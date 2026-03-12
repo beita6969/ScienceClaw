@@ -243,6 +243,9 @@ configure_scienceclaw() {
 
     cat > "$CONFIG_FILE" << JSONEOF
 {
+  "gateway": {
+    "mode": "local"
+  },
   "plugins": {
     "slots": {
       "memory": "memory-core"
@@ -252,28 +255,21 @@ configure_scienceclaw() {
       "memory-lancedb": { "enabled": true }
     }
   },
-  "agent": {
-    "timeout": 3600,
-    "heartbeat": 1800
-  },
-  "context": {
-    "pruning": "cache-ttl",
-    "cacheTtl": 3600
-  },
-  "mcpServers": {
-    "academic-mcp":          { "command": "uvx", "args": ["academic-mcp"] },
-    "arxiv-mcp":             { "command": "uvx", "args": ["arxiv-mcp-server"] },
-    "biomcp":                { "command": "uvx", "args": ["biomcp", "run"] },
-    "chembl-mcp":            { "command": "${VENV_PYTHON}", "args": ["${CHEMBL_SERVER}"] },
-    "semantic-scholar-mcp":  { "command": "uvx", "args": ["semantic-scholar-mcp"] },
-    "zotero-mcp":            { "command": "uvx", "args": ["zotero-mcp"] },
-    "arxiv-latex-mcp":       { "command": "${VENV_PYTHON}", "args": ["${HOME}/clawd/mcp-servers/arxiv-latex-mcp/server/main.py"] },
-    "mcp-research":          { "command": "uvx", "args": ["deep-research-mcp-server"] }
+  "agents": {
+    "defaults": {
+      "heartbeat": { "interval": 1800 }
+    }
   }
 }
 JSONEOF
 
     log_ok "Config written to $CONFIG_FILE"
+
+    # Run doctor to auto-fix any config issues
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    log_info "Running config validation..."
+    cd "$SCRIPT_DIR" && npx openclaw doctor --fix 2>&1 | tail -3 || true
+    log_ok "Config validated"
 }
 
 # ---- Setup workspace ----

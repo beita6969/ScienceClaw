@@ -188,35 +188,23 @@ pnpm install && npx openclaw onboard
 
 ### Enable Research Features
 
-Edit `~/.openclaw/openclaw.json`:
+The `setup.sh` script automatically configures everything. For manual setup, edit `~/.openclaw/openclaw.json`:
 
 ```jsonc
 {
+  "gateway": { "mode": "local" },
   "plugins": {
     "slots": { "memory": "memory-core" },
     "entries": {
       "memory-core": { "enabled": true },
-      "memory-lancedb": { "enabled": true },
-    },
+      "memory-lancedb": { "enabled": true }
+    }
   },
-  "agent": {
-    "timeout": 3600,
-  },
-}
-```
-
-### Add Academic MCP Servers (Recommended)
-
-```jsonc
-{
-  "mcpServers": {
-    "academic-mcp": { "command": "uvx", "args": ["academic-mcp"] },
-    "arxiv-mcp": { "command": "uvx", "args": ["arxiv-mcp-server"] },
-    "biomcp": { "command": "uvx", "args": ["biomcp", "run"] },
-    "chembl-mcp": { "command": "uvx", "args": ["chembl-mcp"] },
-    "semantic-scholar-mcp": { "command": "uvx", "args": ["semantic-scholar-mcp"] },
-    "zotero-mcp": { "command": "uvx", "args": ["zotero-mcp"] },
-  },
+  "agents": {
+    "defaults": {
+      "heartbeat": { "interval": 1800 }
+    }
+  }
 }
 ```
 

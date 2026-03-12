@@ -9,11 +9,8 @@
 <p align="center">
   <img src="https://img.shields.io/github/stars/beita6969/ScienceClaw?style=flat-square&logo=github&label=Stars" alt="Stars">
   <img src="https://img.shields.io/badge/skills-285-8A2BE2?style=flat-square" alt="285 Skills">
-  <img src="https://img.shields.io/badge/databases-25+-2ea44f?style=flat-square" alt="25+ Databases">
   <img src="https://img.shields.io/badge/hallucination-zero-e05d44?style=flat-square" alt="Zero Hallucination">
   <img src="https://img.shields.io/github/license/beita6969/ScienceClaw?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/node-22+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js">
 </p>
 
 ---

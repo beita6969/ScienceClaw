@@ -164,15 +164,23 @@ install_python_deps() {
 
     log_info "Installing ${#ALL_PACKAGES[@]} Python packages..."
 
-    # Use uv for fast installation
-    if command -v uv &>/dev/null; then
-        uv pip install --system "${ALL_PACKAGES[@]}" 2>&1 | tail -3 || {
-            log_warn "Some packages failed with uv, falling back to pip..."
-            pip3 install "${ALL_PACKAGES[@]}" 2>&1 | tail -3 || true
-        }
-    else
-        pip3 install "${ALL_PACKAGES[@]}" 2>&1 | tail -3 || true
+    # Create a virtual environment for ScienceClaw's Python deps
+    VENV_DIR="$HOME/.scienceclaw/venv"
+    if [ ! -d "$VENV_DIR" ]; then
+        log_info "Creating Python virtual environment at $VENV_DIR..."
+        mkdir -p "$HOME/.scienceclaw"
+        uv venv "$VENV_DIR" 2>&1 | tail -1
     fi
+
+    log_info "Installing packages into virtual environment..."
+    uv pip install --python "$VENV_DIR/bin/python" "${ALL_PACKAGES[@]}" 2>&1 | tail -5 || {
+        log_warn "Some packages failed, retrying individually..."
+        for pkg in "${ALL_PACKAGES[@]}"; do
+            uv pip install --python "$VENV_DIR/bin/python" "$pkg" 2>/dev/null || log_warn "  $pkg failed (optional)"
+        done
+    }
+
+    log_info "To activate: source $VENV_DIR/bin/activate"
 
     log_ok "Python scientific packages installed"
 }
@@ -192,9 +200,11 @@ install_mcp_servers() {
         "mcp-research"
     )
 
+    # MCP servers run via uvx on-demand (no pre-install needed)
+    # We just verify uvx can resolve them
     for server in "${MCP_SERVERS[@]}"; do
-        log_info "Installing $server..."
-        uvx install "$server" 2>&1 | tail -1 || log_warn "$server install failed (may need manual setup)"
+        log_info "Caching $server..."
+        uvx --quiet "$server" --help &>/dev/null && log_ok "$server cached" || log_warn "$server not available (will try at runtime)"
     done
 
     log_ok "MCP servers installed"

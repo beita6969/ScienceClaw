@@ -182,11 +182,11 @@ ScienceClaw covers **natural sciences AND social sciences** across dozens of dis
 git clone https://github.com/beita6969/ScienceClaw.git
 cd ScienceClaw
 
-# Install
-pnpm install   # or npm / bun
+# One-click setup (installs everything: Node, Python, MCP servers, skills)
+chmod +x setup.sh && ./setup.sh
 
-# Onboard
-npx openclaw onboard
+# Or manual install
+pnpm install && npx openclaw onboard
 ```
 
 ### Enable Research Features
@@ -229,19 +229,21 @@ Edit `~/.openclaw/openclaw.json`:
 
 ```
 ScienceClaw/
+├── setup.sh                # 🦞 One-click setup (run this first!)
 ├── SCIENCE.md              # 629-line research protocol (the brain)
 ├── skills/                 # 285 skill definitions (and growing)
 │   ├── skill-evolution/    # VOYAGER-style self-improvement
 │   ├── research-reflection/# Post-task learning & evaluation
 │   ├── skill-creator/      # Runtime skill generation
 │   └── ...
-├── src/
+├── src/                    # Core engine
 │   ├── memory/             # 4-layer memory (temporal decay, LanceDB)
 │   ├── agents/             # Agent orchestration & persistence
-│   └── skills/             # Skill loading & execution engine
+│   └── skills/             # Skill loading & execution
 ├── ui/                     # Web-based research gateway UI
-├── extensions/             # Plugin system (978 files)
-├── apps/                   # Application integrations
+├── extensions/             # Plugin system
+├── deploy/                 # Docker, Fly.io, Podman configs
+├── config/                 # Vitest, build, lint configs
 └── docs/                   # Documentation
 ```
 

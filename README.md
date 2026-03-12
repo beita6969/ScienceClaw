@@ -246,14 +246,9 @@ ScienceClaw/
 └── docs/                   # Documentation
 ```
 
-## Contributing
+## Contact Us
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Priority areas:
-
-- New database integrations (especially social science data sources)
-- Domain-specific skill packs
-- Statistical method implementations
-- Improved search strategies and fallback chains
+📧 **mingdazhang@ieee.org**
 
 ## License
 

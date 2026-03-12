@@ -9,6 +9,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/stars/beita6969/ScienceClaw?style=flat-square&logo=github&label=Stars" alt="Stars">
   <img src="https://img.shields.io/badge/skills-285-8A2BE2?style=flat-square" alt="285 Skills">
+  <img src="https://img.shields.io/badge/disciplines-28+-2a9d8f?style=flat-square" alt="28+ Disciplines">
   <img src="https://img.shields.io/badge/hallucination-zero-e05d44?style=flat-square" alt="Zero Hallucination">
   <img src="https://img.shields.io/github/license/beita6969/ScienceClaw?style=flat-square" alt="License">
 </p>

@@ -1,0 +1,149 @@
+{
+  "metadata": {
+    "patient_id": "TEST001",
+    "input_file": "test_patient.txt",
+    "checksum": "abc123",
+    "upload_date": "2026-01-01T00:00:00+00:00"
+  },
+  "genotypes": {
+    "rs762551": {"chrom": "15", "pos": 75041917, "genotype": "AC", "allele1": "A", "allele2": "C"},
+    "rs3892097": {"chrom": "22", "pos": 42524947, "genotype": "TT", "allele1": "T", "allele2": "T"},
+    "rs4244285": {"chrom": "10", "pos": 96541616, "genotype": "AG", "allele1": "A", "allele2": "G"}
+  },
+  "ancestry": null,
+  "skill_results": {
+    "pharmgx": {
+      "run_at": "2026-01-01T00:00:00+00:00",
+      "data": {
+        "skill": "pharmgx",
+        "version": "0.2.0",
+        "completed_at": "2026-01-01T00:00:00+00:00",
+        "input_checksum": "sha256:abc123",
+        "summary": {
+          "total_snps_in_file": 3,
+          "pgx_snps_found": 3,
+          "pgx_snps_total": 30,
+          "genes_profiled": 2,
+          "drugs_assessed": 5,
+          "drugs_standard": 2,
+          "drugs_caution": 2,
+          "drugs_avoid": 1,
+          "drugs_indeterminate": 0
+        },
+        "data": {
+          "gene_profiles": {
+            "CYP2D6": {
+              "diplotype": "*4/*4",
+              "phenotype": "Poor Metabolizer"
+            },
+            "CYP1A2": {
+              "diplotype": "*1/*1F",
+              "phenotype": "Normal Metabolizer"
+            }
+          },
+          "drug_recommendations": {
+            "standard": [
+              {
+                "drug": "Clozapine",
+                "brand": "Clozaril",
+                "class": "Antipsychotic",
+                "gene": "CYP1A2",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Efavirenz",
+                "brand": "Sustiva",
+                "class": "Antiretroviral",
+                "gene": "CYP2B6",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              }
+            ],
+            "caution": [
+              {
+                "drug": "Paroxetine",
+                "brand": "Paxil",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or alternative SSRI.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Metoprolol",
+                "brand": "Lopressor",
+                "class": "Beta-Blocker",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or alternative beta-blocker.",
+                "classification": "caution"
+              }
+            ],
+            "avoid": [
+              {
+                "drug": "Codeine",
+                "brand": "Tylenol w/ Codeine",
+                "class": "Opioid Analgesic",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid codeine. Select alternative analgesic.",
+                "classification": "avoid"
+              }
+            ],
+            "indeterminate": []
+          }
+        }
+      }
+    },
+    "nutrigx": {
+      "run_at": "2026-01-01T00:00:00+00:00",
+      "data": {
+        "skill": "nutrigx",
+        "version": "0.2.0",
+        "completed_at": "2026-01-01T00:00:00+00:00",
+        "input_checksum": "sha256:abc123",
+        "summary": {
+          "total_variants_loaded": 3,
+          "panel_snps_tested": 1,
+          "panel_snps_missing": 27,
+          "panel_size": 28,
+          "elevated_domains": [],
+          "moderate_domains": ["caffeine"],
+          "domains_assessed": 12
+        },
+        "data": {
+          "risk_scores": {
+            "caffeine": {
+              "score": 5.0,
+              "category": "Moderate",
+              "contributing_snps": [
+                {"rsid": "rs762551", "gene": "CYP1A2", "genotype": "AC", "risk_count": 1}
+              ],
+              "tested_snps": 1,
+              "missing_snps": 1,
+              "coverage": "1/2 SNPs tested"
+            },
+            "folate": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 3,
+              "coverage": "0/3 SNPs tested"
+            }
+          },
+          "snp_calls": {
+            "rs762551": {
+              "rsid": "rs762551",
+              "gene": "CYP1A2",
+              "status": "found",
+              "genotype": "AC",
+              "normalised": "AC",
+              "risk_allele": "C",
+              "risk_count": 1,
+              "nutrient_domain": "caffeine"
+            }
+          }
+        }
+      }
+    }
+  }
+}

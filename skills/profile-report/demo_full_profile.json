@@ -1,0 +1,1237 @@
+{
+  "metadata": {
+    "patient_id": "DEMO001",
+    "input_file": "/Users/jaymoore/Documents/JAY_PhD/imperial/ClawBio/skills/pharmgx-reporter/demo_patient.txt",
+    "checksum": "4c2e9c8a7fd58de831187dd847e30509fe72c5aee09ff80d617caa4ae8a0eedb",
+    "upload_date": "2026-03-04T06:58:09.191616+00:00"
+  },
+  "genotypes": {
+    "rs4244285": {
+      "chrom": "10",
+      "pos": 96541616,
+      "genotype": "AG",
+      "allele1": "A",
+      "allele2": "G"
+    },
+    "rs4986893": {
+      "chrom": "10",
+      "pos": 96540410,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs12248560": {
+      "chrom": "10",
+      "pos": 96522463,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs28399504": {
+      "chrom": "10",
+      "pos": 96521657,
+      "genotype": "AA",
+      "allele1": "A",
+      "allele2": "A"
+    },
+    "rs3892097": {
+      "chrom": "22",
+      "pos": 42524947,
+      "genotype": "TT",
+      "allele1": "T",
+      "allele2": "T"
+    },
+    "rs5030655": {
+      "chrom": "22",
+      "pos": 42525772,
+      "genotype": "TT",
+      "allele1": "T",
+      "allele2": "T"
+    },
+    "rs16947": {
+      "chrom": "22",
+      "pos": 42523943,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs1065852": {
+      "chrom": "22",
+      "pos": 42526694,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs28371725": {
+      "chrom": "22",
+      "pos": 42524175,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs1799853": {
+      "chrom": "10",
+      "pos": 96702047,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs1057910": {
+      "chrom": "10",
+      "pos": 96741053,
+      "genotype": "AC",
+      "allele1": "A",
+      "allele2": "C"
+    },
+    "rs9923231": {
+      "chrom": "16",
+      "pos": 31107689,
+      "genotype": "GA",
+      "allele1": "G",
+      "allele2": "A"
+    },
+    "rs4149056": {
+      "chrom": "12",
+      "pos": 21331549,
+      "genotype": "TC",
+      "allele1": "T",
+      "allele2": "C"
+    },
+    "rs3918290": {
+      "chrom": "1",
+      "pos": 97915614,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs55886062": {
+      "chrom": "1",
+      "pos": 98165091,
+      "genotype": "TT",
+      "allele1": "T",
+      "allele2": "T"
+    },
+    "rs67376798": {
+      "chrom": "1",
+      "pos": 97981395,
+      "genotype": "TT",
+      "allele1": "T",
+      "allele2": "T"
+    },
+    "rs1800460": {
+      "chrom": "6",
+      "pos": 18130918,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs1142345": {
+      "chrom": "6",
+      "pos": 18139228,
+      "genotype": "AA",
+      "allele1": "A",
+      "allele2": "A"
+    },
+    "rs1800462": {
+      "chrom": "6",
+      "pos": 18143955,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs8175347": {
+      "chrom": "2",
+      "pos": 234668879,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs4148323": {
+      "chrom": "2",
+      "pos": 234669144,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs776746": {
+      "chrom": "7",
+      "pos": 99672916,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs10264272": {
+      "chrom": "7",
+      "pos": 99665212,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs41303343": {
+      "chrom": "7",
+      "pos": 99664693,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs3745274": {
+      "chrom": "19",
+      "pos": 41512841,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs28399499": {
+      "chrom": "19",
+      "pos": 41515263,
+      "genotype": "TT",
+      "allele1": "T",
+      "allele2": "T"
+    },
+    "rs116855232": {
+      "chrom": "13",
+      "pos": 48611703,
+      "genotype": "CC",
+      "allele1": "C",
+      "allele2": "C"
+    },
+    "rs147390019": {
+      "chrom": "13",
+      "pos": 48611695,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    },
+    "rs762551": {
+      "chrom": "15",
+      "pos": 75041917,
+      "genotype": "AC",
+      "allele1": "A",
+      "allele2": "C"
+    },
+    "rs2069514": {
+      "chrom": "15",
+      "pos": 75044934,
+      "genotype": "GG",
+      "allele1": "G",
+      "allele2": "G"
+    }
+  },
+  "ancestry": null,
+  "skill_results": {
+    "pharmgx": {
+      "run_at": "2026-03-04T07:10:49.668907+00:00",
+      "data": {
+        "skill": "pharmgx",
+        "version": "0.2.0",
+        "completed_at": "2026-03-04T07:10:49.662628+00:00",
+        "input_checksum": "sha256:4c2e9c8a7fd58de8",
+        "summary": {
+          "total_snps_in_file": 30,
+          "pgx_snps_found": 30,
+          "pgx_snps_total": 30,
+          "genes_profiled": 12,
+          "drugs_assessed": 51,
+          "drugs_standard": 21,
+          "drugs_caution": 20,
+          "drugs_avoid": 10,
+          "drugs_indeterminate": 0
+        },
+        "data": {
+          "gene_profiles": {
+            "CYP2C19": {
+              "diplotype": "*1/*2",
+              "phenotype": "Intermediate Metabolizer"
+            },
+            "CYP2D6": {
+              "diplotype": "*4/*4",
+              "phenotype": "Poor Metabolizer"
+            },
+            "CYP2C9": {
+              "diplotype": "*1/*3",
+              "phenotype": "Intermediate Metabolizer"
+            },
+            "VKORC1": {
+              "diplotype": "GA",
+              "phenotype": "Intermediate Warfarin Sensitivity"
+            },
+            "SLCO1B1": {
+              "diplotype": "TC",
+              "phenotype": "Intermediate Function"
+            },
+            "DPYD": {
+              "diplotype": "Normal/Normal",
+              "phenotype": "Normal Metabolizer"
+            },
+            "TPMT": {
+              "diplotype": "*1/*1",
+              "phenotype": "Normal Metabolizer"
+            },
+            "UGT1A1": {
+              "diplotype": "*1/*1",
+              "phenotype": "Normal Metabolizer"
+            },
+            "CYP3A5": {
+              "diplotype": "*3/*3",
+              "phenotype": "CYP3A5 Non-expressor"
+            },
+            "CYP2B6": {
+              "diplotype": "*1/*1",
+              "phenotype": "Normal Metabolizer"
+            },
+            "NUDT15": {
+              "diplotype": "*1/*1",
+              "phenotype": "Normal Metabolizer"
+            },
+            "CYP1A2": {
+              "diplotype": "*1/*1F",
+              "phenotype": "Normal Metabolizer"
+            }
+          },
+          "drug_recommendations": {
+            "standard": [
+              {
+                "drug": "Omeprazole",
+                "brand": "Prilosec",
+                "class": "Proton Pump Inhibitor",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Pantoprazole",
+                "brand": "Protonix",
+                "class": "Proton Pump Inhibitor",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Lansoprazole",
+                "brand": "Prevacid",
+                "class": "Proton Pump Inhibitor",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Esomeprazole",
+                "brand": "Nexium",
+                "class": "Proton Pump Inhibitor",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Dexlansoprazole",
+                "brand": "Dexilant",
+                "class": "Proton Pump Inhibitor",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Citalopram",
+                "brand": "Celexa",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Escitalopram",
+                "brand": "Lexapro",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Sertraline",
+                "brand": "Zoloft",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Voriconazole",
+                "brand": "Vfend",
+                "class": "Antifungal",
+                "gene": "CYP2C19",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Rosuvastatin",
+                "brand": "Crestor",
+                "class": "Statin",
+                "gene": "SLCO1B1",
+                "recommendation": "Use desired starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Pravastatin",
+                "brand": "Pravachol",
+                "class": "Statin",
+                "gene": "SLCO1B1",
+                "recommendation": "Use desired starting dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Fluorouracil",
+                "brand": "5-FU",
+                "class": "Antineoplastic",
+                "gene": "DPYD",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Capecitabine",
+                "brand": "Xeloda",
+                "class": "Antineoplastic",
+                "gene": "DPYD",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Azathioprine",
+                "brand": "Imuran",
+                "class": "Immunosuppressant",
+                "gene": "TPMT",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Mercaptopurine",
+                "brand": "Purinethol",
+                "class": "Immunosuppressant",
+                "gene": "TPMT",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Thioguanine",
+                "brand": "Tabloid",
+                "class": "Immunosuppressant",
+                "gene": "TPMT",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Irinotecan",
+                "brand": "Camptosar",
+                "class": "Antineoplastic",
+                "gene": "UGT1A1",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Atazanavir",
+                "brand": "Reyataz",
+                "class": "Antiretroviral",
+                "gene": "UGT1A1",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Tacrolimus",
+                "brand": "Prograf",
+                "class": "Immunosuppressant",
+                "gene": "CYP3A5",
+                "recommendation": "Use recommended dose (most patients).",
+                "classification": "standard"
+              },
+              {
+                "drug": "Efavirenz",
+                "brand": "Sustiva",
+                "class": "Antiretroviral",
+                "gene": "CYP2B6",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              },
+              {
+                "drug": "Clozapine",
+                "brand": "Clozaril",
+                "class": "Antipsychotic",
+                "gene": "CYP1A2",
+                "recommendation": "Use recommended dose.",
+                "classification": "standard"
+              }
+            ],
+            "caution": [
+              {
+                "drug": "Clopidogrel",
+                "brand": "Plavix",
+                "class": "Antiplatelet Agent",
+                "gene": "CYP2C19",
+                "recommendation": "Consider alternative antiplatelet therapy (prasugrel, ticagrelor).",
+                "classification": "caution"
+              },
+              {
+                "drug": "Hydrocodone",
+                "brand": "Vicodin",
+                "class": "Opioid Analgesic",
+                "gene": "CYP2D6",
+                "recommendation": "Reduced analgesia likely; consider alternative.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Oxycodone",
+                "brand": "OxyContin",
+                "class": "Opioid Analgesic",
+                "gene": "CYP2D6",
+                "recommendation": "Reduced analgesia possible; consider alternative.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Paroxetine",
+                "brand": "Paxil",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or alternative SSRI.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Fluoxetine",
+                "brand": "Prozac",
+                "class": "SSRI Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or alternative.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Venlafaxine",
+                "brand": "Effexor",
+                "class": "SNRI Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or switch to desvenlafaxine.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Metoprolol",
+                "brand": "Lopressor",
+                "class": "Beta-Blocker",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction or alternative beta-blocker.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Ondansetron",
+                "brand": "Zofran",
+                "class": "Antiemetic",
+                "gene": "CYP2D6",
+                "recommendation": "May have reduced antiemetic effect; consider alternative.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Risperidone",
+                "brand": "Risperdal",
+                "class": "Antipsychotic",
+                "gene": "CYP2D6",
+                "recommendation": "Consider 50% dose reduction.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Aripiprazole",
+                "brand": "Abilify",
+                "class": "Antipsychotic",
+                "gene": "CYP2D6",
+                "recommendation": "Reduce dose to 75% of usual.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Haloperidol",
+                "brand": "Haldol",
+                "class": "Antipsychotic",
+                "gene": "CYP2D6",
+                "recommendation": "Reduce dose; monitor for side effects.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Atomoxetine",
+                "brand": "Strattera",
+                "class": "ADHD Medication",
+                "gene": "CYP2D6",
+                "recommendation": "Start at lower dose; 2-fold higher exposure expected.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Phenytoin",
+                "brand": "Dilantin",
+                "class": "Antiepileptic",
+                "gene": "CYP2C9",
+                "recommendation": "Reduce dose 25%. Monitor levels closely.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Celecoxib",
+                "brand": "Celebrex",
+                "class": "NSAID",
+                "gene": "CYP2C9",
+                "recommendation": "Start at lowest dose.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Flurbiprofen",
+                "brand": "Ansaid",
+                "class": "NSAID",
+                "gene": "CYP2C9",
+                "recommendation": "Start at lowest dose.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Piroxicam",
+                "brand": "Feldene",
+                "class": "NSAID",
+                "gene": "CYP2C9",
+                "recommendation": "Start at lowest dose; monitor.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Meloxicam",
+                "brand": "Mobic",
+                "class": "NSAID",
+                "gene": "CYP2C9",
+                "recommendation": "Start at lowest dose.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Warfarin",
+                "brand": "Coumadin",
+                "class": "Anticoagulant",
+                "gene": "CYP2C9+VKORC1",
+                "recommendation": "Reduce initial dose. Use genotype-guided dosing algorithm.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Simvastatin",
+                "brand": "Zocor",
+                "class": "Statin",
+                "gene": "SLCO1B1",
+                "recommendation": "Lower dose or alternative statin. 4.5x myopathy risk.",
+                "classification": "caution"
+              },
+              {
+                "drug": "Atorvastatin",
+                "brand": "Lipitor",
+                "class": "Statin",
+                "gene": "SLCO1B1",
+                "recommendation": "Consider CK surveillance.",
+                "classification": "caution"
+              }
+            ],
+            "avoid": [
+              {
+                "drug": "Codeine",
+                "brand": "Tylenol w/ Codeine",
+                "class": "Opioid Analgesic",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid codeine. Select alternative analgesic.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Tramadol",
+                "brand": "Ultram",
+                "class": "Opioid Analgesic",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid tramadol. Select alternative analgesic.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Tamoxifen",
+                "brand": "Nolvadex",
+                "class": "SERM (Oncology)",
+                "gene": "CYP2D6",
+                "recommendation": "Consider aromatase inhibitor or higher tamoxifen dose with TDM.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Amitriptyline",
+                "brand": "Elavil",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA. If necessary, reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Nortriptyline",
+                "brand": "Pamelor",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Desipramine",
+                "brand": "Norpramin",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Imipramine",
+                "brand": "Tofranil",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Doxepin",
+                "brand": "Sinequan",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Trimipramine",
+                "brand": "Surmontil",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              },
+              {
+                "drug": "Clomipramine",
+                "brand": "Anafranil",
+                "class": "Tricyclic Antidepressant",
+                "gene": "CYP2D6",
+                "recommendation": "Avoid TCA or reduce dose 50%.",
+                "classification": "avoid"
+              }
+            ],
+            "indeterminate": []
+          }
+        }
+      }
+    },
+    "nutrigx": {
+      "run_at": "2026-03-04T07:10:49.973135+00:00",
+      "data": {
+        "skill": "nutrigx",
+        "version": "0.2.0",
+        "completed_at": "2026-03-04T07:10:49.939040+00:00",
+        "input_checksum": "sha256:4c2e9c8a7fd58de8",
+        "summary": {
+          "total_variants_loaded": 30,
+          "panel_snps_tested": 1,
+          "panel_snps_missing": 27,
+          "panel_size": 28,
+          "elevated_domains": [],
+          "moderate_domains": [
+            "caffeine"
+          ],
+          "domains_assessed": 12
+        },
+        "data": {
+          "risk_scores": {
+            "folate": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 3,
+              "coverage": "0/3 SNPs tested"
+            },
+            "vitamin_d": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 3,
+              "coverage": "0/3 SNPs tested"
+            },
+            "omega3": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 4,
+              "coverage": "0/4 SNPs tested"
+            },
+            "vitamin_a": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 2,
+              "coverage": "0/2 SNPs tested"
+            },
+            "vitamin_c": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 1,
+              "coverage": "0/1 SNPs tested"
+            },
+            "vitamin_b6": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 1,
+              "coverage": "0/1 SNPs tested"
+            },
+            "carbohydrate": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 2,
+              "coverage": "0/2 SNPs tested"
+            },
+            "fat_metabolism": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 3,
+              "coverage": "0/3 SNPs tested"
+            },
+            "caffeine": {
+              "score": 5.0,
+              "category": "Moderate",
+              "contributing_snps": [
+                {
+                  "rsid": "rs762551",
+                  "gene": "CYP1A2",
+                  "genotype": "AC",
+                  "risk_count": 1,
+                  "raw_score": 0.5,
+                  "weight": 0.85,
+                  "effect_direction": "slow_caffeine_metabolism"
+                }
+              ],
+              "tested_snps": 1,
+              "missing_snps": 1,
+              "coverage": "1/2 SNPs tested"
+            },
+            "alcohol": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 2,
+              "coverage": "0/2 SNPs tested"
+            },
+            "lactose": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 1,
+              "coverage": "0/1 SNPs tested"
+            },
+            "antioxidant": {
+              "score": null,
+              "category": "Unknown",
+              "contributing_snps": [],
+              "tested_snps": 0,
+              "missing_snps": 4,
+              "coverage": "0/4 SNPs tested"
+            }
+          },
+          "snp_calls": {
+            "rs1801133": {
+              "rsid": "rs1801133",
+              "gene": "MTHFR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "folate"
+            },
+            "rs1801131": {
+              "rsid": "rs1801131",
+              "gene": "MTHFR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "folate"
+            },
+            "rs1805087": {
+              "rsid": "rs1805087",
+              "gene": "MTR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "G",
+              "risk_count": null,
+              "nutrient_domain": "folate"
+            },
+            "rs2228570": {
+              "rsid": "rs2228570",
+              "gene": "VDR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_d"
+            },
+            "rs731236": {
+              "rsid": "rs731236",
+              "gene": "VDR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_d"
+            },
+            "rs4588": {
+              "rsid": "rs4588",
+              "gene": "GC",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_d"
+            },
+            "rs174546": {
+              "rsid": "rs174546",
+              "gene": "FADS1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "omega3"
+            },
+            "rs1535": {
+              "rsid": "rs1535",
+              "gene": "FADS2",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "omega3"
+            },
+            "rs953413": {
+              "rsid": "rs953413",
+              "gene": "ELOVL2",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "G",
+              "risk_count": null,
+              "nutrient_domain": "omega3"
+            },
+            "rs429358": {
+              "rsid": "rs429358",
+              "gene": "APOE",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "omega3"
+            },
+            "rs7501331": {
+              "rsid": "rs7501331",
+              "gene": "BCMO1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_a"
+            },
+            "rs12934922": {
+              "rsid": "rs12934922",
+              "gene": "BCMO1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_a"
+            },
+            "rs33972313": {
+              "rsid": "rs33972313",
+              "gene": "SLC23A1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_c"
+            },
+            "rs1256335": {
+              "rsid": "rs1256335",
+              "gene": "ALPL",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "vitamin_b6"
+            },
+            "rs9939609": {
+              "rsid": "rs9939609",
+              "gene": "FTO",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "carbohydrate"
+            },
+            "rs7903146": {
+              "rsid": "rs7903146",
+              "gene": "TCF7L2",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "carbohydrate"
+            },
+            "rs1801282": {
+              "rsid": "rs1801282",
+              "gene": "PPARG",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "G",
+              "risk_count": null,
+              "nutrient_domain": "fat_metabolism"
+            },
+            "rs662799": {
+              "rsid": "rs662799",
+              "gene": "APOA5",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "fat_metabolism"
+            },
+            "rs7412": {
+              "rsid": "rs7412",
+              "gene": "APOE",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "fat_metabolism"
+            },
+            "rs762551": {
+              "rsid": "rs762551",
+              "gene": "CYP1A2",
+              "status": "found",
+              "genotype": "AC",
+              "normalised": "AC",
+              "risk_allele": "C",
+              "risk_count": 1,
+              "nutrient_domain": "caffeine"
+            },
+            "rs4410790": {
+              "rsid": "rs4410790",
+              "gene": "AHR",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "caffeine"
+            },
+            "rs1229984": {
+              "rsid": "rs1229984",
+              "gene": "ADH1B",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "alcohol"
+            },
+            "rs671": {
+              "rsid": "rs671",
+              "gene": "ALDH2",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "alcohol"
+            },
+            "rs4988235": {
+              "rsid": "rs4988235",
+              "gene": "MCM6",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "lactose"
+            },
+            "rs4880": {
+              "rsid": "rs4880",
+              "gene": "SOD2",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "C",
+              "risk_count": null,
+              "nutrient_domain": "antioxidant"
+            },
+            "rs1050450": {
+              "rsid": "rs1050450",
+              "gene": "GPX1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "antioxidant"
+            },
+            "rs1800566": {
+              "rsid": "rs1800566",
+              "gene": "NQO1",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "T",
+              "risk_count": null,
+              "nutrient_domain": "antioxidant"
+            },
+            "rs4680": {
+              "rsid": "rs4680",
+              "gene": "COMT",
+              "status": "not_tested",
+              "genotype": null,
+              "normalised": null,
+              "risk_allele": "A",
+              "risk_count": null,
+              "nutrient_domain": "antioxidant"
+            }
+          }
+        }
+      }
+    },
+    "prs": {
+      "run_at": "2026-03-04T07:00:00+00:00",
+      "data": {
+        "skill": "prs",
+        "version": "0.2.0",
+        "completed_at": "2026-03-04T07:00:00+00:00",
+        "input_checksum": "sha256:4c2e9c8a7fd58de8",
+        "summary": {
+          "scores_computed": 6,
+          "traits_assessed": 6
+        },
+        "data": {
+          "scores": [
+            {
+              "pgs_id": "PGS000013",
+              "trait": "Type 2 diabetes",
+              "raw_score": 0.83,
+              "z_score": -0.97,
+              "percentile": 14.0,
+              "risk_category": "Low",
+              "variants_used": 6,
+              "variants_total": 8
+            },
+            {
+              "pgs_id": "PGS000011",
+              "trait": "Atrial fibrillation",
+              "raw_score": 1.12,
+              "z_score": 2.04,
+              "percentile": 98.0,
+              "risk_category": "Elevated",
+              "variants_used": 9,
+              "variants_total": 12
+            },
+            {
+              "pgs_id": "PGS000004",
+              "trait": "Coronary artery disease",
+              "raw_score": 2.91,
+              "z_score": 0.25,
+              "percentile": 60.0,
+              "risk_category": "Average",
+              "variants_used": 30,
+              "variants_total": 46
+            },
+            {
+              "pgs_id": "PGS000001",
+              "trait": "Breast cancer",
+              "raw_score": 4.01,
+              "z_score": -0.41,
+              "percentile": 34.0,
+              "risk_category": "Average",
+              "variants_used": 52,
+              "variants_total": 77
+            },
+            {
+              "pgs_id": "PGS000057",
+              "trait": "Prostate cancer",
+              "raw_score": 7.45,
+              "z_score": 0.61,
+              "percentile": 73.0,
+              "risk_category": "Average",
+              "variants_used": 98,
+              "variants_total": 147
+            },
+            {
+              "pgs_id": "PGS000039",
+              "trait": "Body mass index",
+              "raw_score": 2.76,
+              "z_score": -0.52,
+              "percentile": 30.0,
+              "risk_category": "Low",
+              "variants_used": 65,
+              "variants_total": 97
+            }
+          ]
+        }
+      }
+    },
+    "compare": {
+      "run_at": "2026-03-04T07:00:00+00:00",
+      "data": {
+        "skill": "compare",
+        "version": "0.2.0",
+        "completed_at": "2026-03-04T07:00:00+00:00",
+        "input_checksum": "sha256:4c2e9c8a7fd58de8",
+        "summary": {
+          "total_snps_compared": 287432,
+          "ibs2_proportion": 0.712
+        },
+        "data": {
+          "ibs_summary": {
+            "total_snps_compared": 287432,
+            "ibs2_count": 204651,
+            "ibs2_proportion": 0.712,
+            "ibs1_count": 72843,
+            "ibs1_proportion": 0.253,
+            "ibs0_count": 9938,
+            "ibs0_proportion": 0.035
+          },
+          "ancestry_estimation": {
+            "European": 0.82,
+            "South Asian": 0.09,
+            "East Asian": 0.04,
+            "African": 0.03,
+            "Americas": 0.02
+          },
+          "reference_comparison": {
+            "reference_name": "George Church",
+            "kinship_coefficient": 0.0012,
+            "relationship": "Unrelated"
+          }
+        }
+      }
+    }
+  }
+}

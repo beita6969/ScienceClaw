@@ -13,10 +13,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
-<p align="center">
-  <a href="SCIENCE.md">SCIENCE.md</a> · <a href="skills/">Skills Catalog</a> · <a href="CONTRIBUTING.md">Contributing</a> · <a href="docs/">Docs</a>
-</p>
-
 ---
 
 ## Why ScienceClaw?
@@ -78,14 +74,14 @@ Standard AI assistants forget everything when the conversation ends. ScienceClaw
 
 A real literature review takes hours, not seconds. Most AI tools time out after a few minutes. ScienceClaw is engineered for extended research sessions:
 
-| Capability | Standard OpenClaw | ScienceClaw |
-|---|---|---|
-| Agent timeout | 600s (10 min) | **3600s (1 hour)** |
-| Session persistence | Ends with conversation | Heartbeat keeps sessions alive across interruptions |
-| Research depth | Single-pass response | **Multi-phase protocol with mandatory depth thresholds** |
-| Minimum effort | No guarantee | Quick=5, Survey=30, Review=60, Systematic=100+ tool calls |
-| Early stopping | Common | **Anti-premature-conclusion checklist** blocks shallow answers |
-| Context management | Basic truncation | **Smart compaction** preserves key findings when context fills up |
+| Capability          | Standard OpenClaw      | ScienceClaw                                                       |
+| ------------------- | ---------------------- | ----------------------------------------------------------------- |
+| Agent timeout       | 600s (10 min)          | **3600s (1 hour)**                                                |
+| Session persistence | Ends with conversation | Heartbeat keeps sessions alive across interruptions               |
+| Research depth      | Single-pass response   | **Multi-phase protocol with mandatory depth thresholds**          |
+| Minimum effort      | No guarantee           | Quick=5, Survey=30, Review=60, Systematic=100+ tool calls         |
+| Early stopping      | Common                 | **Anti-premature-conclusion checklist** blocks shallow answers    |
+| Context management  | Basic truncation       | **Smart compaction** preserves key findings when context fills up |
 
 **The persistence protocol enforces real research depth.** Before ScienceClaw concludes any task, it must verify:
 
@@ -139,33 +135,36 @@ ScienceClaw covers **natural sciences AND social sciences** across dozens of dis
 <summary><strong>📋 Full discipline & database list</strong></summary>
 
 ### Natural Sciences
-| Domain | Key Skills & Databases |
-|--------|----------------------|
-| **Biomedicine** | PubMed, UniProt, KEGG, PDB, ClinicalTrials, gnomAD, scanpy, biopython |
-| **Chemistry** | PubChem, ChEMBL, RDKit, drug-discovery, molecular-dynamics |
-| **Genomics** | NCBI Entrez, Ensembl, ClinVar, GEO, phylogenetics |
-| **Materials Science** | Materials Project, pymatgen, materials-screening |
-| **Physics** | astropy, quantum-computing, physics-solver, simulation |
-| **Environmental Science** | Copernicus climate data, geospatial analysis, GIS tools |
-| **Food Science** | Specialized analysis pipelines |
+
+| Domain                    | Key Skills & Databases                                                |
+| ------------------------- | --------------------------------------------------------------------- |
+| **Biomedicine**           | PubMed, UniProt, KEGG, PDB, ClinicalTrials, gnomAD, scanpy, biopython |
+| **Chemistry**             | PubChem, ChEMBL, RDKit, drug-discovery, molecular-dynamics            |
+| **Genomics**              | NCBI Entrez, Ensembl, ClinVar, GEO, phylogenetics                     |
+| **Materials Science**     | Materials Project, pymatgen, materials-screening                      |
+| **Physics**               | astropy, quantum-computing, physics-solver, simulation                |
+| **Environmental Science** | Copernicus climate data, geospatial analysis, GIS tools               |
+| **Food Science**          | Specialized analysis pipelines                                        |
 
 ### Social Sciences
-| Domain | Key Skills & Databases |
-|--------|----------------------|
-| **Economics** | World Bank, SSRN, census data, econometrics |
-| **Political Science** | Policy analysis, legislative data |
-| **Psychology** | Experimental design, statistical testing, meta-analysis |
-| **Linguistics** | spaCy, NLTK, NLP analysis |
-| **Education** | Research methodology, assessment analysis |
-| **Sociology** | Network analysis, survey methods |
+
+| Domain                | Key Skills & Databases                                  |
+| --------------------- | ------------------------------------------------------- |
+| **Economics**         | World Bank, SSRN, census data, econometrics             |
+| **Political Science** | Policy analysis, legislative data                       |
+| **Psychology**        | Experimental design, statistical testing, meta-analysis |
+| **Linguistics**       | spaCy, NLTK, NLP analysis                               |
+| **Education**         | Research methodology, assessment analysis               |
+| **Sociology**         | Network analysis, survey methods                        |
 
 ### Cross-Disciplinary Tools
-| Category | Capabilities |
-|----------|-------------|
-| **Statistics** | SciPy, statsmodels, scikit-learn, effect sizes, confidence intervals, multiple comparison corrections |
-| **Visualization** | matplotlib, plotly, seaborn, publication-quality figures |
-| **Writing** | LaTeX papers, systematic reviews (PRISMA), grant proposals, patent drafting |
-| **Mathematics** | SymPy symbolic computation, numerical methods, optimization |
+
+| Category          | Capabilities                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| **Statistics**    | SciPy, statsmodels, scikit-learn, effect sizes, confidence intervals, multiple comparison corrections |
+| **Visualization** | matplotlib, plotly, seaborn, publication-quality figures                                              |
+| **Writing**       | LaTeX papers, systematic reviews (PRISMA), grant proposals, patent drafting                           |
+| **Mathematics**   | SymPy symbolic computation, numerical methods, optimization                                           |
 
 </details>
 
@@ -199,12 +198,12 @@ Edit `~/.openclaw/openclaw.json`:
     "slots": { "memory": "memory-core" },
     "entries": {
       "memory-core": { "enabled": true },
-      "memory-lancedb": { "enabled": true }
-    }
+      "memory-lancedb": { "enabled": true },
+    },
   },
   "agent": {
-    "timeout": 3600
-  }
+    "timeout": 3600,
+  },
 }
 ```
 
@@ -213,13 +212,13 @@ Edit `~/.openclaw/openclaw.json`:
 ```jsonc
 {
   "mcpServers": {
-    "academic-mcp":          { "command": "uvx", "args": ["academic-mcp"] },
-    "arxiv-mcp":             { "command": "uvx", "args": ["arxiv-mcp-server"] },
-    "biomcp":                { "command": "uvx", "args": ["biomcp", "run"] },
-    "chembl-mcp":            { "command": "uvx", "args": ["chembl-mcp"] },
-    "semantic-scholar-mcp":  { "command": "uvx", "args": ["semantic-scholar-mcp"] },
-    "zotero-mcp":            { "command": "uvx", "args": ["zotero-mcp"] }
-  }
+    "academic-mcp": { "command": "uvx", "args": ["academic-mcp"] },
+    "arxiv-mcp": { "command": "uvx", "args": ["arxiv-mcp-server"] },
+    "biomcp": { "command": "uvx", "args": ["biomcp", "run"] },
+    "chembl-mcp": { "command": "uvx", "args": ["chembl-mcp"] },
+    "semantic-scholar-mcp": { "command": "uvx", "args": ["semantic-scholar-mcp"] },
+    "zotero-mcp": { "command": "uvx", "args": ["zotero-mcp"] },
+  },
 }
 ```
 

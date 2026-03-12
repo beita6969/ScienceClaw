@@ -1,4 +1,6 @@
-<h1 align="center">🔬 ScienceClaw</h1>
+<p align="center">
+  <img src="assets/banner.png" alt="ScienceClaw — AI Research Gateway" width="800" />
+</p>
 
 <p align="center">
   <strong>A self-evolving AI research colleague for scientists.</strong>
@@ -11,6 +13,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
+<p align="center">
+  <a href="SCIENCE.md">SCIENCE.md</a> · <a href="skills/">Skills Catalog</a> · <a href="CONTRIBUTING.md">Contributing</a> · <a href="docs/">Docs</a>
+</p>
+
 ---
 
 ## Why ScienceClaw?
@@ -19,7 +25,11 @@ General-purpose AI assistants are built for everyone. ScienceClaw is built for *
 
 The core idea is simple: an AI that does real scientific work — searching literature, querying databases, running analyses — and **gets better at it the more you use it**. It remembers your research context across sessions, adapts its skills to your field, and never fabricates a citation.
 
-ScienceClaw is built on the [OpenClaw](https://github.com/openclaw/openclaw) engine, but redesigned from the ground up for academic research. Here's what makes it different:
+ScienceClaw is built on the [OpenClaw](https://github.com/openclaw/openclaw) engine, but redesigned from the ground up for academic research.
+
+<p align="center">
+  <img src="assets/comparison.png" alt="ScienceClaw vs Standard AI" width="720" />
+</p>
 
 ---
 
@@ -29,36 +39,15 @@ ScienceClaw is built on the [OpenClaw](https://github.com/openclaw/openclaw) eng
 
 Most AI tools ship with a fixed set of capabilities. ScienceClaw's skills **evolve with you**. Every time you complete a research task, the system learns:
 
-```
-  You do research
-       │
-       ▼
-┌─────────────────┐
-│ research-        │  ← "What strategies worked? What failed?
-│ reflection       │     Which databases had the best results?"
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ skill-evolution  │  ← Stores successful patterns, proposes
-│                  │     improvements to existing skills
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ skill-creator    │  ← If no existing skill fits, writes a
-│                  │     brand new SKILL.md at runtime
-└─────────────────┘
-         │
-         ▼
-  Next session is smarter
-```
+<p align="center">
+  <img src="assets/skill-evolution.png" alt="Skill Self-Evolution Cycle" width="720" />
+</p>
 
 **What this means in practice:**
 
-- Week 1: You study immunology. ScienceClaw learns that PubMed + Semantic Scholar works best for your queries, that you prefer forest plots over tables, and that you always need PMID + DOI in citations.
-- Week 4: The system has created specialized skills for your subfield — optimized search templates, preferred statistical methods, database priority chains tuned to immunology literature.
-- Month 3: ScienceClaw handles your domain like a trained research assistant. It knows which databases to hit first, which journals matter, and how you like your output formatted.
+- **Week 1:** You study immunology. ScienceClaw learns that PubMed + Semantic Scholar works best for your queries, that you prefer forest plots over tables, and that you always need PMID + DOI in citations.
+- **Week 4:** The system has created specialized skills for your subfield — optimized search templates, preferred statistical methods, database priority chains tuned to immunology literature.
+- **Month 3:** ScienceClaw handles your domain like a trained research assistant. It knows which databases to hit first, which journals matter, and how you like your output formatted.
 
 This is inspired by [VOYAGER](https://voyager.minedojo.org/) — the Minecraft agent that builds its own skill library. Except here, the skill library serves science.
 
@@ -70,21 +59,16 @@ This is inspired by [VOYAGER](https://voyager.minedojo.org/) — the Minecraft a
 
 Standard AI assistants forget everything when the conversation ends. ScienceClaw doesn't.
 
-**Memory architecture:**
-
-| Layer | What it remembers | How long |
-|-------|-------------------|----------|
-| **Session Memory** | Current research context, intermediate findings, tool outputs | Current session |
-| **Temporal Decay Memory** | Key findings, successful strategies, verified facts | Weeks to months (decays by relevance) |
-| **LanceDB Vector Memory** | Semantic embeddings of research patterns and discoveries | Permanent (vector-indexed) |
-| **Skill Memory** | Which tools worked for which types of queries | Permanent (encoded in evolved skills) |
+<p align="center">
+  <img src="assets/memory-layers.png" alt="Four-Layer Research Memory" width="720" />
+</p>
 
 **What this enables:**
 
-- "Continue the literature review we started last Tuesday" — it remembers where you left off
-- "Use the same search strategy that worked for the BRCA2 project" — it retrieves past patterns
-- Cross-session knowledge accumulation — findings from project A can inform project B
-- Smart context pruning — when the context window fills up, it preserves statistical results, effect sizes, and key citations while compacting intermediate steps
+- **"Continue the literature review we started last Tuesday"** — it remembers where you left off
+- **"Use the same search strategy that worked for the BRCA2 project"** — it retrieves past patterns
+- **Cross-session knowledge accumulation** — findings from project A can inform project B
+- **Smart context pruning** — when the context window fills up, it preserves statistical results, effect sizes, and key citations while compacting intermediate steps
 
 > **Compared to standard OpenClaw:** OpenClaw has a basic memory plugin. ScienceClaw adds temporal decay weighting, LanceDB vector storage, and cross-session research pattern retrieval — specifically designed for long-running academic work.
 
@@ -103,9 +87,8 @@ A real literature review takes hours, not seconds. Most AI tools time out after 
 | Early stopping | Common | **Anti-premature-conclusion checklist** blocks shallow answers |
 | Context management | Basic truncation | **Smart compaction** preserves key findings when context fills up |
 
-**The persistence protocol enforces real research depth:**
+**The persistence protocol enforces real research depth.** Before ScienceClaw concludes any task, it must verify:
 
-Before ScienceClaw concludes any task, it must verify:
 - ✅ Searched at least 3 different databases/sources
 - ✅ Retrieved full metadata (not just titles)
 - ✅ Cross-referenced findings across sources
@@ -148,6 +131,13 @@ This is enforced at the protocol level in [`SCIENCE.md`](SCIENCE.md) — the 629
 
 ScienceClaw covers **natural sciences AND social sciences** across dozens of disciplines:
 
+<p align="center">
+  <img src="assets/disciplines.png" alt="Scientific Discipline Coverage" width="720" />
+</p>
+
+<details>
+<summary><strong>📋 Full discipline & database list</strong></summary>
+
 ### Natural Sciences
 | Domain | Key Skills & Databases |
 |--------|----------------------|
@@ -177,35 +167,11 @@ ScienceClaw covers **natural sciences AND social sciences** across dozens of dis
 | **Writing** | LaTeX papers, systematic reviews (PRISMA), grant proposals, patent drafting |
 | **Mathematics** | SymPy symbolic computation, numerical methods, optimization |
 
+</details>
+
 **285 skills total** — and growing, because the self-evolution system creates new ones as you work.
 
 > **Compared to standard OpenClaw:** OpenClaw has no scientific database integrations. No PubMed, no UniProt, no arXiv, no World Bank. ScienceClaw connects to 25+ academic databases with structured API query skills across all major scientific disciplines.
-
----
-
-## How It All Fits Together
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    ScienceClaw Gateway                       │
-├──────────────┬────────────────┬──────────────────────────────┤
-│  SCIENCE.md  │  Memory System │  Skill Self-Evolution        │
-│  Zero-halluc │  LanceDB +     │  research-reflection →       │
-│  Persistence │  Temporal decay │  skill-evolution →           │
-│  Depth rules │  Cross-session  │  skill-creator               │
-├──────────────┴────────────────┴──────────────────────────────┤
-│                       285 Skills                             │
-│                                                              │
-│  Literature Search (35)  │  Scientific Databases (25)        │
-│  Computation (26)        │  Research & Writing (18)          │
-│  Domain-Specific (50+)   │  ScienceClaw Core (10)           │
-│  Meta & Evolution (6)    │  Utility & Integration (100+)    │
-│                                                              │
-├──────────────────────────────────────────────────────────────┤
-│  MCP Servers: academic-mcp · arxiv-mcp · biomcp · chembl    │
-│  semantic-scholar-mcp · zotero-mcp · arxiv-latex-mcp        │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -263,18 +229,19 @@ Edit `~/.openclaw/openclaw.json`:
 
 ```
 ScienceClaw/
-├── SCIENCE.md              # Research protocol (the brain)
+├── SCIENCE.md              # 629-line research protocol (the brain)
 ├── skills/                 # 285 skill definitions (and growing)
-│   ├── skill-evolution/    # Self-improvement engine
-│   ├── research-reflection/# Post-task learning
+│   ├── skill-evolution/    # VOYAGER-style self-improvement
+│   ├── research-reflection/# Post-task learning & evaluation
 │   ├── skill-creator/      # Runtime skill generation
 │   └── ...
 ├── src/
-│   ├── memory/             # Memory management (temporal decay, LanceDB)
+│   ├── memory/             # 4-layer memory (temporal decay, LanceDB)
 │   ├── agents/             # Agent orchestration & persistence
-│   └── skills/             # Skill loading & execution
-├── ui/                     # Web control interface
-├── extensions/             # Plugin system
+│   └── skills/             # Skill loading & execution engine
+├── ui/                     # Web-based research gateway UI
+├── extensions/             # Plugin system (978 files)
+├── apps/                   # Application integrations
 └── docs/                   # Documentation
 ```
 

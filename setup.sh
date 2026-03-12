@@ -193,11 +193,9 @@ install_mcp_servers() {
         "academic-mcp"
         "arxiv-mcp-server"
         "biomcp"
-        "chembl-mcp"
         "semantic-scholar-mcp"
         "zotero-mcp"
-        "arxiv-latex-mcp"
-        "mcp-research"
+        "deep-research-mcp-server"
     )
 
     # MCP servers run via uvx on-demand (no pre-install needed)
@@ -206,6 +204,22 @@ install_mcp_servers() {
         log_info "Caching $server..."
         uvx --quiet "$server" --help &>/dev/null && log_ok "$server cached" || log_warn "$server not available (will try at runtime)"
     done
+
+    # Bundled MCP servers (not on PyPI, included in project)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VENV_DIR="$HOME/.scienceclaw/venv"
+
+    if [ -d "$SCRIPT_DIR/mcp-servers/chembl-mcp" ]; then
+        log_info "Installing ChEMBL MCP dependencies..."
+        uv pip install --python "$VENV_DIR/bin/python" -r "$SCRIPT_DIR/mcp-servers/chembl-mcp/requirements.txt" 2>&1 | tail -3 || true
+        log_ok "ChEMBL MCP server ready (bundled)"
+    fi
+
+    if [ -d "$SCRIPT_DIR/mcp-servers/arxiv-latex-mcp" ]; then
+        log_info "Installing arXiv LaTeX MCP dependencies..."
+        uv pip install --python "$VENV_DIR/bin/python" httpx "mcp[cli]" "arxiv-to-prompt>=0.10.0" 2>&1 | tail -3 || true
+        log_ok "arXiv LaTeX MCP server ready (bundled)"
+    fi
 
     log_ok "MCP servers installed"
 }
@@ -224,7 +238,10 @@ configure_scienceclaw() {
         cp "$CONFIG_FILE" "$CONFIG_FILE.bak.$(date +%Y%m%d%H%M%S)"
     fi
 
-    cat > "$CONFIG_FILE" << 'JSONEOF'
+    VENV_PYTHON="$HOME/.scienceclaw/venv/bin/python"
+    CHEMBL_SERVER="$HOME/clawd/mcp-servers/chembl-mcp/chembl_server.py"
+
+    cat > "$CONFIG_FILE" << JSONEOF
 {
   "plugins": {
     "slots": {
@@ -247,11 +264,11 @@ configure_scienceclaw() {
     "academic-mcp":          { "command": "uvx", "args": ["academic-mcp"] },
     "arxiv-mcp":             { "command": "uvx", "args": ["arxiv-mcp-server"] },
     "biomcp":                { "command": "uvx", "args": ["biomcp", "run"] },
-    "chembl-mcp":            { "command": "uvx", "args": ["chembl-mcp"] },
+    "chembl-mcp":            { "command": "${VENV_PYTHON}", "args": ["${CHEMBL_SERVER}"] },
     "semantic-scholar-mcp":  { "command": "uvx", "args": ["semantic-scholar-mcp"] },
     "zotero-mcp":            { "command": "uvx", "args": ["zotero-mcp"] },
-    "arxiv-latex-mcp":       { "command": "uvx", "args": ["arxiv-latex-mcp"] },
-    "mcp-research":          { "command": "uvx", "args": ["mcp-research"] }
+    "arxiv-latex-mcp":       { "command": "${VENV_PYTHON}", "args": ["${HOME}/clawd/mcp-servers/arxiv-latex-mcp/server/main.py"] },
+    "mcp-research":          { "command": "uvx", "args": ["deep-research-mcp-server"] }
   }
 }
 JSONEOF
@@ -273,6 +290,14 @@ setup_workspace() {
         cp -rn "$SCRIPT_DIR/skills/"* "$WORKSPACE/skills/" 2>/dev/null || true
         SKILL_COUNT=$(ls -1 "$WORKSPACE/skills/" 2>/dev/null | wc -l | tr -d ' ')
         log_ok "$SKILL_COUNT skills available in workspace"
+    fi
+
+    # Copy bundled MCP servers to workspace
+    if [ -d "$SCRIPT_DIR/mcp-servers" ]; then
+        log_info "Copying bundled MCP servers..."
+        mkdir -p "$WORKSPACE/mcp-servers"
+        cp -rn "$SCRIPT_DIR/mcp-servers/"* "$WORKSPACE/mcp-servers/" 2>/dev/null || true
+        log_ok "Bundled MCP servers copied"
     fi
 
     log_ok "Workspace ready at $WORKSPACE"

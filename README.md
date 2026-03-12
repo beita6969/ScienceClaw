@@ -45,8 +45,6 @@ Most AI tools ship with a fixed set of capabilities. ScienceClaw's skills **evol
 - **Week 4:** The system has created specialized skills for your subfield — optimized search templates, preferred statistical methods, database priority chains tuned to immunology literature.
 - **Month 3:** ScienceClaw handles your domain like a trained research assistant. It knows which databases to hit first, which journals matter, and how you like your output formatted.
 
-This is inspired by [VOYAGER](https://voyager.minedojo.org/) — the Minecraft agent that builds its own skill library. Except here, the skill library serves science.
-
 > **Compared to standard OpenClaw:** OpenClaw ships with ~54 general-purpose skills that don't change. ScienceClaw starts with 285 skills and grows from there — the agent writes new `SKILL.md` files at runtime without any redeployment.
 
 ---
@@ -231,7 +229,7 @@ ScienceClaw/
 ├── setup.sh                # 🦞 One-click setup (run this first!)
 ├── SCIENCE.md              # 629-line research protocol (the brain)
 ├── skills/                 # 285 skill definitions (and growing)
-│   ├── skill-evolution/    # VOYAGER-style self-improvement
+│   ├── skill-evolution/    # Self-improving skill system
 │   ├── research-reflection/# Post-task learning & evaluation
 │   ├── skill-creator/      # Runtime skill generation
 │   └── ...
@@ -253,9 +251,3 @@ ScienceClaw/
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
----
-
-<p align="center">
-  <em>"The best research assistant is one that gets better every time you use it."</em>
-</p>

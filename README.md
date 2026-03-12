@@ -1,7 +1,7 @@
-<h1 align="center">🔬 ScienceClaw — AI Research Gateway</h1>
+<h1 align="center">🔬 ScienceClaw</h1>
 
 <p align="center">
-  <strong>Not just another AI assistant. A research colleague that never sleeps.</strong>
+  <strong>A self-evolving AI research colleague for scientists.</strong>
 </p>
 
 <p align="center">
@@ -13,121 +13,217 @@
 
 ---
 
-## What is ScienceClaw?
+## Why ScienceClaw?
 
-**ScienceClaw** is an AI-powered scientific research gateway built for researchers, scientists, and academics. While general-purpose AI assistants help you set reminders and write emails, ScienceClaw is purpose-built for one thing: **rigorous scientific work**.
+General-purpose AI assistants are built for everyone. ScienceClaw is built for **researchers**.
 
-It connects to 25+ academic databases, enforces zero-hallucination protocols, and evolves its own capabilities through research iterations — like having a postdoc who gets smarter with every paper they read.
+The core idea is simple: an AI that does real scientific work — searching literature, querying databases, running analyses — and **gets better at it the more you use it**. It remembers your research context across sessions, adapts its skills to your field, and never fabricates a citation.
 
-## ScienceClaw vs General AI Assistants
+ScienceClaw is built on the [OpenClaw](https://github.com/openclaw/openclaw) engine, but redesigned from the ground up for academic research. Here's what makes it different:
 
-| Capability | General AI Assistant | ScienceClaw |
+---
+
+## 🧬 Core 1: Self-Evolving Skills
+
+**This is ScienceClaw's most important feature.**
+
+Most AI tools ship with a fixed set of capabilities. ScienceClaw's skills **evolve with you**. Every time you complete a research task, the system learns:
+
+```
+  You do research
+       │
+       ▼
+┌─────────────────┐
+│ research-        │  ← "What strategies worked? What failed?
+│ reflection       │     Which databases had the best results?"
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ skill-evolution  │  ← Stores successful patterns, proposes
+│                  │     improvements to existing skills
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ skill-creator    │  ← If no existing skill fits, writes a
+│                  │     brand new SKILL.md at runtime
+└─────────────────┘
+         │
+         ▼
+  Next session is smarter
+```
+
+**What this means in practice:**
+
+- Week 1: You study immunology. ScienceClaw learns that PubMed + Semantic Scholar works best for your queries, that you prefer forest plots over tables, and that you always need PMID + DOI in citations.
+- Week 4: The system has created specialized skills for your subfield — optimized search templates, preferred statistical methods, database priority chains tuned to immunology literature.
+- Month 3: ScienceClaw handles your domain like a trained research assistant. It knows which databases to hit first, which journals matter, and how you like your output formatted.
+
+This is inspired by [VOYAGER](https://voyager.minedojo.org/) — the Minecraft agent that builds its own skill library. Except here, the skill library serves science.
+
+> **Compared to standard OpenClaw:** OpenClaw ships with ~54 general-purpose skills that don't change. ScienceClaw starts with 285 skills and grows from there — the agent writes new `SKILL.md` files at runtime without any redeployment.
+
+---
+
+## 🧠 Core 2: Research Memory That Persists
+
+Standard AI assistants forget everything when the conversation ends. ScienceClaw doesn't.
+
+**Memory architecture:**
+
+| Layer | What it remembers | How long |
+|-------|-------------------|----------|
+| **Session Memory** | Current research context, intermediate findings, tool outputs | Current session |
+| **Temporal Decay Memory** | Key findings, successful strategies, verified facts | Weeks to months (decays by relevance) |
+| **LanceDB Vector Memory** | Semantic embeddings of research patterns and discoveries | Permanent (vector-indexed) |
+| **Skill Memory** | Which tools worked for which types of queries | Permanent (encoded in evolved skills) |
+
+**What this enables:**
+
+- "Continue the literature review we started last Tuesday" — it remembers where you left off
+- "Use the same search strategy that worked for the BRCA2 project" — it retrieves past patterns
+- Cross-session knowledge accumulation — findings from project A can inform project B
+- Smart context pruning — when the context window fills up, it preserves statistical results, effect sizes, and key citations while compacting intermediate steps
+
+> **Compared to standard OpenClaw:** OpenClaw has a basic memory plugin. ScienceClaw adds temporal decay weighting, LanceDB vector storage, and cross-session research pattern retrieval — specifically designed for long-running academic work.
+
+---
+
+## ⏱️ Core 3: Built for Long-Duration Research
+
+A real literature review takes hours, not seconds. Most AI tools time out after a few minutes. ScienceClaw is engineered for extended research sessions:
+
+| Capability | Standard OpenClaw | ScienceClaw |
 |---|---|---|
-| Literature search | Basic web search | Multi-database protocol (PubMed, Semantic Scholar, OpenAlex, arXiv, CrossRef, DBLP, SSRN...) |
-| Data sources | Wikipedia, web pages | 25+ scientific databases with structured API queries |
-| Hallucination control | "Try to be accurate" | **Zero-Hallucination Rule** — every claim must cite a source or be explicitly marked as inference |
-| Research depth | Single-pass answers | Multi-phase protocol: search → retrieve → cross-reference → verify → synthesize |
-| Statistical analysis | Basic math | Full SciPy/statsmodels/scikit-learn pipelines with rigor checks |
-| Skill count | ~50 generic | **285 specialized skills** (121 science-specific) |
-| Self-improvement | Static | **VOYAGER-style skill evolution** — learns from every research session |
-| Output format | Chat text | Structured reports, LaTeX papers, XLSX data, publication-ready figures |
+| Agent timeout | 600s (10 min) | **3600s (1 hour)** |
+| Session persistence | Ends with conversation | Heartbeat keeps sessions alive across interruptions |
+| Research depth | Single-pass response | **Multi-phase protocol with mandatory depth thresholds** |
+| Minimum effort | No guarantee | Quick=5, Survey=30, Review=60, Systematic=100+ tool calls |
+| Early stopping | Common | **Anti-premature-conclusion checklist** blocks shallow answers |
+| Context management | Basic truncation | **Smart compaction** preserves key findings when context fills up |
 
-## Core Philosophy
+**The persistence protocol enforces real research depth:**
 
-### 🚫 Zero Hallucination
+Before ScienceClaw concludes any task, it must verify:
+- ✅ Searched at least 3 different databases/sources
+- ✅ Retrieved full metadata (not just titles)
+- ✅ Cross-referenced findings across sources
+- ✅ Checked for contradictory evidence
+- ✅ Verified key statistics against primary sources
+- ✅ Organized results into a structured output file
+- ✅ Met the minimum tool-call threshold for the task type
 
-Every factual claim must be backed by a retrievable source. If ScienceClaw can't find evidence, it says so — clearly and without fabrication. No "I think", no "probably", no made-up citations.
+If any box is unchecked, it **keeps working** instead of giving you a half-baked answer.
 
-### 🔁 Never Stop Early
+> **Compared to standard OpenClaw:** OpenClaw's default 10-minute timeout is fine for sending messages and setting reminders. ScienceClaw's 1-hour sessions with heartbeat monitoring and mandatory depth enforcement are built for real academic research.
 
-Built-in persistence protocol with minimum tool-call thresholds by task complexity:
-- Quick lookup: 5+ tool calls
-- Survey: 30+ tool calls
-- Literature review: 60+ tool calls
-- Systematic review: 100+ tool calls
+---
 
-An anti-premature-conclusion checklist runs before every final output.
+## 🚫 Core 4: Zero Hallucination
 
-### 🧬 Self-Evolving Skills
+This is the highest-priority rule in the entire system. It's non-negotiable.
 
-Inspired by VOYAGER (the Minecraft agent that builds its own skill library), ScienceClaw tracks which strategies work and creates new skills from successful patterns. After each research session, the `research-reflection` module evaluates what worked, and `skill-evolution` proposes improvements.
+**The problem:** General AI assistants routinely fabricate citations — inventing DOIs, making up author names, citing papers that don't exist. In scientific work, this is catastrophic.
 
-## 285 Skills at a Glance
-
-### 🔬 ScienceClaw Core (10)
-`scienceclaw-retrieval` · `scienceclaw-qa` · `scienceclaw-verification` · `scienceclaw-discovery` · `scienceclaw-prediction` · `scienceclaw-reasoning` · `scienceclaw-classification` · `scienceclaw-generation` · `scienceclaw-ie` · `scienceclaw-summarization`
-
-### 📚 Literature Search (35)
-`pubmed-search` · `semantic-scholar` · `arxiv-search` · `openalex-search` · `crossref-search` · `dblp-search` · `biorxiv-search` · `ssrn-econpapers` · `literature-search` · `deep-research` · `deep-research-swarm` · `multi-search-engine` · `perplexity-search` · `wikipedia-search` · and more...
-
-### 🗄️ Scientific Databases (25)
-`uniprot-protein` · `ncbi-entrez` · `kegg-pathway` · `pdb-structure` · `pubchem-compound` · `chembl-drug` · `open-targets` · `wikidata-knowledge` · `clinicaltrials-database` · `clinvar-database` · `ensembl-database` · `gnomad-database` · `geo-database` · `reactome-database` · `string-database` · and more...
-
-### 🧮 Computation & Analysis (26)
-`scipy-analysis` · `statsmodels-stats` · `scikit-learn-ml` · `matplotlib-viz` · `sympy-math` · `rdkit-chemistry` · `biopython-bio` · `astropy-astronomy` · `networkx-social` · `geopandas-spatial` · `spacy-nlp` · `nltk-linguistics` · `transformers-inference` · `plotly` · `seaborn` · `polars` · and more...
-
-### ✍️ Research & Writing (18)
-`paper-writing` · `latex-writing` · `latex-posters` · `scientific-slides` · `citation-analysis` · `meta-analysis` · `systematic-review` · `grant-writing` · `protocol-writing` · `peer-review` · `review-writing` · `patent-drafting` · `regulatory-drafting` · and more...
-
-### 🧫 Domain-Specific (50+)
-`drug-discovery` · `genomics-analysis` · `protein-structure` · `molecular-dynamics` · `scanpy-singlecell` · `phylogenetics` · `epidemiology` · `neuroscience` · `clinical-trial` · `quantum-computing` · `materials-science` · `environmental-science` · `food-science` · `economics-analysis` · `political-science` · `psychology-research` · and more...
-
-### 🧬 Meta & Evolution (6)
-`skill-evolution` · `research-reflection` · `skill-creator` · `find-skills` · `knowledge-synthesis` · `knowledge-discovery`
-
-### 🛠️ Utility & Integration (100+)
-Messaging channels, document processing, code execution, visualization, and system tools.
-
-## Architecture
+**ScienceClaw's approach:**
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                 ScienceClaw Gateway                   │
-│              (Research Control Plane)                  │
-├──────────────┬───────────────┬───────────────────────┤
-│   SCIENCE.md │  Memory Core  │   Skill Evolution     │
-│   (629-line  │  (Temporal    │   (VOYAGER-style      │
-│   research   │   decay +     │    pattern library)   │
-│   protocol)  │   LanceDB)   │                       │
-├──────────────┴───────────────┴───────────────────────┤
-│                   285 Skills                          │
-│  ┌─────────┐ ┌──────────┐ ┌────────┐ ┌───────────┐  │
-│  │ Search  │ │ Database │ │ Compute│ │ Writing   │  │
-│  │ (35)    │ │ (25)     │ │ (26)   │ │ (18)      │  │
-│  └─────────┘ └──────────┘ └────────┘ └───────────┘  │
-│  ┌─────────┐ ┌──────────┐ ┌────────┐ ┌───────────┐  │
-│  │ Domain  │ │ Core     │ │ Meta   │ │ Utility   │  │
-│  │ (50+)   │ │ (10)     │ │ (6)    │ │ (100+)    │  │
-│  └─────────┘ └──────────┘ └────────┘ └───────────┘  │
-├──────────────────────────────────────────────────────┤
-│              MCP Server Integrations                  │
-│  academic-mcp · arxiv-mcp · biomcp · chembl-mcp      │
-│  semantic-scholar-mcp · zotero-mcp · mcp-research    │
-│  arxiv-latex-mcp                                     │
-└──────────────────────────────────────────────────────┘
+EVERY citation must come from a tool result in the CURRENT conversation.
+
+If a database didn't return it → you can't cite it.
+If you're not sure → say "not verified" explicitly.
+If you can't find evidence → say so. Don't guess.
+
+No "I think." No "probably." No hallucinated PMIDs.
 ```
+
+This is enforced at the protocol level in [`SCIENCE.md`](SCIENCE.md) — the 629-line research protocol that governs all agent behavior. It's not a suggestion. It's a hard rule that applies before any other instruction.
+
+> **Compared to standard OpenClaw:** OpenClaw has no special hallucination controls. ScienceClaw's SCIENCE.md protocol treats every factual claim as requiring evidence — the same standard you'd apply to a manuscript under peer review.
+
+---
+
+## 🌍 Core 5: All of Science, Not Just Biomedicine
+
+ScienceClaw covers **natural sciences AND social sciences** across dozens of disciplines:
+
+### Natural Sciences
+| Domain | Key Skills & Databases |
+|--------|----------------------|
+| **Biomedicine** | PubMed, UniProt, KEGG, PDB, ClinicalTrials, gnomAD, scanpy, biopython |
+| **Chemistry** | PubChem, ChEMBL, RDKit, drug-discovery, molecular-dynamics |
+| **Genomics** | NCBI Entrez, Ensembl, ClinVar, GEO, phylogenetics |
+| **Materials Science** | Materials Project, pymatgen, materials-screening |
+| **Physics** | astropy, quantum-computing, physics-solver, simulation |
+| **Environmental Science** | Copernicus climate data, geospatial analysis, GIS tools |
+| **Food Science** | Specialized analysis pipelines |
+
+### Social Sciences
+| Domain | Key Skills & Databases |
+|--------|----------------------|
+| **Economics** | World Bank, SSRN, census data, econometrics |
+| **Political Science** | Policy analysis, legislative data |
+| **Psychology** | Experimental design, statistical testing, meta-analysis |
+| **Linguistics** | spaCy, NLTK, NLP analysis |
+| **Education** | Research methodology, assessment analysis |
+| **Sociology** | Network analysis, survey methods |
+
+### Cross-Disciplinary Tools
+| Category | Capabilities |
+|----------|-------------|
+| **Statistics** | SciPy, statsmodels, scikit-learn, effect sizes, confidence intervals, multiple comparison corrections |
+| **Visualization** | matplotlib, plotly, seaborn, publication-quality figures |
+| **Writing** | LaTeX papers, systematic reviews (PRISMA), grant proposals, patent drafting |
+| **Mathematics** | SymPy symbolic computation, numerical methods, optimization |
+
+**285 skills total** — and growing, because the self-evolution system creates new ones as you work.
+
+> **Compared to standard OpenClaw:** OpenClaw has no scientific database integrations. No PubMed, no UniProt, no arXiv, no World Bank. ScienceClaw connects to 25+ academic databases with structured API query skills across all major scientific disciplines.
+
+---
+
+## How It All Fits Together
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ScienceClaw Gateway                       │
+├──────────────┬────────────────┬──────────────────────────────┤
+│  SCIENCE.md  │  Memory System │  Skill Self-Evolution        │
+│  Zero-halluc │  LanceDB +     │  research-reflection →       │
+│  Persistence │  Temporal decay │  skill-evolution →           │
+│  Depth rules │  Cross-session  │  skill-creator               │
+├──────────────┴────────────────┴──────────────────────────────┤
+│                       285 Skills                             │
+│                                                              │
+│  Literature Search (35)  │  Scientific Databases (25)        │
+│  Computation (26)        │  Research & Writing (18)          │
+│  Domain-Specific (50+)   │  ScienceClaw Core (10)           │
+│  Meta & Evolution (6)    │  Utility & Integration (100+)    │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│  MCP Servers: academic-mcp · arxiv-mcp · biomcp · chembl    │
+│  semantic-scholar-mcp · zotero-mcp · arxiv-latex-mcp        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 20+ (or Bun)
-- macOS / Linux / Windows (WSL2)
-
-### Install
-
 ```bash
-# Clone the repository
+# Clone
 git clone https://github.com/beita6969/ScienceClaw.git
 cd ScienceClaw
 
-# Install dependencies
-pnpm install   # or npm install / bun install
+# Install
+pnpm install   # or npm / bun
 
-# Run the onboarding wizard
+# Onboard
 npx openclaw onboard
 ```
 
-### Configure for Science
+### Enable Research Features
 
 Edit `~/.openclaw/openclaw.json`:
 
@@ -141,14 +237,12 @@ Edit `~/.openclaw/openclaw.json`:
     }
   },
   "agent": {
-    "timeout": 3600  // 1-hour timeout for deep research
+    "timeout": 3600
   }
 }
 ```
 
-### Add MCP Servers (Optional, Recommended)
-
-For enhanced academic capabilities, add MCP servers to your config:
+### Add Academic MCP Servers (Recommended)
 
 ```jsonc
 {
@@ -163,129 +257,42 @@ For enhanced academic capabilities, add MCP servers to your config:
 }
 ```
 
-## SCIENCE.md — The Research Protocol
-
-The heart of ScienceClaw is [`SCIENCE.md`](SCIENCE.md) — a 629-line research protocol that governs agent behavior:
-
-| Section | Purpose |
-|---------|---------|
-| **Persistence Rules** | Agents never stop early; minimum tool-call thresholds enforced |
-| **Zero-Hallucination Rule** | Every claim needs a source; no fabricated citations |
-| **Research Depth Enforcement** | Multi-phase search with fallback chains |
-| **Academic Literature Search** | Structured multi-channel search protocol |
-| **Scientific Database Queries** | API templates for 25+ databases |
-| **Statistical Rigor Standards** | Effect sizes, confidence intervals, multiple comparison corrections |
-| **Visualization Standards** | Publication-quality figures with proper labeling |
-| **LaTeX & Academic Writing** | Template management, citation handling |
-| **Systematic Review Protocol** | PRISMA-compliant screening workflows |
-| **Memory & Learning** | Cross-session knowledge retention |
-| **Compaction Guidance** | Context window management for long research sessions |
-
-## How Skill Self-Evolution Works
-
-```
-Research Session
-       │
-       ▼
-┌─────────────┐     ┌──────────────────┐
-│  Execute     │────▶│  research-       │
-│  Research    │     │  reflection      │
-│  Task        │     │  (what worked?)  │
-└─────────────┘     └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │  skill-evolution  │
-                    │  (store pattern,  │
-                    │   improve skill)  │
-                    └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │  skill-creator    │
-                    │  (new SKILL.md   │
-                    │   if needed)      │
-                    └──────────────────┘
-                             │
-                             ▼
-                  Next session starts
-                  with improved skills
-```
-
-The agent writes new `SKILL.md` files at runtime — no redeployment needed. Skills accumulate like a lab notebook: each successful strategy becomes a reusable template.
-
-## Example Use Cases
-
-### Biomedical Literature Review
-> "Find all studies on CRISPR-Cas9 off-target effects in human cell lines published since 2022"
-
-ScienceClaw will search PubMed, Semantic Scholar, OpenAlex, and bioRxiv, cross-reference results, extract key findings with proper citations, and output a structured Markdown report.
-
-### Drug Target Discovery
-> "Identify potential drug targets for idiopathic pulmonary fibrosis using protein interaction networks"
-
-Queries UniProt, Open Targets, STRING, KEGG, and ChEMBL, builds interaction networks with NetworkX, and generates publication-ready figures.
-
-### Statistical Meta-Analysis
-> "Perform a meta-analysis of RCTs comparing immunotherapy vs chemotherapy in NSCLC"
-
-Searches clinical trial databases, extracts effect sizes, runs random-effects models with proper heterogeneity assessment (I², Q-test), generates forest plots.
-
-### Materials Science Screening
-> "Screen perovskite materials with band gap 1.1-1.7 eV for solar cell applications"
-
-Queries Materials Project and PubChem, filters by computed properties, generates comparison tables with DFT-calculated values.
-
-## Memory System
-
-ScienceClaw remembers across sessions:
-
-- **Temporal Decay**: Recent findings are weighted higher, but important discoveries persist
-- **LanceDB Backend**: Vector-based semantic memory for efficient retrieval
-- **Cross-Session Learning**: Patterns from past research improve future searches
-- **Context Pruning**: Smart compaction keeps the most relevant context within token limits
+---
 
 ## Project Structure
 
 ```
 ScienceClaw/
-├── SCIENCE.md          # 629-line research protocol (the brain)
-├── AGENTS.md           # Agent behavior guidelines
-├── skills/             # 285 skill definitions
-│   ├── scienceclaw-*/  # Core research skills
-│   ├── *-search/       # Literature search skills
-│   ├── *-database/     # Database query skills
-│   ├── skill-evolution/ # Self-improvement engine
+├── SCIENCE.md              # Research protocol (the brain)
+├── skills/                 # 285 skill definitions (and growing)
+│   ├── skill-evolution/    # Self-improvement engine
+│   ├── research-reflection/# Post-task learning
+│   ├── skill-creator/      # Runtime skill generation
 │   └── ...
-├── src/                # Core source code (4,832 files)
-│   ├── agents/         # Agent orchestration
-│   ├── memory/         # Memory management system
-│   ├── skills/         # Skill loading & execution
-│   └── ...
-├── ui/                 # Web-based control interface
-├── extensions/         # Plugin extensions
-├── apps/               # Application integrations
-├── scripts/            # Build & utility scripts
-└── docs/               # Documentation
+├── src/
+│   ├── memory/             # Memory management (temporal decay, LanceDB)
+│   ├── agents/             # Agent orchestration & persistence
+│   └── skills/             # Skill loading & execution
+├── ui/                     # Web control interface
+├── extensions/             # Plugin system
+└── docs/                   # Documentation
 ```
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Priority areas:
 
-Priority areas:
-- New scientific database integrations
-- Domain-specific skill packs (ecology, astronomy, social sciences...)
-- Improved search strategies and fallback chains
+- New database integrations (especially social science data sources)
+- Domain-specific skill packs
 - Statistical method implementations
-- Visualization templates for specific journal formats
+- Improved search strategies and fallback chains
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  <strong>ScienceClaw</strong> — Because science deserves better than "let me search that for you."
+  <em>"The best research assistant is one that gets better every time you use it."</em>
 </p>

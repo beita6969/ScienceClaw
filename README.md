@@ -74,7 +74,7 @@ A real literature review takes hours, not seconds. Most AI tools time out after 
 
 | Capability          | Standard OpenClaw      | ScienceClaw                                                       |
 | ------------------- | ---------------------- | ----------------------------------------------------------------- |
-| Agent timeout       | 600s (10 min)          | **3600s (1 hour)**                                                |
+| Agent timeout       | 600s (10 min)          | **3600s (1 hour+)**                                                |
 | Session persistence | Ends with conversation | Heartbeat keeps sessions alive across interruptions               |
 | Research depth      | Single-pass response   | **Multi-phase protocol with mandatory depth thresholds**          |
 | Minimum effort      | No guarantee           | Quick=5, Survey=30, Review=60, Systematic=100+ tool calls         |

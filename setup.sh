@@ -364,21 +364,38 @@ wire_research_stack() {
         log_warn "  openclaw config set skills.load.extraDirs '[\"$WORKSPACE/skills\"]'"
     fi
 
-    # 2. Agent instructions: deploy the ScienceClaw operating protocol
-    #    (SCIENCE.md) as the workspace AGENTS.md, which OpenClaw loads into every
-    #    session. Bootstrap only seeds AGENTS.md when missing, so installing it
-    #    here makes the agent boot as ScienceClaw instead of generic OpenClaw.
+    # 2. Agent instructions: OpenClaw bootstraps a small set of NAMED workspace
+    #    files (AGENTS.md, SOUL.md, IDENTITY.md, ...) into every session, each
+    #    capped by agents.defaults.bootstrapMaxChars (default 20000). It does NOT
+    #    auto-load arbitrary files like SCIENCE.md. So we deploy two files:
+    #      SCIENCE.bootstrap.md -> AGENTS.md  : lean (~13KB) persona + protocol,
+    #                                           loaded every session (and the only
+    #                                           doc sub-agents get). Fits the budget.
+    #      SCIENCE.md           -> SCIENCE.md : the full operating manual, which
+    #                                           AGENTS.md tells the agent to read on
+    #                                           demand (kept out of the bootstrap
+    #                                           budget so it is never truncated).
+    #    Bootstrap only seeds these when missing, so installing them here makes the
+    #    agent boot as ScienceClaw instead of generic OpenClaw.
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     AGENT_WS="$HOME/.openclaw/workspace"
     if [ -f "$SCRIPT_DIR/SCIENCE.md" ]; then
-        log_info "Deploying SCIENCE.md as the agent's instructions..."
+        log_info "Deploying ScienceClaw agent instructions..."
         mkdir -p "$AGENT_WS"
         if [ -f "$AGENT_WS/AGENTS.md" ]; then
             cp "$AGENT_WS/AGENTS.md" "$AGENT_WS/AGENTS.openclaw-default.md.bak"
         fi
         cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/SCIENCE.md"
-        cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/AGENTS.md"
-        log_ok "SCIENCE.md deployed (workspace AGENTS.md + SCIENCE.md)"
+        if [ -f "$SCRIPT_DIR/SCIENCE.bootstrap.md" ]; then
+            cp "$SCRIPT_DIR/SCIENCE.bootstrap.md" "$AGENT_WS/AGENTS.md"
+            log_ok "Agent instructions deployed (AGENTS.md lean bootstrap + SCIENCE.md full manual)"
+        else
+            # Fallback: lean bootstrap missing — use the full manual as AGENTS.md and
+            # raise the bootstrap budget so the 30KB protocol is not truncated.
+            cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/AGENTS.md"
+            oc config set agents.defaults.bootstrapMaxChars 32000 >/dev/null 2>&1 || true
+            log_ok "SCIENCE.md deployed as AGENTS.md (raised bootstrap budget to 32000)"
+        fi
 
         # Align SOUL.md so the generic "friendly general assistant" framing
         # doesn't fight the research persona; defer to AGENTS.md as authoritative.
@@ -390,7 +407,7 @@ wire_research_stack() {
 
 You are **ScienceClaw** — a research instrument, not a general-purpose assistant.
 
-Your identity, capabilities, and operating protocol live in `AGENTS.md` (= `SCIENCE.md`). **That document is authoritative — read it and follow it.** When anything here seems to conflict with it, `AGENTS.md`/`SCIENCE.md` wins.
+Your identity, capabilities, and operating protocol live in `AGENTS.md` (loaded every session); your full operating manual is `SCIENCE.md` in this workspace — read it for detailed search protocols, the database catalog, and analysis/writing standards. **Those documents are authoritative — read and follow them.** When anything here seems to conflict, `AGENTS.md`/`SCIENCE.md` wins.
 
 In short: research-first across all disciplines; evidence over assertion; cite and verify; persist until the task is done and written to a file; be direct, not chatty. You do not do daily-life tasks, reminders, or casual small talk — redirect those toward scientific work.
 SOULEOF

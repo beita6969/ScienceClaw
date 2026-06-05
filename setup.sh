@@ -364,7 +364,26 @@ wire_research_stack() {
         log_warn "  openclaw config set skills.load.extraDirs '[\"$WORKSPACE/skills\"]'"
     fi
 
-    # 2. MCP servers: each is probe-validated; non-fatal so one bad/offline
+    # 2. Agent instructions: deploy the ScienceClaw operating protocol
+    #    (SCIENCE.md) as the workspace AGENTS.md, which OpenClaw loads into every
+    #    session. Bootstrap only seeds AGENTS.md when missing, so installing it
+    #    here makes the agent boot as ScienceClaw instead of generic OpenClaw.
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    AGENT_WS="$HOME/.openclaw/workspace"
+    if [ -f "$SCRIPT_DIR/SCIENCE.md" ]; then
+        log_info "Deploying SCIENCE.md as the agent's instructions..."
+        mkdir -p "$AGENT_WS"
+        if [ -f "$AGENT_WS/AGENTS.md" ]; then
+            cp "$AGENT_WS/AGENTS.md" "$AGENT_WS/AGENTS.openclaw-default.md.bak"
+        fi
+        cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/SCIENCE.md"
+        cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/AGENTS.md"
+        log_ok "SCIENCE.md deployed (workspace AGENTS.md + SCIENCE.md)"
+    else
+        log_warn "SCIENCE.md not found; agent keeps the generic OpenClaw persona"
+    fi
+
+    # 3. MCP servers: each is probe-validated; non-fatal so one bad/offline
     #    server never aborts the whole install.
     add_mcp() {
         local name="$1"; shift

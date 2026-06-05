@@ -31,6 +31,30 @@ log_warn() { echo -e "  ${YELLOW}⚠️  $1${NC}"; }
 log_err()  { echo -e "  ${RED}❌ $1${NC}"; }
 log_info() { echo -e "  ${CYAN}ℹ️  $1${NC}"; }
 
+# ---- Portable timeout wrapper ----
+# GNU/BSD `timeout` is NOT installed on a default macOS, so fall back to a
+# pure-bash background-kill. Returns the command's exit code (non-zero if the
+# command overran the limit and had to be killed). Always call inside `if`/`||`
+# so `set -e` ignores a non-zero result.
+run_with_timeout() {
+    local secs="$1"; shift
+    local rc=0
+    if command -v timeout &>/dev/null; then
+        timeout "$secs" "$@" || rc=$?
+    elif command -v gtimeout &>/dev/null; then
+        gtimeout "$secs" "$@" || rc=$?
+    else
+        "$@" &
+        local cmd_pid=$!
+        ( sleep "$secs"; kill -TERM "$cmd_pid" 2>/dev/null; sleep 2; kill -KILL "$cmd_pid" 2>/dev/null ) &
+        local watcher_pid=$!
+        wait "$cmd_pid" 2>/dev/null || rc=$?
+        kill -TERM "$watcher_pid" 2>/dev/null || true
+        wait "$watcher_pid" 2>/dev/null || true
+    fi
+    return $rc
+}
+
 # ---- Detect OS ----
 detect_os() {
     case "$(uname -s)" in
@@ -198,11 +222,24 @@ install_mcp_servers() {
         "deep-research-mcp-server"
     )
 
-    # MCP servers run via uvx on-demand (no pre-install needed)
-    # We just verify uvx can resolve them
+    # MCP servers run via uvx on-demand (no pre-install needed). This loop just
+    # warms uvx's cache by resolving each package.
+    #
+    # IMPORTANT: these are stdio MCP servers. Most ignore `--help` and instead
+    # start their JSON-RPC stdio loop, which blocks reading stdin forever. On an
+    # interactive terminal (a live TTY with no EOF) that means the installer
+    # HANGS. Two guards prevent this:
+    #   1. </dev/null  → the server gets an immediate EOF and exits cleanly.
+    #   2. run_with_timeout → backstop for any server that ignores stdin EOF.
+    # The package download (the actual cache warming) happens during uvx's
+    # resolve phase regardless of how the server's CLI behaves.
     for server in "${MCP_SERVERS[@]}"; do
         log_info "Caching $server..."
-        uvx --quiet "$server" --help &>/dev/null && log_ok "$server cached" || log_warn "$server not available (will try at runtime)"
+        if run_with_timeout 120 uvx --quiet "$server" --help </dev/null &>/dev/null; then
+            log_ok "$server cached"
+        else
+            log_warn "$server not available (will try at runtime)"
+        fi
     done
 
     # Bundled MCP servers (not on PyPI, included in project)
@@ -265,10 +302,13 @@ JSONEOF
 
     log_ok "Config written to $CONFIG_FILE"
 
-    # Run doctor to auto-fix any config issues
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Run doctor to auto-fix any config issues. Run from a neutral dir ($HOME),
+    # NOT the repo: inside the repo `npx openclaw` resolves to this local package
+    # (also named "openclaw") whose unbuilt bin makes doctor a silent no-op
+    # ("command not found"). From $HOME, npx fetches the published engine, which
+    # actually validates ~/.openclaw/openclaw.json. The subshell keeps cwd intact.
     log_info "Running config validation..."
-    cd "$SCRIPT_DIR" && npx openclaw doctor --fix 2>&1 | tail -3 || true
+    ( cd "$HOME" && npx --yes openclaw doctor --fix </dev/null 2>&1 | tail -3 ) || true
     log_ok "Config validated"
 }
 

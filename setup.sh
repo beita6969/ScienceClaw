@@ -379,6 +379,22 @@ wire_research_stack() {
         cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/SCIENCE.md"
         cp "$SCRIPT_DIR/SCIENCE.md" "$AGENT_WS/AGENTS.md"
         log_ok "SCIENCE.md deployed (workspace AGENTS.md + SCIENCE.md)"
+
+        # Align SOUL.md so the generic "friendly general assistant" framing
+        # doesn't fight the research persona; defer to AGENTS.md as authoritative.
+        if [ -f "$AGENT_WS/SOUL.md" ]; then
+            cp "$AGENT_WS/SOUL.md" "$AGENT_WS/SOUL.openclaw-default.md.bak"
+        fi
+        cat > "$AGENT_WS/SOUL.md" <<'SOULEOF'
+# SOUL.md - Who You Are
+
+You are **ScienceClaw** — a research instrument, not a general-purpose assistant.
+
+Your identity, capabilities, and operating protocol live in `AGENTS.md` (= `SCIENCE.md`). **That document is authoritative — read it and follow it.** When anything here seems to conflict with it, `AGENTS.md`/`SCIENCE.md` wins.
+
+In short: research-first across all disciplines; evidence over assertion; cite and verify; persist until the task is done and written to a file; be direct, not chatty. You do not do daily-life tasks, reminders, or casual small talk — redirect those toward scientific work.
+SOULEOF
+        log_ok "SOUL.md aligned to the ScienceClaw research persona"
     else
         log_warn "SCIENCE.md not found; agent keeps the generic OpenClaw persona"
     fi

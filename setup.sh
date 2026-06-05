@@ -339,6 +339,62 @@ setup_workspace() {
     log_ok "Workspace ready at $WORKSPACE"
 }
 
+# ---- Wire research stack into the engine (skills + MCP servers) ----
+# OpenClaw does NOT auto-discover the skills/MCP servers staged in ~/clawd; they
+# must be registered in ~/.openclaw/openclaw.json. Without this step the install
+# yields a vanilla OpenClaw with the science content orphaned on disk.
+wire_research_stack() {
+    log_step "Wiring research skills + MCP servers into OpenClaw..."
+
+    WORKSPACE="$HOME/clawd"
+    VENV_PYTHON="$HOME/.scienceclaw/venv/bin/python"
+    UVX="$(command -v uvx || echo uvx)"
+
+    # Every `openclaw` call MUST run outside this repo: inside it, npx resolves
+    # the repo's own (unbuilt) `openclaw` package and fails "command not found".
+    # Running from $HOME uses the published engine; </dev/null avoids stdio hangs.
+    oc() { ( cd "$HOME" && run_with_timeout 200 npx --yes openclaw "$@" </dev/null ); }
+
+    # 1. Skills: point the engine's skill scanner at the copied skill folders.
+    log_info "Registering skills directory ($WORKSPACE/skills)..."
+    if oc config set skills.load.extraDirs "[\"$WORKSPACE/skills\"]" >/dev/null 2>&1; then
+        log_ok "Skills directory registered"
+    else
+        log_warn "Skills dir not registered; run later:"
+        log_warn "  openclaw config set skills.load.extraDirs '[\"$WORKSPACE/skills\"]'"
+    fi
+
+    # 2. MCP servers: each is probe-validated; non-fatal so one bad/offline
+    #    server never aborts the whole install.
+    add_mcp() {
+        local name="$1"; shift
+        log_info "Adding MCP server: $name..."
+        if oc mcp add "$name" "$@" >/dev/null 2>&1; then
+            log_ok "$name added"
+        else
+            log_warn "$name not added (add it later: openclaw mcp add $name ...)"
+        fi
+    }
+
+    add_mcp arxiv            --command "$UVX" --arg arxiv-mcp-server
+    add_mcp semantic-scholar --command "$UVX" --arg semantic-scholar-mcp
+    add_mcp biomcp           --command "$UVX" --arg=--from --arg=biomcp-python --arg=biomcp --arg=run --arg=--mode --arg=stdio
+    add_mcp deep-research    --command "$UVX" --arg deep-research-mcp-server
+    if [ -f "$WORKSPACE/mcp-servers/chembl-mcp/chembl_server.py" ]; then
+        add_mcp chembl       --command "$VENV_PYTHON" --arg "$WORKSPACE/mcp-servers/chembl-mcp/chembl_server.py"
+    fi
+    if [ -f "$WORKSPACE/mcp-servers/arxiv-latex-mcp/server/main.py" ]; then
+        add_mcp arxiv-latex  --command "$VENV_PYTHON" --arg "$WORKSPACE/mcp-servers/arxiv-latex-mcp/server/main.py"
+    fi
+
+    # zotero needs the user's API credentials, so it can't be added unattended.
+    log_info "Zotero needs your API key — add it later with:"
+    log_info "  openclaw mcp add zotero --command uvx --arg zotero-mcp \\"
+    log_info "    --env ZOTERO_API_KEY=… --env ZOTERO_LIBRARY_ID=… --env ZOTERO_LIBRARY_TYPE=user"
+
+    log_ok "Research stack wired (applied when the gateway starts/restarts)"
+}
+
 # ---- Main ----
 main() {
     print_banner
@@ -376,6 +432,7 @@ main() {
     log_step "Phase 5/5: Configuring ScienceClaw..."
     configure_scienceclaw
     setup_workspace
+    wire_research_stack
 
     # Done
     echo ""

@@ -340,7 +340,9 @@ describe("web_search perplexity Search API", () => {
 
     expect(mockFetch).toHaveBeenCalled();
     expect(mockFetch.mock.calls[0]?.[0]).toBe("https://api.perplexity.ai/search");
-    expect((mockFetch.mock.calls[0]?.[1] as RequestInit | undefined)?.method).toBe("POST");
+    const request = mockFetch.mock.calls[0]?.[1] as RequestInit | undefined;
+    expect(request?.method).toBe("POST");
+    expect(new Headers(request?.headers).get("x-pplx-integration")).toBe("scienceclaw");
     const body = parseFirstRequestBody(mockFetch);
     expect(body.query).toBe("test");
     expect(result?.details).toMatchObject({
@@ -478,6 +480,11 @@ describe("web_search perplexity OpenRouter compatibility", () => {
 
     expect(mockFetch).toHaveBeenCalled();
     expect(mockFetch.mock.calls[0]?.[0]).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(
+      new Headers((mockFetch.mock.calls[0]?.[1] as RequestInit | undefined)?.headers).get(
+        "x-pplx-integration",
+      ),
+    ).toBeNull();
     const body = parseFirstRequestBody(mockFetch);
     expect(body.model).toBe("perplexity/sonar-pro");
     expect(result?.details).toMatchObject({
@@ -485,6 +492,23 @@ describe("web_search perplexity OpenRouter compatibility", () => {
       citations: ["https://example.com"],
       content: expect.stringContaining("ok"),
     });
+  });
+
+  it("attributes direct Perplexity chat completions", async () => {
+    const mockFetch = installPerplexityChatFetch();
+    const tool = createPerplexitySearchTool({
+      apiKey: "pplx-test",
+      baseUrl: "https://api.perplexity.ai",
+      model: "sonar-pro",
+    });
+    await tool?.execute?.("call-1", { query: "test" });
+
+    expect(mockFetch.mock.calls[0]?.[0]).toBe("https://api.perplexity.ai/chat/completions");
+    expect(
+      new Headers((mockFetch.mock.calls[0]?.[1] as RequestInit | undefined)?.headers).get(
+        "x-pplx-integration",
+      ),
+    ).toBe("scienceclaw");
   });
 
   it("routes configured sk-or key through chat completions", async () => {

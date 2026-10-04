@@ -1,4 +1,4 @@
-"""Contract tests for the read-only InnerEye-HS binary smoke wrapper."""
+"""Contract tests for the read-only InnerEye-HS binary wrapper."""
 from __future__ import annotations
 
 import numpy as np
@@ -23,7 +23,7 @@ def test_checkpoint_path_uses_explicit_file(monkeypatch, tmp_path):
 
 
 @pytest.mark.skipif(ie.have_module("torch") is False, reason="torch is optional in the local test environment")
-def test_random_binary_smoke_roundtrip(monkeypatch, tmp_path):
+def test_random_binary_roundtrip(monkeypatch, tmp_path):
     import torch
 
     net = ie._network()()

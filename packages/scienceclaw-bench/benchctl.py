@@ -2,9 +2,9 @@
 """Small JSON protocol for the native ScienceClaw benchmark plugin.
 
 The TypeScript gateway calls this file with one JSON request on stdin and reads
-one JSON response from stdout.  It intentionally exposes only read/list, the
-offline TOY smoke run, and report generation; formal hidden-split evaluation
-remains an explicit server-side operation.
+one JSON response from stdout.  It exposes the benchmark catalog, task
+availability, and report generation for existing runs; formal hidden-split
+evaluation remains an explicit server-side operation.
 """
 from __future__ import annotations
 
@@ -65,15 +65,8 @@ def main() -> int:
 
             task_dir = repo_root / "scienceclaw" / "bench" / "tasks"
             tool_refs: set[str] = set()
-            # Report the tools of the registered FoR adapters.  There are a
-            # couple of experimental task modules in this directory (for
-            # example the SWE-bench prototype) that are not part of the
-            # 23-discipline route; exposing their names here made the gateway
-            # catalog claim capabilities that no registered adapter could
-            # actually dispatch.  ``ToolSpec`` is often formatted across
-            # lines, so allow whitespace after the opening parenthesis; this
-            # also includes optional/pretrained tools such as FoR30's
-            # ``predict_pretrained`` in the catalog.
+            # Only registered FoR adapters contribute tool refs.  ToolSpec calls
+            # may span lines, so whitespace after the opening parenthesis is allowed.
             for discipline in DISCIPLINES:
                 source = task_dir / f"{discipline.module}.py"
                 if not source.is_file():
@@ -96,26 +89,6 @@ def main() -> int:
             rows = adapter_status(cfg)
             return emit({"schema": 1, "status": "ok", "op": op, "tasks": rows})
 
-        if op == "smoke":
-            from scienceclaw.cli import run_smoke
-
-            rounds = int(req.get("rounds", 2))
-            workers = int(req.get("workers", 1))
-            seed = int(req.get("seed", 1))
-            if not 1 <= rounds <= 10:
-                raise ValueError("rounds must be between 1 and 10")
-            if not 1 <= workers <= 16:
-                raise ValueError("workers must be between 1 and 16")
-            info = run_smoke(run_root, rounds=rounds, workers=workers, verbose=False, seed=seed)
-            # Keep the generated run identifier in the protocol response so a
-            # caller can immediately hand it to the report operation without
-            # parsing filesystem paths.  Older callers may still rely on the
-            # nested run_dir field, so retain the full result unchanged.
-            run_dir = info.get("run_dir") if isinstance(info, dict) else None
-            run_id = Path(str(run_dir)).name if run_dir else None
-            return emit({"schema": 1, "status": "ok", "op": op,
-                         "run_id": run_id, "result": info})
-
         if op == "report":
             from scienceclaw.experiments.report import build_report
 
@@ -129,7 +102,7 @@ def main() -> int:
             return emit({"schema": 1, "status": "ok", "op": op,
                          "run_id": run_id, "report": str(report_path)})
 
-        raise ValueError("op must be one of: catalog, list_tasks, smoke, report")
+        raise ValueError("op must be one of: catalog, list_tasks, report")
     except Exception as exc:  # fail closed; the gateway receives structured error text
         return emit({"schema": 1, "status": "error", "error": str(exc),
                      "type": type(exc).__name__})

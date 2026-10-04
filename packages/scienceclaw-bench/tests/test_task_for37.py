@@ -63,7 +63,7 @@ def _hours(ep) -> list[int]:
 
 
 def test_min_spacing_inside_every_episode(eps):
-    """LEAK-4: no two initialisations of one episode are closer than MIN_SPACING_H (another item's context field
+    """no two initialisations of one episode are closer than MIN_SPACING_H (another item's context field
     would be a near-future observation of the first item's target)."""
     for split, es in eps.items():
         for ep in es:

@@ -27,7 +27,7 @@ Episodes (fixed by the role files, one physical building = one lineage group):
   val 6, id 11, ood 10 items). The official windows of one building are 24-h daily targets whose 168-h contexts
   can contain another window's target (window indices at most 7 days apart); inside an episode the windows of one
   building are therefore drawn *conflict-free* and successive episodes take *disjoint* windows of each building
-  (seeded exact packing). Conflict-free (LEAK-4) = the target of one window ends at least ``MIN_DELAY_H = 144`` h
+  (seeded exact packing). Conflict-free = the target of one window ends at least ``MIN_DELAY_H = 144`` h
   (6 days) before the 168-h context of the other starts, in both directions: every context of an episode is visible,
   so a later window of the same building would otherwise expose the days right after an earlier target. Only the
   m >= 2 episodes (val, ood at 16 items) contain such pairs. 144 h is the largest delay that keeps the capacity
@@ -77,7 +77,7 @@ CONTEXT_H = 168
 HORIZON_H = 24
 MAX_KWH = 1300.0              # generous physical bound (largest hourly value in the delivery is ~ 0.7 MWh)
 ACCEPT_MARGIN = 0.10
-MIN_DELAY_H = 144             # LEAK-4: min hours between the end of one window's target and the start of the next context
+MIN_DELAY_H = 144             # min hours between the end of one window's target and the start of the next context
 UNIT = "kWh"
 M_TARGET = {"src": 1, "val": 2, "id": 2, "ood": 2}     # windows per building and episode (upper bound)
 CATEGORIES = ("residential", "commercial")
@@ -332,7 +332,7 @@ def _conflict(a: PoolItem, b: PoolItem, min_delay_h: int = MIN_DELAY_H) -> bool:
     """True iff two windows of one building may not share an episode.
 
     A window's target must end at least ``min_delay_h`` before the other window's 168-h context starts (and vice versa);
-    ``min_delay_h = 0`` is the plain "no target inside the other's context" rule.  LEAK-4: the context of a later window
+    ``min_delay_h = 0`` is the plain "no target inside the other's context" rule.  The context of a later window
     of the same building is visible in the episode, so it carries the days right after an earlier window's target.
     """
     ca, ta = a.meta[1], a.meta[2]

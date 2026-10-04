@@ -134,7 +134,7 @@ per-episode outputs, metrics, token/cost accounting).
     of the same per-episode entries. **`min_improved_episodes: 1` restores the
     literal rule** (and disables the regression cap). A val set smaller than
     the threshold can then never admit a candidate: set it to 1 for
-    one-episode toy runs (the offline smoke config does).
+    single-episode validation sets.
 13. **Gateway outages are not task failures.** A solve cut short by an LLM /
     gateway outage (`SolveResult.infra_error`: the policy call raised —
     `stop_reason = "policy_error"` — or the final trace holds an executor

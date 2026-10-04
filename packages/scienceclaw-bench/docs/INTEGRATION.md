@@ -11,7 +11,7 @@ connected through a small, typed boundary:
 | Scientific operators | `packages/scienceclaw-bench/scilib/` | frozen dataset tools and optional pretrained wrappers |
 | Dataset skills | `skills/scienceclaw-benchmark-for30/` … `skills/scienceclaw-benchmark-for52/` | task contracts, tool routing, and evidence rules for FoR30–FoR52 |
 | Evolution skill | `skills/scienceclaw-evolution/` | candidate replay, visible-dev gates, provenance, and promotion policy |
-| Native bridge | `extensions/scienceclaw-bench/` | bounded JSON calls for catalog, task inventory, offline smoke, and reports |
+| Native bridge | `extensions/scienceclaw-bench/` | bounded JSON calls for catalog, task availability, and reports |
 
 The gateway bridge does not receive provider credentials or arbitrary shell
 commands. Formal ID/OOD evaluation and remote launchers remain explicit
@@ -53,7 +53,7 @@ is consumed by the pretrained wrappers and Leonardo launchers.
 
 1. Load `skills/scienceclaw-benchmark/SKILL.md` for routing policy.
 2. Load the matching `skills/scienceclaw-benchmark-for30` through `for52` skill.
-3. Use the optional `scienceclaw_bench` tool for catalog, task inventory, TOY
-   smoke, or report inspection.
+3. Use the optional `scienceclaw_bench` tool for catalog, task availability, or
+   report inspection.
 4. Run formal evaluation with the existing server-side launcher and preserve
    its config, hashes, and per-episode receipts.

@@ -1,7 +1,7 @@
 [project]
 name = "scienceclaw"
 version = "0.1.0"
-description = "Rebuild of ScienceClaw: verifiable program-level self-evolution for AI-for-Science agents"
+description = "ScienceClaw benchmark and self-evolution engine: verifiable program-level self-evolution for AI-for-Science agents"
 requires-python = ">=3.11"
 dependencies = ["numpy", "pandas", "scipy", "scikit-learn", "pyyaml"]
 
@@ -11,9 +11,9 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 domain = ["statsmodels", "networkx", "sympy", "joblib", "lightgbm", "xgboost", "rdkit", "nibabel", "jiwer", "sacrebleu", "conllu", "z3-solver"]
-# Heavy model stacks remain optional so the offline TOY smoke path stays
-# installable on a laptop. These groups mirror the actual scilib imports used
-# by the corresponding domain adapters on Leonardo.
+# Heavy model stacks remain optional so the base install stays light. These
+# groups mirror the actual scilib imports used by the corresponding domain
+# adapters.
 vision = ["torch", "torchvision", "transformers", "scikit-image", "lightgbm", "Pillow"]
 audio = ["torch", "torchaudio", "demucs", "imageio-ffmpeg", "transformers", "hydra-core", "omegaconf"]
 nlp = ["stanza", "transformers", "sentencepiece", "conllu", "jiwer", "sacrebleu"]

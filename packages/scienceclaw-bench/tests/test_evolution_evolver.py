@@ -231,7 +231,7 @@ def test_candidate_is_not_gated_against_an_incumbent_that_is_still_errored(tmp_p
     assert not snaps[1].skills
 
 
-# ------------------------------------------------------------------ noise guard (cost M7), end to end
+# ------------------------------------------------------------------ noise guard, end to end
 def test_default_noise_guard_needs_two_improved_val_episodes(tmp_path):
     two_d1 = {"D1": [make_episode("valD1a", "D1", split="val"), make_episode("valD1b", "D1", split="val")],
               "D2": [make_episode("valD2", "D2", split="val")]}
@@ -245,7 +245,7 @@ def test_default_noise_guard_needs_two_improved_val_episodes(tmp_path):
             assert cand["reasons"]["improved_episodes"] == ["valD1"]
 
 
-# ------------------------------------------------------------------ gateway outages (cost M2), end to end
+# ------------------------------------------------------------------ gateway outages, end to end
 class OutageSource(StubSolver):
     """Source solves of ``episodes`` fail with a gateway outage (no evidence) for their first ``n`` attempts."""
 

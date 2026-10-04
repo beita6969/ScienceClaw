@@ -1,4 +1,4 @@
-"""Uniform disclosure (F5): what the policy may read about an episode must not name the reference predictor.
+"""Uniform disclosure: what the policy may read about an episode must not name the reference predictor.
 
 The generic acceptance section of the system prompt says only that the task metric has to beat the task's reference
 predictor by a fixed margin. The adapters' objective strings must not contradict that by naming the reference method

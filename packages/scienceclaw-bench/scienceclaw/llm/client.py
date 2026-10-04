@@ -70,7 +70,7 @@ TRANSIENT_ERROR_CODES: frozenset[str] = frozenset({
 GATEWAY_ERROR_RETRY_LIMIT = 2        # retries for a 4xx carrying a transient gateway error code
 ENDPOINT_COOLDOWN_S = 20.0           # a self-hosted endpoint that failed is skipped for this long
 MIN_COMPLETION_TOKENS = 16           # the gateway rejects smaller limits (HTTP 400 upstream_error)
-DEFAULT_USER_AGENT = "scienceclaw-rebuild/0.1"
+DEFAULT_USER_AGENT = "scienceclaw/0.1"
 MAX_COMPLETION_LIMIT = 65_536        # cap for the doubled limit of the single length retry
 _ERROR_BODY_CHARS = 500
 

@@ -181,7 +181,7 @@ class Episode:
     def failure_result(self, msg: str = "no output", trace: Trace | None = None) -> EvalResult:
         """EvalResult of an episode with no (usable) output: z=0, ``details['failed']`` and the failure payload.
 
-        LEAK-5: a held-out episode must never silently drop out of the pooled metric. The payload is the adapter's
+        A held-out episode must never silently drop out of the pooled metric. The payload is the adapter's
         failure payload (its reference/inaction payload), so pooling stays over the full episode set and a method that
         fails cannot look better than the reference on the remaining episodes.
         """

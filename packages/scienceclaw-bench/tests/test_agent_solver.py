@@ -172,7 +172,7 @@ def _bad_tool_step(uses: list[str]) -> dict:
 
 
 def test_uses_of_rejected_actions_are_not_counted(tmp_path: Path) -> None:
-    """Use(omega) only sees components of actions that were actually applied (fidelity F1)."""
+    """Use(omega) only sees components of actions that were actually applied."""
     script = [_bad_tool_step(["skill:scale"])] + build_script(GOOD_CODE, fix=False)
     res = make_solver(SolverConfig(), ScriptedLLM(script)).solve(make_episode(), _program(), "source", tmp_path)
     assert res.steps[0].feedback["action_ok"] is False and res.steps[0].uses == ["skill:scale"]   # cited, but rejected
@@ -373,7 +373,7 @@ def test_scrub_volatile() -> None:
     assert scrub_volatile("range=[1, 4] (3 values)") == "range=[1, 4] (3 values)"
 
 
-# ---------------------------------------------------------------- infrastructure errors (cost M2) and usage
+# ---------------------------------------------------------------- infrastructure errors and usage
 def test_infra_error_is_none_for_ordinary_failures(tmp_path: Path) -> None:
     res = make_solver(SolverConfig(), ScriptedLLM(build_script(BUGGY_CODE, fix=False))).solve(
         make_episode(), AgentProgram(), "source", tmp_path)

@@ -1,4 +1,4 @@
-"""ScienceClaw rebuild."""
+"""ScienceClaw benchmark and self-evolution engine."""
 import sys as _sys
 from pathlib import Path as _Path
 

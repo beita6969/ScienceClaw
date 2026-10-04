@@ -1,4 +1,4 @@
-# ScienceClaw rebuild — all DESIGN.md defaults made explicit (RunConfig()).
+# ScienceClaw — all DESIGN.md defaults made explicit (RunConfig()).
 # Paper-scale protocol: 23 disciplines (empty list = all available adapters), 7 rounds,
 # n_val 2, n_id 4 x 16 items, n_ood 4 x 16 items. Decisions 1-10 of DESIGN.md section 1.
 # The API key is read at request time from llm.credentials_file and is never copied anywhere.

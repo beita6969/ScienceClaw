@@ -1,4 +1,4 @@
-"""Review-fix tests for the policy prompts (F4, F5, F7, F8, F9, F10, F11) and the compact history (M1)."""
+"""Tests for the policy prompts and the compact history."""
 from __future__ import annotations
 
 import importlib.util
@@ -77,7 +77,7 @@ def test_finish_text_matches_the_solver_choice_of_deliverable() -> None:
         assert prompts._FINISH in q
 
 
-# ---------------------------------------------------------------------------------------- F7/F8
+# ---------------------------------------------------------------------------------------- restricted orchestrations
 @pytest.mark.parametrize("orchestration", ["single_operator", "fixed_workflow"])
 def test_restricted_orchestrations_do_not_list_unusable_components(orchestration: str) -> None:
     p = build_system_prompt(make_episode(), [], [], orchestration, fixed_code_node="core")
@@ -222,7 +222,7 @@ def test_every_prompt_variant_is_free_of_strategy_phrases(orchestration: str, sh
     assert find_strategy_phrases(p) == []
 
 
-# --------------------------------------------------------------------- F9/M1: compact history
+# --------------------------------------------------------------------- compact history
 class _Rec:
     def __init__(self, status: str, cached: bool = False, error: str | None = None) -> None:
         self.status, self.cached, self.error = status, cached, error

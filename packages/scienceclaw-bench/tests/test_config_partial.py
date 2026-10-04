@@ -10,9 +10,9 @@ def test_partial_role_override_keeps_default_instance_fields():
 
 
 def test_empty_config_equals_defaults_and_instances_are_independent():
-    a, b = load_config(None, {}), load_config(None, {"bench.disciplines": ["TOY"]})
+    a, b = load_config(None, {}), load_config(None, {"bench.disciplines": ["SYN"]})
     assert a.to_dict() == RunConfig().to_dict()
-    assert a.bench.disciplines == [] and b.bench.disciplines == ["TOY"]
+    assert a.bench.disciplines == [] and b.bench.disciplines == ["SYN"]
 
 
 def test_gate_warning_when_noise_guard_exceeds_n_val():

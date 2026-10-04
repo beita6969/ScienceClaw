@@ -24,7 +24,7 @@ Conventions (all stated in the report itself):
 * Pooled scores come from ``adapter.pooled_metric`` over the episode payloads; if the adapter cannot be
   loaded the mean episode ``primary`` is used and flagged ``score_kind = "episode_mean"``.
 * Natural sciences = families "Life & health", "Physical & Earth", "Engineering & computing"; social sciences
-  and humanities = "Social & behavior", "Humanities & law" (reporting convention of this rebuild).
+  and humanities = "Social & behavior", "Humanities & law" (reporting convention of this package).
 """
 from __future__ import annotations
 
@@ -193,7 +193,7 @@ def _pooled_by_discipline(rows: list[dict], adapters: Mapping[str, Any], base_di
 
     ``n`` is the number of episodes the split promises (``expected``, from the manifest) when known, else the number
     of result rows; ``n_with_payload`` counts distinct episodes with a pooled payload. ``n_with_payload < n`` means
-    the pooled score covers only part of the split (LEAK-5): it must not be compared with a complete one.
+    the pooled score covers only part of the split: it must not be compared with a complete one.
     """
     out = {}
     for (d,), rs in _group(rows, "discipline").items():
@@ -260,7 +260,7 @@ def logical_tokens_of(usage: Mapping[str, Any]) -> float:
 def row_costs(rs: Iterable[Mapping[str, Any]]) -> tuple[dict[str, float], float, int]:
     """(summed spent usage, logical tokens, #alias rows) of result rows.
 
-    Alias rows (M5: identical program, outcome copied from the solved snapshot) spent nothing (``usage`` empty), but
+    Alias rows (identical program, outcome copied from the solved snapshot) spent nothing (``usage`` empty), but
     their logical cost is the root's (``alias_usage``): the spent sum is the real bill, the logical sum the cost the
     evaluation would have without de-duplication.
     """
@@ -407,7 +407,7 @@ def build_report(run_dir: str | Path, adapters: Mapping[str, Any] | None = None,
                 cov[snap].setdefault(d, (0, int(want)))
         pi = None
         if ref_name in scores:
-            # LEAK-5: coverage-aware PI -- a pooled score over fewer episodes than the split promises is not comparable
+            # coverage-aware PI -- a pooled score over fewer episodes than the split promises is not comparable
             pi = M.performance_index(scores, ref_name, directions, normalization=normalization, coverage=cov)
             pi_objs[split] = pi.to_dict()
             for d, why in pi.excluded.items():
@@ -576,10 +576,9 @@ def _family_transfer(fam_rows: list[dict], std_rows: list[dict], adapters: Mappi
 
 
 def _render_md(rep: dict) -> str:
-    L = [f"# ScienceClaw rebuild — run report", "",
+    L = ["# ScienceClaw — run report", "",
          f"Run: `{rep['run_dir']}`  ", f"Split manifest sha256: `{rep.get('split_sha256')}`", "",
-         "> Rebuild experiment. Every number below is computed from this run's receipts "
-         "(eval/results.jsonl); none is copied from, or back-filled into, the submitted paper.", "",
+         "> Every number below is computed from this run's receipts (eval/results.jsonl).", "",
          "## Conventions", "",
          f"* MacroSR (Eq. 4): mean over disciplines of the per-discipline success rate of z (95% percentile "
          f"bootstrap CI over disciplines).",
@@ -597,7 +596,7 @@ def _render_md(rep: dict) -> str:
                                     "mean_norm_score", "pi", "pi_ci_lo", "pi_ci_hi", "n_episodes", "n_expected",
                                     "complete", "logical_tokens", "billed_tokens"]),
           "", "`complete` = every discipline's pooled payload covers all episodes the split promises; a PI over an "
-              "incomplete snapshot is NaN (LEAK-5: partial pools are not comparable).", ""]
+              "incomplete snapshot is NaN (partial pools are not comparable).", ""]
     fam = [r for r in rep["per_family"] if r["group_kind"] == "family"]
     sph = [r for r in rep["per_family"] if r["group_kind"] == "sphere"]
     L += ["## By family", "", md_table(fam, ["snapshot", "split", "group", "macro_sr", "pi", "n_disciplines"]), "",
@@ -677,7 +676,7 @@ def compare_runs(runs: Mapping[str, str | Path], split: str = "ood", snapshot: s
             if r.get("direction") in ("max", "min"):
                 directions.setdefault(r["discipline"], r["direction"])
     if incomplete:
-        # LEAK-5: a discipline pooled over fewer episodes than promised is not comparable across methods
+        # a discipline pooled over fewer episodes than promised is not comparable across methods
         for d, who in sorted(incomplete.items()):
             warnings.append(f"{d}: pooled payload coverage incomplete for {', '.join(who)}; discipline dropped from "
                             "the comparison")

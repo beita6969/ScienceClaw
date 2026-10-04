@@ -1,4 +1,4 @@
-"""Smoke/throughput test of a self-hosted vLLM endpoint (no credentials involved).
+"""Throughput test of a self-hosted vLLM endpoint (no credentials involved).
 
 Usage: python scripts/leonardo/bench_endpoint.py http://127.0.0.1:18001/v1 [--n 32] [--conc 16] [--model sc-llm]
 Checks: JSON mode, thinking disabled (no <think>/reasoning text), completion speed under concurrency.

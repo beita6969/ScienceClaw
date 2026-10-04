@@ -206,7 +206,7 @@ def test_score_dev(plan):
         t["score_dev"].fn({"predictions": np.full((n_dev, N_Q), -1)}, {})
 
 
-# ------------------------------------------------------------------------------------------- LEAK-7: per-solve ledger
+# ------------------------------------------------------------------------------------------- per-solve ledger
 def _receipt(t, cq, k, offset=0):
     return t["query_answers"].fn({"selections": _select(cq, k, offset)}, {})["receipt"]
 
@@ -221,7 +221,7 @@ def _budget(ep, y, trace):
 
 
 def test_query_budget_ledger_counts_removed_session_queries(adapter, plan, tmp_path):
-    """Answers revealed by a node the policy deleted before submitting still count (review finding LEAK-7)."""
+    """Answers revealed by a node the policy deleted before submitting still count."""
     ep = plan["src"][0]
     t, y = _tools(ep), _oracle(adapter, ep)
     cq = t["load_eval_inputs"].fn({}, {})["can_query"]

@@ -1029,7 +1029,7 @@ class Executor:
         shared = {k: v for k, v in inputs.items() if k != LLM_ITEMS_PORT}
         template = node.prompt or ""
         diagnostics: dict[str, Any] = {}
-        # ---- template checks (RT-4): the item must reach the prompt; unresolved names are reported
+        # ---- template checks: the item must reach the prompt; unresolved names are reported
         names, accessors = template_fields(template)
         if accessors:
             return _Outcome("error", error=(
@@ -1051,7 +1051,7 @@ class Executor:
                   {"role": "user", "content": render_template(template, it, shared)}] for it in items]
         if not batch:
             return _Outcome("ok", {LLM_OUTPUT_PORT: []}, diagnostics={"n_items": 0, "parse_failures": 0, "llm_errors": 0})
-        # ---- cost guards (RT-11): rendered prompt size and max_tokens
+        # ---- cost guards: rendered prompt size and max_tokens
         sizes = [len(m[0]["content"]) + len(m[1]["content"]) for m in batch]
         worst = max(range(len(sizes)), key=sizes.__getitem__)
         if sizes[worst] > self.max_llm_prompt_chars:
@@ -1074,7 +1074,7 @@ class Executor:
             kw["json_mode"] = True
         if cfg.get("seed") is not None:
             kw["cache_salt"] = f"seed={cfg['seed']}"
-        # ---- run in chunks under the node deadline (RT-6)
+        # ---- run in chunks under the node deadline
         timeout = self._node_timeout(node, deadline)
         t_end = time.monotonic() + timeout
         usage: dict = {}

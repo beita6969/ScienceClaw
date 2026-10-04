@@ -4,7 +4,7 @@ The interface consumes only visible feature arrays and returns the frozen
 model's Gaussian parameters. It does not load BuildingsBench targets, fit a
 model, or provide a formal FoR33 scorer. The caller must supply the pinned
 upstream source and checkpoint explicitly; task-specific preprocessing remains
-outside this smoke component.
+outside this component.
 """
 from __future__ import annotations
 

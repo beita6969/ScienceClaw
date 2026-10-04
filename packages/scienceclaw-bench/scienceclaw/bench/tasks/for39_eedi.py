@@ -19,7 +19,7 @@ This adapter:
 * **Query rule** (strict, as in the data team's reconstruction): only answered, non-target questions of the item's
   mask may be queried; at most ``QUERY_BUDGET`` = 10 distinct answers per student in total. ``query_answers`` may be
   called several times (chained calls allow adaptive selection); every call returns an HMAC-signed receipt and the
-  hard constraint ``query_budget`` unions the receipts of the **whole solve** (review finding LEAK-7): the tool nodes of
+  hard constraint ``query_budget`` unions the receipts of the **whole solve**: the tool nodes of
   the final trace *and* every ``receipt.pkl`` the executor persisted in the solve's session (``<run_dir>/exec``) and
   replay (``<run_dir>/replay/kNNN``) directories, so answers revealed by nodes the policy later removed or replaced, or
   by nodes inside operator bodies, still count. Fails closed when that ledger cannot be located. The starter kit's
@@ -544,7 +544,7 @@ def _load_plain(path: Path) -> Any:
 
 
 def solve_ledger_roots(trace: Trace) -> tuple[list[Path], str]:
-    """Directories that hold every ``query_answers`` receipt this solve has ever produced (LEAK-7).
+    """Directories that hold every ``query_answers`` receipt this solve has ever produced.
 
     The solver lays a solve out as ``<run_dir>/exec`` (the interactive session: every executor run of every step, also
     of nodes the policy later removed or replaced, and of nodes inside operator bodies) and
@@ -565,7 +565,7 @@ def solve_ledger_roots(trace: Trace) -> tuple[list[Path], str]:
 
 
 def check_query_budget(trace: Trace | None, eid: str, key: bytes, n: int) -> tuple[bool, str]:
-    """Per-solve ledger check: at most QUERY_BUDGET distinct evaluation cells revealed per student (LEAK-7).
+    """Per-solve ledger check: at most QUERY_BUDGET distinct evaluation cells revealed per student.
 
     The ledger is the union of the signed eval receipts (a) of the tool nodes in ``trace`` and (b) of every
     ``receipt.pkl`` the executor persisted in the solve's session and replay directories (:func:`solve_ledger_roots`).

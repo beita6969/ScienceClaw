@@ -1,11 +1,9 @@
 """Experiment drivers (run_stream / evaluate / report / cli) with local stub Evolver and Solver.
 
 The real Evolver/Solver are other modules; these tests inject stubs so they run offline and independently.
-The end-to-end ``cli smoke`` test at the bottom uses the real modules and is skipped when they are missing.
 """
 from __future__ import annotations
 
-import importlib
 import json
 import sys
 import types
@@ -16,8 +14,8 @@ import numpy as np
 import pytest
 
 from scienceclaw.bench.splits import SplitPlan
-from scienceclaw.bench.tasks.toy import ToyAdapter, toy_truth
-from scienceclaw.cli import build_parser, parse_overrides, smoke_config
+from synthetic_adapter import SyntheticAdapter, synthetic_truth
+from scienceclaw.cli import build_parser, parse_overrides
 from scienceclaw.config import BenchConfig, RunConfig, load_config
 from scienceclaw.core.program import AgentProgram, Bundle
 from scienceclaw.core.skills import Skill
@@ -29,7 +27,7 @@ from scienceclaw.experiments.run_stream import run_stream, snapshot_dirs
 
 # ------------------------------------------------------------------------------------------------- stubs
 class StubEvolver:
-    """Adds one Skill per round (provenance = that round's TOY source episode) and logs candidates."""
+    """Adds one Skill per round (provenance = that round's SYN source episode) and logs candidates."""
 
     def __init__(self, cfg, llm, plan, run_dir):
         self.cfg, self.llm, self.plan, self.run_dir = cfg, llm, plan, Path(run_dir)
@@ -58,7 +56,7 @@ class StubSolver:
         StubSolver.calls.append((program.version, episode.split, episode.id, str(run_dir)))
         X = episode.tool("load_eval_inputs").fn({}, {})["X_eval"]
         yt = episode.tool("load_train").fn({}, {})["y_train"]
-        y = toy_truth(X) if program.skills else np.full(len(X), yt.mean())
+        y = synthetic_truth(X) if program.skills else np.full(len(X), yt.mean())
         ev = episode.evaluate(y, None)
         ev.reproducible = True
 
@@ -79,22 +77,22 @@ def stub_evolver(monkeypatch):
 
 def _cfg(tmp_path, rounds=2):
     cfg = RunConfig(name="t", runs_root=str(tmp_path / "runs"))
-    cfg.bench = BenchConfig(disciplines=["TOY"], items_per_episode=6, rounds=rounds, n_val=1, n_id=2, n_ood=1, seed=3)
+    cfg.bench = BenchConfig(disciplines=["SYN"], items_per_episode=6, rounds=rounds, n_val=1, n_id=2, n_ood=1, seed=3)
     return cfg
 
 
 @pytest.fixture()
 def run_dir(tmp_path, stub_evolver):
-    return run_stream(_cfg(tmp_path), adapters={"TOY": ToyAdapter()}, llm=SimpleNamespace(usage=lambda: {"total": {}}))
+    return run_stream(_cfg(tmp_path), adapters={"SYN": SyntheticAdapter()}, llm=SimpleNamespace(usage=lambda: {"total": {}}))
 
 
 # ------------------------------------------------------------------------------------------------- tests
 def test_run_stream_writes_receipts(run_dir):
     assert run_dir.name.startswith("t-")
     cfg = load_config(run_dir / "config.yaml")
-    assert cfg.bench.disciplines == ["TOY"] and cfg.bench.rounds == 2
+    assert cfg.bench.disciplines == ["SYN"] and cfg.bench.rounds == 2
     m = SplitPlan.load_manifest(run_dir / "splits.json")
-    assert m["disciplines"] == ["TOY"] and len(m["splits"]["src"]["TOY"]) == 2
+    assert m["disciplines"] == ["SYN"] and len(m["splits"]["src"]["SYN"]) == 2
     assert sorted(snapshot_dirs(run_dir)) == [0, 1, 2]
     assert AgentProgram.load(snapshot_dirs(run_dir)[2]).version == "A2"
     run = json.loads((run_dir / "run.json").read_text())
@@ -111,14 +109,14 @@ def test_run_stream_marks_failure(tmp_path, monkeypatch):
     mod.Evolver = Boom
     monkeypatch.setitem(sys.modules, "scienceclaw.evolution.evolver", mod)
     with pytest.raises(RuntimeError):
-        run_stream(_cfg(tmp_path), adapters={"TOY": ToyAdapter()}, llm=SimpleNamespace())
+        run_stream(_cfg(tmp_path), adapters={"SYN": SyntheticAdapter()}, llm=SimpleNamespace())
     rd = next((tmp_path / "runs").iterdir())
     assert json.loads((rd / "run.json").read_text())["status"] == "failed"
 
 
 def test_evaluate_snapshots_rep_and_resume(run_dir):
     StubSolver.calls = []
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     path = evaluate_snapshots(run_dir, "all", adapters=ads, solver_factory=StubSolver, workers=2)
     rows = read_results(path)
     # 3 snapshots x (2 id + 1 ood) + rep: A_1 -> 1, A_2 -> 2
@@ -151,7 +149,7 @@ def test_evaluate_errors_are_retried(run_dir):
                 raise RuntimeError("transient")
             return super().solve(episode, program, mode, run_dir)
 
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     path = evaluate_snapshots(run_dir, ["A_0"], splits=("id", "ood"), adapters=ads, solver_factory=Flaky,
                               include_rep=False, workers=1)
     assert {r["split"] for r in read_results(path)} == {"id"}
@@ -165,16 +163,16 @@ def test_evaluate_errors_are_retried(run_dir):
 
 
 def test_manifest_mismatch_is_detected(run_dir):
-    class OtherToy(ToyAdapter):
+    class OtherSynthetic(SyntheticAdapter):
         def build_episodes(self, split, n, seed, items_per_episode=16):
             return super().build_episodes(split, n, seed + 1, items_per_episode)
 
     with pytest.raises(ValueError, match="manifest"):
-        evaluate_snapshots(run_dir, "all", adapters={"TOY": OtherToy()}, solver_factory=StubSolver)
+        evaluate_snapshots(run_dir, "all", adapters={"SYN": OtherSynthetic()}, solver_factory=StubSolver)
 
 
 def test_report_tables(run_dir):
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     evaluate_snapshots(run_dir, "all", adapters=ads, solver_factory=StubSolver, workers=1)
     evaluate_family_transfer(run_dir, split="ood", adapters=ads, solver_factory=StubSolver, workers=1)
     md = build_report(run_dir, adapters=ads, n_boot=100)
@@ -201,7 +199,7 @@ def test_report_tables(run_dir):
               "rep_matrix_z.csv", "family_transfer.csv"):
         assert (md.parent / f).exists(), f
     text = md.read_text()
-    assert "Rebuild experiment" in text and "PI reference: **A_0**" in text
+    assert "computed from this run's receipts" in text and "PI reference: **A_0**" in text
     # method_final reference: the last snapshot gets 100
     md2 = build_report(run_dir, adapters=ads, pi_reference="method_final", n_boot=50)
     rep2 = json.loads((md2.parent / "report.json").read_text())
@@ -233,8 +231,6 @@ def test_cli_parsing(tmp_path):
         "bench.rounds": 3, "llm.policy.model": "m", "solver.show_dev_score": False}
     a = build_parser().parse_args(["evaluate", "--run", "x", "--snapshots", "A_0,A_2", "--no-rep"])
     assert a.snapshots == "A_0,A_2" and a.no_rep and a.splits == "id,ood"
-    cfg = smoke_config(tmp_path)
-    assert cfg.bench.disciplines == ["TOY"] and cfg.llm.use_cache is False
 
 
 def test_cli_list_tasks(capsys):
@@ -242,7 +238,7 @@ def test_cli_list_tasks(capsys):
 
     assert main(["list-tasks"]) == 0
     out = capsys.readouterr().out
-    assert "FoR30" in out and "TOY" in out and "registry disciplines available" in out
+    assert "FoR30" in out and "FoR52" in out and "registry disciplines available" in out
 
 
 def test_configs_load():
@@ -254,40 +250,3 @@ def test_configs_load():
     assert dev.solver.max_steps == 8 and dev.llm.policy.model == "lab-gpt-5.4-mini" and dev.llm.policy.json_mode
     full = load_config(root / "full_api.yaml")
     assert (full.bench.disciplines, full.bench.rounds, full.bench.n_val, full.bench.n_id, full.bench.n_ood) == ([], 7, 2, 4, 4)
-
-
-def _real_modules_ready() -> str | None:
-    for mod, attr in (("scienceclaw.agent.solver", "Solver"), ("scienceclaw.evolution.evolver", "Evolver"),
-                      ("scienceclaw.runtime.executor", "Executor"), ("scienceclaw.llm.fake", "FakeLLM")):
-        try:
-            if not hasattr(importlib.import_module(mod), attr):
-                return f"{mod}.{attr} not implemented yet"
-        except ImportError as ex:
-            return f"{mod} not available yet ({ex})"
-    return None
-
-
-@pytest.mark.skipif(_real_modules_ready() is not None, reason=f"end-to-end smoke needs the real pipeline modules: "
-                                                              f"{_real_modules_ready()}")
-def test_cli_smoke_end_to_end(tmp_path):
-    from scienceclaw.cli import run_smoke
-
-    info = run_smoke(tmp_path, rounds=2, workers=1, verbose=False)
-    assert info["snapshots"] == ["A_0", "A_1", "A_2"]
-    assert info["n_results"] == 3 * (2 + 2) + 1 + 2          # id + ood per snapshot, + rep (A_1: 1, A_2: 2)
-    assert Path(info["report"]).exists()
-    # with the smoke seed the scripted policy fails some held-out episodes at A_0 and a candidate is promoted
-    summ = {(r["snapshot"], r["split"]): r["macro_sr"] for r in info["summary"]}
-    total = next(p for p in info["promotions"] if p["round"] == "total")
-    assert total["promoted"] >= 1
-    assert summ[("A_2", "id")] == 1.0 and summ[("A_2", "ood")] == 1.0
-    assert summ[("A_0", "id")] + summ[("A_0", "ood")] < 2.0
-
-
-@pytest.mark.skipif(_real_modules_ready() is not None, reason="end-to-end smoke needs the real pipeline modules")
-def test_cli_smoke_command(tmp_path, capsys):
-    from scienceclaw.cli import main
-
-    assert main(["smoke", "--out", str(tmp_path), "--rounds", "1"]) == 0
-    out = capsys.readouterr().out
-    assert "MacroSR=" in out and "report" in out

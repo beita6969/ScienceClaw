@@ -10,7 +10,7 @@ tags = sys.argv[1:] or ["H1"]
 
 # ``result.json.uses`` records retrieved skills/operators, but not the task's built-in ToolSpec nodes.
 # Audit the trajectory as well so a call such as FoR30's ``predict_pretrained`` is not mistaken for a
-# direct smoke. Keep direct code imports separate: they exercise a library path, but are not a task-tool call.
+# direct library call. Keep direct code imports separate: they exercise a library path, but are not a task-tool call.
 BASE_REFS = {
     "load_train", "load_dev_inputs", "load_eval_inputs", "load_history", "load_covariates", "load_context",
     "load_data", "score_dev", "score_pretrained_dev", "check_trees", "read_conllu", "submit",

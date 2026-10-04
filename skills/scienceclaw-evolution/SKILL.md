@@ -15,17 +15,16 @@ the engine supplies typed programs, replay, receipts, and promotion decisions.
 
 ## Choose the run mode
 
-- For a connection or offline integration check, call the optional
-  `scienceclaw_bench` tool with `operation=smoke`, then call `operation=report`
-  with the returned `runId`. This supported gateway path uses the TOY task.
+- To inspect a finished run, call the optional `scienceclaw_bench` tool with
+  `operation=report` and that run's `runId`.
 - For a real benchmark, load `scienceclaw-benchmark` and the matching
   `scienceclaw-benchmark-for*` skill first. The server-side stream launcher owns
-  the dataset and split configuration; a smoke run cannot support a FoR score.
+  the dataset and split configuration.
 - For a skill/operator proposal, use the source stream and the engine's
   `Evolver`; do not hand-edit a promoted `AgentProgram` or treat a successful
   live solve as promotion evidence.
 
-The bridge exposes only `catalog`, `list_tasks`, `smoke`, and `report`. It does
+The bridge exposes only `catalog`, `list_tasks`, and `report`. It does
 not expose arbitrary shell commands or formal ID/OOD evaluation. Use the
 checked-in launcher for an explicitly approved server-side batch and retain its
 manifest and receipts.
@@ -63,7 +62,7 @@ generate a skill. Formal evaluation is a separate server-side operation.
 
 Treat a new skill as routing and evidence guidance, not as an undocumented
 scorer change. Treat a new operator as a frozen, versioned tool with explicit
-inputs, outputs, dependency notes, and a deterministic smoke or replay check.
+inputs, outputs, dependency notes, and a deterministic replay check.
 When a candidate depends on a pretrained model or external service, record the
 model identifier, license/authorization state, content hash, and fallback
 behavior; do not silently download weights or forward gateway credentials.
@@ -81,8 +80,8 @@ Use the configured `qval`, `qval_eps`, `hval_mode`, `min_improved_episodes`,
 default gate is strict: `H_val` must hold, the candidate must be within both
 absolute and relative validation budgets, and `Q_val` must strictly improve
 the incumbent. The noise guard requires the configured number of individually
-improved visible episodes; a one-episode TOY smoke config should set
-`min_improved_episodes=1`.
+improved visible episodes; a configuration with a single validation episode
+should set `min_improved_episodes=1`.
 
 Reject and record a candidate when source or boundary replay fails, the
 candidate is not actually used, a visible hard constraint/schema/integrity/

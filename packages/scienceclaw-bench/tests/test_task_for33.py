@@ -102,7 +102,7 @@ def test_buildings_disjoint_complete_and_window_disjoint(eps):
                 used.add(w.id)
             for b in set(blds):                                                 # conflict-free within a building
                 own = sorted((np.datetime64(w.target_start, "h").astype("int64") for w in ws if w.building == b))
-                # LEAK-4: the later context starts >= MIN_DELAY_H after the earlier target ended (168-h context + 24-h target)
+                # the later context starts >= MIN_DELAY_H after the earlier target ended (168-h context + 24-h target)
                 assert all(y - x >= 24 + MIN_DELAY_H + 168 for x, y in zip(own, own[1:])), (ep.id, b, own)
     names = list(seen_b)
     for i, a in enumerate(names):
@@ -142,7 +142,7 @@ def test_pack_groups_respects_conflicts():
 
 
 def test_min_delay_between_a_target_and_a_later_context():
-    """LEAK-4: a later window of the same building must start its context >= MIN_DELAY_H after the earlier target."""
+    """a later window of the same building must start its context >= MIN_DELAY_H after the earlier target."""
     assert MIN_DELAY_H == 144
 
     def item(k, target_day):

@@ -1,4 +1,4 @@
-"""modify_node patch.code_edit (review F4) and 'operator nodes take no config' (review RT-7 / F7)."""
+"""modify_node patch.code_edit and 'operator nodes take no config'."""
 from __future__ import annotations
 
 import json

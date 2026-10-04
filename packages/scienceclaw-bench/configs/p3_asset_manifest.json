@@ -13,8 +13,7 @@
       "license": "BSD-3-Clause / BuildingsBench data terms",
       "source_commit": "c60e25f37dbae8f3664df0879aaa13a7fe25952d",
       "wrapper": "scilib/buildingsbench.py",
-      "smoke": "normal single-A100 jobs 59278303/59279440; official TransformerWithGaussian-L config; wrapper forward (1,192,features)->(1,24,2)",
-      "status": "smoke_validated_unintegrated"
+      "status": "unintegrated"
     },
     {
       "name": "beats_iter3",
@@ -27,8 +26,7 @@
       "license": "MIT",
       "source_commit": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
       "wrapper": "scilib/beats.py",
-      "smoke": "normal single-A100 jobs 59278302/59279440; pinned Microsoft/unilm BEATs.py; wrapper 1 s/16 kHz waveform -> (1,48,768)",
-      "status": "smoke_validated_unintegrated"
+      "status": "unintegrated"
     },
     {
       "name": "granite_timeseries_ttm_r2",
@@ -40,8 +38,7 @@
       "license": "Apache-2.0",
       "frequency_caveat": "Validate a 6-hour resampling policy on src/val before formal use.",
       "wrapper": "scilib/granite.py",
-      "smoke": "independent p3-granite-20261003 environment; local_files_only; TinyTimeMixer forward (1,512,1)->(1,96,1)",
-      "status": "smoke_validated_unintegrated"
+      "status": "unintegrated"
     },
     {
       "name": "tabpfn_25",
@@ -63,8 +60,7 @@
       "training_evidence": "Microsoft v0.5 model card states five-fold 3-D U-Net training on 998 ADNI image/label pairs; the release documentation contains no MSD Task04/Medical Segmentation Decathlon training reference.",
       "contract_caveat": "Checkpoint predicts whole left/right hippocampi; FoR32 requires anterior/posterior labels in one crop. No class remapping is permitted.",
       "wrapper": "scilib/hippo_innereeye.py",
-      "smoke": "Leonardo sc-harness CPU random volume (1,16,16,16): available=True, binary output shape (1,16,16,16), dtype uint8, unique [0], sum 0, 2.77 s; no target or scorer access",
-      "status": "smoke_only_unintegrated"
+      "status": "unintegrated"
     },
     {
       "name": "mass_base_iris_f32",
@@ -79,8 +75,7 @@
       "training_evidence": "MASS release metadata states self-supervised pretraining from auto-generated class-agnostic masks only; no expert labels.",
       "contract": "Iris in-context reference image/mask; multi-class output can preserve FoR32 labels 1=anterior, 2=posterior.",
       "wrapper": null,
-      "smoke": "Leonardo CPU overlap on 4 visible train references and 2 dev image queries: weights loaded missing=0/unexpected=0; output shapes restored and values {0,1,2}; score_dev mixed mean DSC 0.59858 vs all-atlas 0.69429.",
-      "status": "smoke_only_unintegrated",
+      "status": "unintegrated",
       "status_reason": "zero-shot transfer on FoR32 crops is below visible location atlas; no formal ToolSpec or scorer submission."
     }
   ]

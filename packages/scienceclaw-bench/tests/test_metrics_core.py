@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from scienceclaw.bench import metrics as M
-from scienceclaw.bench.tasks.toy import ToyAdapter
+from synthetic_adapter import SyntheticAdapter
 
 
 def test_macro_sr_hand_computed():
@@ -27,17 +27,17 @@ def test_group_macro():
 
 
 def test_pooled_scores_inline_path_and_missing(tmp_path):
-    ad = ToyAdapter()
+    ad = SyntheticAdapter()
     (tmp_path / "p.json").write_text(json.dumps({"y_true": [0.0, 0.0], "y_pred": [2.0, 2.0], "y_ref": [0, 0]}))
-    results = {"TOY": [
+    results = {"SYN": [
         {"pooled_payload": {"y_true": [0.0, 0.0], "y_pred": [1.0, 1.0], "y_ref": [0.0, 0.0]}},
         {"pooled_payload": "p.json"},                               # relative path -> base_dir
         {"details": {"pooled_payload": None}},                       # no output: excluded
     ]}
-    out = M.pooled_scores(results, {"TOY": ad}, base_dir=tmp_path)
-    assert out["TOY"] == pytest.approx(math.sqrt((1 + 1 + 4 + 4) / 4))
-    assert M.pooled_coverage(results, tmp_path) == {"TOY": (2, 3)}
-    assert M.pooled_scores({"TOY": [{}]}, {"TOY": ad}) == {"TOY": None}
+    out = M.pooled_scores(results, {"SYN": ad}, base_dir=tmp_path)
+    assert out["SYN"] == pytest.approx(math.sqrt((1 + 1 + 4 + 4) / 4))
+    assert M.pooled_coverage(results, tmp_path) == {"SYN": (2, 3)}
+    assert M.pooled_scores({"SYN": [{}]}, {"SYN": ad}) == {"SYN": None}
     with pytest.raises(KeyError):
         M.pooled_scores({"X": []}, {})
 

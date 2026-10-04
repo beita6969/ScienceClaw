@@ -1,4 +1,4 @@
-"""Generic hidden-probe API (LEAK-1): ``Episode.run_probes`` re-runs a graph on adapter-derived episodes."""
+"""Generic hidden-probe API: ``Episode.run_probes`` re-runs a graph on adapter-derived episodes."""
 from __future__ import annotations
 
 import numpy as np
@@ -27,7 +27,7 @@ def _episode(with_probe: bool = True) -> Episode:
         return [Probe("p", {"tools": [short], "constraints": []},
                       lambda y2: (list(y2) == list(y)[:2], f"got {list(y2)}"))]
 
-    return Episode(id="toy-0", discipline="TOY", family="toy", split="id", task_type="t", objective="o",
+    return Episode(id="toy-0", discipline="SYN", family="toy", split="id", task_type="t", objective="o",
                    required_output=PortSchema("list", (4,), None, "int", ""), tools=[tool], constraints=[probe_ok],
                    budget=Budget(), metric="m", direction="max", n_items=4, _evaluate=evaluate,
                    _probes=probes if with_probe else None)

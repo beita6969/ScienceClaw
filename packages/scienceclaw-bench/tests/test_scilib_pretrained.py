@@ -73,7 +73,7 @@ def test_available_false_when_switched_off(name, monkeypatch):
     assert mod.available() is False
 
 
-# ------------------------------------------------------------------------------------------------ visible text (F5)
+# ------------------------------------------------------------------------------------------------ visible text
 BANNED = [r"success criterion", r"accepted iff", r"acceptance", r"margin", r"reference (recipe|method|score|value)",
           r"\bthreshold of\b", r"\bexpected (score|LAS|PQ|SDR)"]
 

@@ -22,9 +22,8 @@ loop that produces and validates skills/operators.
 3. Use `load_train` and the adapter's visible `score_dev` (or its documented
    visible substitute) to compare one frozen route with a named baseline. Keep
    tool/checkpoint/preprocessing provenance in the run receipt.
-4. Use `scienceclaw_bench(operation=smoke)` only for an offline TOY wiring
-   check. Immediately pass its returned `runId` to `operation=report` when a
-   smoke report is needed. A smoke success does not support a FoR score claim.
+4. Use `scienceclaw_bench(operation=report)` with the `runId` of an existing
+   server-side run to inspect its report.
 5. Keep the benchmark engine and gateway separate: the gateway routes and
    records; the Python package owns typed graphs, adapters, replay, scoring,
    self-evolution, and receipts. Read only the relevant reference below.

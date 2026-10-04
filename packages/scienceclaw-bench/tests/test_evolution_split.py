@@ -78,7 +78,7 @@ def test_registered_node_repaired_in_delta_is_included():
     fix = Action("modify_node", {"id": "reg", "patch": {"code": "def run(inputs, config):\n    return {'o': 1}\n"}})
     control, comps = split_edits(_inst([fix], _g_plus(), _g_plus()), _known_program())
     assert control == []
-    assert comps == [{"reg"}]      # the repaired registered node is a candidate; unchanged a/b/c/d are not (F7)
+    assert comps == [{"reg"}]      # the repaired registered node is a candidate; unchanged a/b/c/d are not
 
 
 def test_unregistered_operator_origin_counts_as_generated():
@@ -116,7 +116,7 @@ def test_apply_structural_tracks_graph_before():
     assert set(g2.nodes) == {"a"}
 
 
-# ---------------------------------------------------------------------------------------------- F7: Pi_exec follows delta
+# ---------------------------------------------------------------------------------------------- Pi_exec follows delta
 def test_unchanged_unrelated_exec_nodes_are_not_operator_candidates():
     """delta only re-configures c: the unrelated loader/formatter-like blocks (a-b, d) must not become operators."""
     fix = Action("modify_node", {"id": "c", "patch": {"config": {"k": 1}}})
@@ -137,7 +137,7 @@ def test_no_e_minus_keeps_every_generated_exec_node():
     assert det.components == [{"a", "b"}, {"c"}, {"d"}] and det.excluded == {"reg"}
 
 
-# ---------------------------------------------------------------------------------------------- F2: convex CC_Gamma
+# ---------------------------------------------------------------------------------------------- convex CC_Gamma
 def _nonconvex_g() -> WorkflowGraph:
     """A(code) -> T(tool featurize) -> B(code), A.labels -> B.labels, B -> submit."""
     nodes = {

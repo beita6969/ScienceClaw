@@ -1,12 +1,12 @@
-"""TOY: a synthetic, fully offline TaskAdapter for exercising the whole ScienceClaw pipeline.
+"""Synthetic regression TaskAdapter used as a deterministic fixture for the pipeline tests.
 
-Task (discipline code ``"TOY"``, family ``"Engineering & computing"``): noisy 2-D regression
+Task (discipline code ``"SYN"``, family ``"Engineering & computing"``): noisy 2-D regression
 
     y = sin(x1) + 0.5 * x2**2 + eps,   eps ~ N(0, NOISE_SD**2)
 
 * IID pool (splits ``src``/``val``/``id``): x1, x2 ~ U[-2, 2].
-* OOD pool (split ``ood``): a *shifted x-range* (x1 ~ U[1, 4], x2 ~ U[0.5, 3]) — same "discipline",
-  different "dataset", mirroring the paper's same-discipline cross-dataset OOD split.
+* OOD pool (split ``ood``): a *shifted x-range* (x1 ~ U[1, 4], x2 ~ U[0.5, 3]), the same discipline with a
+  different dataset, mirroring the same-discipline cross-dataset OOD split of the benchmark.
 
 D_E tools (run in the parent, return visible data only):
 
@@ -29,31 +29,25 @@ D_V:
 * dev evaluator (visible): RMSE over the dev rows (plus the same statistic for the reference baseline).
 
 ``EvalResult.details`` carries ``reference``, ``norm_score`` (= reference/RMSE clipped to [0, 10]) and
-``pooled_payload`` = {"y_true", "y_pred", "y_ref"} over the hidden rows. :meth:`ToyAdapter.pooled_metric`
+``pooled_payload`` = {"y_true", "y_pred", "y_ref"} over the hidden rows. :meth:`SyntheticAdapter.pooled_metric`
 computes the pooled RMSE over all episodes; an invalid submission (``y_pred`` is None) is scored with the
 reference-baseline predictions ``y_ref`` (i.e. it earns no credit over the baseline).
-
-The module also exports :func:`make_toy_plan` (a ready SplitPlan with only TOY, for tests) and
-:func:`scripted_toy_responder` (a deterministic scripted *fake policy* used only by ``cli smoke`` and tests
-to drive the pipeline without any network access; it is test scaffolding, not part of the method).
 """
 from __future__ import annotations
 
 import hashlib
-import json
-import re
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
-from ...core.schema import PortSchema
-from ...core.trace import Trace
-from ..task import Budget, ConstraintSpec, EvalResult, Episode, ToolSpec
+from scienceclaw.core.schema import PortSchema
+from scienceclaw.core.trace import Trace
+from scienceclaw.bench.task import Budget, ConstraintSpec, EvalResult, Episode, ToolSpec
 
-TOY_CODE = "TOY"
-TOY_FAMILY = "Engineering & computing"
-TOY_NAME = "toy-sin-regression"
-TOY_VERSION = "toy-v1"
+SYN_CODE = "SYN"
+SYN_FAMILY = "Engineering & computing"
+SYN_NAME = "synthetic-sin-regression"
+SYN_VERSION = "synthetic-v1"
 
 NOISE_SD = 0.1
 IID_RANGE: tuple[tuple[float, float], tuple[float, float]] = ((-2.0, 2.0), (-2.0, 2.0))
@@ -64,7 +58,7 @@ NORM_CLIP = 10.0
 _POOL_OF_SPLIT = {"src": "iid", "val": "iid", "id": "iid", "ood": "ood"}
 
 
-def toy_truth(X: np.ndarray) -> np.ndarray:
+def synthetic_truth(X: np.ndarray) -> np.ndarray:
     """Noise-free response f(x) = sin(x1) + 0.5*x2^2 (used by tests as the 'perfect' predictor)."""
     X = np.asarray(X, dtype=float)
     return np.sin(X[:, 0]) + 0.5 * X[:, 1] ** 2
@@ -92,12 +86,12 @@ def _as_float_vector(y: Any) -> tuple[np.ndarray | None, str]:
     return arr, ""
 
 
-class ToyAdapter:
+class SyntheticAdapter:
     """Synthetic regression adapter implementing the ``bench.task.TaskAdapter`` protocol."""
 
-    discipline = TOY_CODE
-    name = TOY_NAME
-    family = TOY_FAMILY
+    discipline = SYN_CODE
+    name = SYN_NAME
+    family = SYN_FAMILY
     metric = "RMSE"
     direction = "min"
     task_type = "regression"
@@ -105,7 +99,7 @@ class ToyAdapter:
     def __init__(self, n_train: int = 48, n_dev: int = 8, noise_sd: float = NOISE_SD,
                  budget: Budget | None = None) -> None:
         if n_train < 2 or n_dev < 1:
-            raise ValueError("ToyAdapter needs n_train >= 2 and n_dev >= 1")
+            raise ValueError("SyntheticAdapter needs n_train >= 2 and n_dev >= 1")
         self.n_train = int(n_train)
         self.n_dev = int(n_dev)
         self.noise_sd = float(noise_sd)
@@ -117,7 +111,7 @@ class ToyAdapter:
 
     def build_episodes(self, split: str, n: int, seed: int, items_per_episode: int = 16) -> list[Episode]:
         if split not in _POOL_OF_SPLIT:
-            raise ValueError(f"ToyAdapter builds splits {tuple(_POOL_OF_SPLIT)}; 'rep' episodes are copies of "
+            raise ValueError(f"SyntheticAdapter builds splits {tuple(_POOL_OF_SPLIT)}; 'rep' episodes are copies of "
                              f"src episodes made by SplitPlan (got {split!r})")
         if items_per_episode < 1:
             raise ValueError("items_per_episode must be >= 1")
@@ -135,7 +129,7 @@ class ToyAdapter:
             if pred is None:
                 pred = p.get("y_ref")
             if pred is None or len(pred) != len(t):
-                raise ValueError("TOY pooled payload needs y_true and y_pred (or y_ref) of equal length")
+                raise ValueError("SYN pooled payload needs y_true and y_pred (or y_ref) of equal length")
             y_true.extend(float(v) for v in t)
             y_pred.extend(float(v) for v in pred)
         if not y_true:
@@ -145,12 +139,12 @@ class ToyAdapter:
     # ------------------------------------------------------------ episodes
     def _make_episode(self, split: str, k: int, seed: int, n_eval: int) -> Episode:
         pool = _POOL_OF_SPLIT[split]
-        ep_seed = _derive_seed(TOY_VERSION, seed, split, k)
+        ep_seed = _derive_seed(SYN_VERSION, seed, split, k)
         rng = np.random.default_rng(ep_seed)
         (lo1, hi1), (lo2, hi2) = IID_RANGE if pool == "iid" else OOD_RANGE
         n_tot = self.n_train + self.n_dev + n_eval
         X = np.column_stack([rng.uniform(lo1, hi1, n_tot), rng.uniform(lo2, hi2, n_tot)])
-        y = toy_truth(X) + rng.normal(0.0, self.noise_sd, n_tot)
+        y = synthetic_truth(X) + rng.normal(0.0, self.noise_sd, n_tot)
 
         tr = slice(0, self.n_train)
         dv = slice(self.n_train, self.n_train + self.n_dev)
@@ -168,9 +162,9 @@ class ToyAdapter:
 
         train_mean = float(y_train.mean())
         tag = f"{ep_seed & 0xFFFFFF:06x}"
-        ep_id = f"TOY-{split}-{k:02d}-{tag}"
-        item_ids = [f"TOY:{pool}:{split}:{k}:{tag}:e{i}" for i in range(n_eval)]
-        dev_ids = [f"TOY:{pool}:{split}:{k}:{tag}:d{i}" for i in range(self.n_dev)]
+        ep_id = f"SYN-{split}-{k:02d}-{tag}"
+        item_ids = [f"SYN:{pool}:{split}:{k}:{tag}:e{i}" for i in range(n_eval)]
+        dev_ids = [f"SYN:{pool}:{split}:{k}:{tag}:d{i}" for i in range(self.n_dev)]
 
         def load_train(inputs: dict, config: dict) -> dict:
             return {"X_train": X_train.copy(), "y_train": y_train.copy()}
@@ -250,11 +244,11 @@ class ToyAdapter:
             "by the tools. Deliverable: a 1-D float array y with one prediction per row of X_eval, in the same order."
         )
         return Episode(
-            id=ep_id, discipline=TOY_CODE, family=TOY_FAMILY, split=split, task_type=self.task_type,
+            id=ep_id, discipline=SYN_CODE, family=SYN_FAMILY, split=split, task_type=self.task_type,
             objective=objective, required_output=PortSchema("array", ("n_items",), dtype="float",
                                                             description="one prediction per row of X_eval"),
             tools=tools, constraints=constraints, budget=self.budget or Budget(),
-            lineage={"dataset": "synthetic: y = sin(x1) + 0.5*x2^2 + N(0, sd^2)", "version": TOY_VERSION,
+            lineage={"dataset": "synthetic: y = sin(x1) + 0.5*x2^2 + N(0, sd^2)", "version": SYN_VERSION,
                      "pool": pool, "x_range": [list(r) for r in (IID_RANGE if pool == "iid" else OOD_RANGE)],
                      "noise_sd": self.noise_sd, "seed": ep_seed, "split_seed": seed, "index": k,
                      "item_ids": item_ids, "dev_item_ids": dev_ids, "n_train": self.n_train,
@@ -265,159 +259,3 @@ class ToyAdapter:
             metric=self.metric, direction=self.direction, n_items=n_items,
             _evaluate=evaluate, _dev_evaluate=dev_evaluate,
         )
-
-
-Adapter = ToyAdapter   # registry convention: modules export `Adapter`
-
-
-def make_toy_plan(rounds: int = 2, n_val: int = 1, n_id: int = 1, n_ood: int = 1, items_per_episode: int = 8,
-                  seed: int = 0, **adapter_kwargs: Any):
-    """Build a SplitPlan containing only the TOY discipline (convenience for tests and the smoke run)."""
-    from ...config import BenchConfig
-    from ..splits import SplitPlan
-
-    cfg = BenchConfig(disciplines=[TOY_CODE], items_per_episode=items_per_episode, rounds=rounds, n_val=n_val,
-                      n_id=n_id, n_ood=n_ood, seed=seed)
-    return SplitPlan.build(cfg, {TOY_CODE: ToyAdapter(**adapter_kwargs)})
-
-
-# --------------------------------------------------------------------------------------------------------------
-# Scripted fake policy (test scaffolding for `cli smoke`; never used in real runs)
-# --------------------------------------------------------------------------------------------------------------
-_TRIVIAL_CODE = """import numpy as np
-
-def run(inputs, config):
-    y = np.asarray(inputs["y_train"], dtype=float)
-    X = np.asarray(inputs["X_eval"], dtype=float)
-    return {"y_pred": np.full(X.shape[0], float(y.mean()))}
-"""
-
-_GOOD_CODE = """import numpy as np
-
-def _features(X):
-    x1, x2 = X[:, 0], X[:, 1]
-    return np.column_stack([np.ones(len(X)), x1, x1 ** 2, x1 ** 3, x2, x2 ** 2, x1 * x2])
-
-def run(inputs, config):
-    Xt = np.asarray(inputs["X_train"], dtype=float)
-    yt = np.asarray(inputs["y_train"], dtype=float)
-    Xe = np.asarray(inputs["X_eval"], dtype=float)
-    A = _features(Xt)
-    w = np.linalg.solve(A.T @ A + 1e-6 * np.eye(A.shape[1]), A.T @ yt)
-    return {"y_pred": _features(Xe) @ w}
-"""
-
-_REF_RE = re.compile(r"\b(?:skill|op):[A-Za-z0-9_\-\.]*[A-Za-z0-9_\-]")
-_NODE_RE = re.compile(r"\[([A-Za-z0-9_\-]+)\] kind=")
-_EDGE_RE = re.compile(r"([A-Za-z0-9_\-]+)\.([A-Za-z0-9_]+) -> ([A-Za-z0-9_\-]+)\.([A-Za-z0-9_]+)")
-
-
-def _msg_text(m: dict) -> str:
-    c = m.get("content", "")
-    if isinstance(c, list):
-        return "\n".join(str(p.get("text", "")) if isinstance(p, dict) else str(p) for p in c)
-    return str(c)
-
-
-def _toy_node(nid: str, kind: str, **kw: Any) -> dict:
-    return {"id": nid, "kind": kind, **kw}
-
-
-_DEV_RE = re.compile(r'"dev_rmse":\s*([-+0-9.eE]+)')
-REPAIR_RULES = ("always", "library_only", "library_or_hash")
-_FIT_INPUTS = {"X_train": {"type": "array", "shape": ["n", 2]}, "y_train": {"type": "array", "shape": ["n"]},
-               "X_eval": {"type": "array", "shape": ["m", 2]}}
-_FIT_OUTPUTS = {"y_pred": {"type": "array", "shape": ["m"], "dtype": "float"}}
-_FIT_WIRING = (("tr", "X_train", "X_train"), ("tr", "y_train", "y_train"), ("ev", "X_eval", "X_eval"))
-
-
-def _edge(src: str, src_port: str, dst: str, dst_port: str) -> dict:
-    return {"type": "add_edge", "edge": {"src": src, "src_port": src_port, "dst": dst, "dst_port": dst_port}}
-
-
-def scripted_toy_responder(repair: str = "library_or_hash") -> Callable[[str, list[dict]], str]:
-    """Return a deterministic ``(role, messages) -> str`` responder for ``llm.fake.FakeLLM``.
-
-    policy role: reads the current canvas from the most recent message that contains one (the text after
-    ``## Current canvas``: node headers ``[id] kind=...`` and ``edges:`` lines, as printed by
-    ``WorkflowGraph.render_compact``) and emits the next missing canvas edit of a fixed script: load tools ->
-    a *trivial* mean predictor ``fit`` -> submit (a replay-verified failure: it does not beat the reference) ->
-    [repair by replacing the model node: add a polynomial least-squares code node ``fit2``, wire its inputs,
-    remove ``fit``, wire ``fit2`` to the submit node (a replay-verified success whose window holds both
-    control edits and an executable edit)] -> finish. The repair needs 14 canvas edits, so the episode budget
-    must allow >= 14 steps (``cli smoke`` uses 16). It cites every
-    ``skill:``/``op:`` reference found in the prompt in ``uses`` (so the source-replay Use check can observe
-    evolved components). Whether the repair happens is set by ``repair``:
-
-    * ``"always"``: always repair (every episode is solved, independent of the program);
-    * ``"library_only"``: repair iff the prompt cites a library component (Skill/Operator);
-    * ``"library_or_hash"`` (default): repair iff a library component is cited, or — emulating an LLM that
-      only sometimes finds the fix on its own — iff a deterministic hash of the visible dev score of the
-      trivial predictor is even (~50% of episodes). This makes evolution observable: A_0 solves only some
-      episodes, a promoted program with a retrieved component solves all of them.
-
-    patch role (Skill/Operator documentation): a generic, instance-independent JSON document.
-    executor role: ``"0"``.
-    """
-    if repair not in REPAIR_RULES:
-        raise ValueError(f"repair must be one of {REPAIR_RULES}")
-
-    def respond(role: str, messages: list[dict]) -> str:
-        if role == "patch":
-            return json.dumps({
-                "title": "Fit a flexible model on the labelled data before submitting",
-                "body": "When a baseline prediction does not beat the reference, replace it with a model that "
-                        "can represent non-linear structure in the features, check the visible dev score, and "
-                        "keep the output aligned with the evaluation rows.",
-                "tags": ["regression", "tabular"],
-                "name": "fit_and_predict", "description": "Fits a regression model and predicts the eval rows.",
-                "skills": [{"title": "Fit a flexible model on the labelled data before submitting",
-                            "body": "Replace a baseline that does not beat the reference with a model that can "
-                                    "represent non-linear feature effects; verify with the dev score.",
-                            "tags": ["regression", "tabular"]}],
-            })
-        if role != "policy":
-            return "0"
-        texts = [_msg_text(m) for m in messages]
-        latest = next((t for t in reversed(texts) if "(empty canvas)" in t or " kind=" in t), "")
-        canvas = latest[latest.rfind("## Current canvas"):] if "## Current canvas" in latest else latest
-        nodes = set(_NODE_RE.findall(canvas))
-        edges = {(a, b, c, d) for a, b, c, d in _EDGE_RE.findall(canvas)}
-        refs = sorted({m.group(0) for t in texts for m in _REF_RE.finditer(t)})
-        repaired = "np.linalg.solve" in canvas
-        dev = _DEV_RE.findall(latest)
-        if repair == "always" or refs:
-            do_repair = True
-        elif repair == "library_only" or not dev:
-            do_repair = False
-        else:
-            do_repair = int(hashlib.sha256(dev[-1].encode()).hexdigest(), 16) % 2 == 0
-        repaired = repaired or "fit2" in nodes
-        build: list[tuple[bool, dict]] = [
-            ("tr" in nodes, {"type": "add_node", "node": _toy_node("tr", "tool", ref="load_train")}),
-            ("ev" in nodes, {"type": "add_node", "node": _toy_node("ev", "tool", ref="load_eval_inputs")}),
-            ("fit" in nodes, {"type": "add_node", "node": _toy_node(
-                "fit", "code", code=_TRIVIAL_CODE, inputs=_FIT_INPUTS, outputs=_FIT_OUTPUTS)}),
-            *[((src, sp, "fit", dp) in edges, _edge(src, sp, "fit", dp)) for src, sp, dp in _FIT_WIRING],
-            ("out" in nodes, {"type": "add_node", "node": _toy_node("out", "submit")}),
-            (("fit", "y_pred", "out", "y") in edges, _edge("fit", "y_pred", "out", "y")),
-        ]
-        # repair = replace the model node: a new code node (executable edit) plus re-wiring and removal of the
-        # old node (control edits). The intermediate canvases never feed the submit node, so the next replay
-        # happens only when fit2 is wired to it -> delta(e-, e+) holds both control and executable edits.
-        fix: list[tuple[bool, dict]] = [
-            ("fit2" in nodes, {"type": "add_node", "node": _toy_node(
-                "fit2", "code", code=_GOOD_CODE, inputs=_FIT_INPUTS, outputs=_FIT_OUTPUTS)}),
-            *[((src, sp, "fit2", dp) in edges, _edge(src, sp, "fit2", dp)) for src, sp, dp in _FIT_WIRING],
-            ("fit" not in nodes, {"type": "remove_node", "id": "fit"}),
-            (("fit2", "y_pred", "out", "y") in edges, _edge("fit2", "y_pred", "out", "y")),
-        ]
-        if repaired:
-            script = fix
-        else:
-            script = build + ([] if not do_repair else fix)
-        action = next((a for done, a in script if not done), {"type": "finish"})
-        return json.dumps({"thought": "Next canvas edit of the scripted smoke policy.", "action": action,
-                           "uses": refs})
-
-    return respond

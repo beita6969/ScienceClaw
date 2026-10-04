@@ -8,7 +8,7 @@ import pytest
 from scienceclaw.bench.splits import (LineageOverlapError, SplitPlan, discipline_order, load_adapters,
                                       manifest_hash, split_seed)
 from scienceclaw.bench.task import Episode
-from scienceclaw.bench.tasks.toy import ToyAdapter
+from synthetic_adapter import SyntheticAdapter
 from scienceclaw.config import BenchConfig
 from scienceclaw.core.schema import PortSchema
 
@@ -48,18 +48,18 @@ def _cfg(**kw):
 
 
 def _adapters():
-    return {"TOY": ToyAdapter(), "FoR49": FakeAdapter("FoR49", "Engineering & computing"),
+    return {"SYN": SyntheticAdapter(), "FoR49": FakeAdapter("FoR49", "Engineering & computing"),
             "FoR31": FakeAdapter("FoR31")}
 
 
 def test_order_and_seeds():
-    assert discipline_order({"TOY", "FoR49", "FoR31", "ZZZ"}) == ["FoR31", "FoR49", "TOY", "ZZZ"]
+    assert discipline_order({"SYN", "FoR49", "FoR31", "ZZZ"}) == ["FoR31", "FoR49", "SYN", "ZZZ"]
     s = {split_seed(1, d, sp) for d in ("FoR31", "FoR49") for sp in ("src", "val", "id", "ood")}
     assert len(s) == 8
     assert split_seed(1, "FoR31", "src") == split_seed(1, "FoR31", "src")
     ads = _adapters()
     plan = SplitPlan.build(_cfg(), ads)
-    assert plan.order == ["FoR31", "FoR49", "TOY"]
+    assert plan.order == ["FoR31", "FoR49", "SYN"]
     seeds = [c[2] for c in ads["FoR31"].calls]
     assert len(set(seeds)) == 4 and ads["FoR31"].calls[0][:2] == ("src", 3)
     assert [c[1] for c in ads["FoR31"].calls] == [3, 1, 2, 2]
@@ -104,7 +104,7 @@ def test_source_stream_round_major_and_rep():
     plan = SplitPlan.build(_cfg(), _adapters())
     stream = plan.source_stream()
     assert [r for r, _ in stream] == [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    assert [ep.discipline for _, ep in stream[:3]] == ["FoR31", "FoR49", "TOY"]
+    assert [ep.discipline for _, ep in stream[:3]] == ["FoR31", "FoR49", "SYN"]
     assert all(ep.split == "src" for _, ep in stream)
     assert plan.rep_until(0) == []
     rep2 = plan.rep_until(2)
@@ -119,8 +119,8 @@ def test_source_stream_round_major_and_rep():
 
 
 def test_restriction_to_listed_disciplines():
-    plan = SplitPlan.build(_cfg(disciplines=["TOY"]), _adapters())
-    assert plan.order == ["TOY"]
+    plan = SplitPlan.build(_cfg(disciplines=["SYN"]), _adapters())
+    assert plan.order == ["SYN"]
     with pytest.raises(KeyError):
         SplitPlan.build(_cfg(disciplines=["FoR52"]), _adapters())
 
@@ -130,7 +130,7 @@ def test_manifest_deterministic_hash_and_save(tmp_path):
     m2 = SplitPlan.build(_cfg(), _adapters()).manifest()
     assert m1 == m2 and m1["sha256"] == manifest_hash(m1) and len(m1["sha256"]) == 64
     assert SplitPlan.build(_cfg(seed=124), _adapters()).manifest()["sha256"] != m1["sha256"]
-    assert m1["splits"]["src"]["TOY"][0]["round"] == 1
+    assert m1["splits"]["src"]["SYN"][0]["round"] == 1
     assert set(m1["splits"]) == {"src", "val", "id", "ood"}
     assert len(m1["rep"]["episodes"]) == 9
     plan = SplitPlan.build(_cfg(), _adapters())
@@ -140,7 +140,7 @@ def test_manifest_deterministic_hash_and_save(tmp_path):
     assert loaded == m1
     plan.verify_against(loaded)
     tampered = json.loads(p.read_text())
-    tampered["splits"]["id"]["TOY"][0]["id"] = "X"
+    tampered["splits"]["id"]["SYN"][0]["id"] = "X"
     p.write_text(json.dumps(tampered))
     with pytest.raises(ValueError, match="sha256"):
         SplitPlan.load_manifest(p)
@@ -148,8 +148,7 @@ def test_manifest_deterministic_hash_and_save(tmp_path):
         SplitPlan.build(_cfg(seed=5), _adapters()).verify_against(loaded)
 
 
-def test_load_adapters_toy_and_strict():
-    ads = load_adapters(BenchConfig(disciplines=["TOY"]))
-    assert list(ads) == ["TOY"]
-    with pytest.raises(RuntimeError):
+def test_load_adapters_strict():
+    with pytest.raises(RuntimeError, match="unknown discipline code"):
         load_adapters(BenchConfig(disciplines=["NOPE"]))
+    assert load_adapters(BenchConfig(disciplines=["NOPE"]), strict=False) == {}

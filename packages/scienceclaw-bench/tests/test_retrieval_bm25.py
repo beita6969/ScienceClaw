@@ -135,7 +135,7 @@ def test_ranking_independent_of_hash_seed() -> None:
     assert len(outs) == 1
 
 
-# ------------------------------------------------------------------------------------ relevance floor (cost M4)
+# ------------------------------------------------------------------------------------ relevance floor
 def _mol_episode(eid: str = "mol") -> SimpleNamespace:
     """A different discipline / task type than the toy regression episode."""
     return SimpleNamespace(id=eid, discipline="FoR34", task_type="binary_classification",

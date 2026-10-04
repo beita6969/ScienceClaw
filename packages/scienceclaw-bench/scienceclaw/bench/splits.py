@@ -2,8 +2,8 @@
 
 Protocol (DESIGN §7):
 
-* Disciplines are processed in a fixed order: registry order (FoR30 … FoR52), then ``TOY``, then any other
-  adapter codes sorted alphabetically.
+* Disciplines are processed in a fixed order: registry order (FoR30 … FoR52), then any other adapter codes
+  sorted alphabetically.
 * Per discipline the adapter builds ``rounds`` source episodes, ``n_val`` validation, ``n_id`` held-out ID and
   ``n_ood`` held-out OOD episodes. Each (discipline, split) gets its own deterministic seed
   :func:`split_seed` = first 32 bits of sha256(f"{seed}|{discipline}|{split}").
@@ -38,7 +38,6 @@ from .task import Episode, TaskAdapter
 
 BUILT_SPLITS = ("src", "val", "id", "ood")
 MANIFEST_SCHEMA = "scienceclaw.splits/v1"
-TOY_CODE = "TOY"
 
 
 class LineageOverlapError(ValueError):
@@ -51,11 +50,10 @@ def split_seed(seed: int, discipline: str, split: str) -> int:
 
 
 def discipline_order(codes: list[str] | set[str] | dict) -> list[str]:
-    """Registry order (FoR30..FoR52), then TOY, then remaining codes sorted."""
+    """Registry order (FoR30..FoR52), then remaining codes sorted."""
     codes = set(codes)
     reg = [d.code for d in DISCIPLINES if d.code in codes]
-    rest = sorted(codes - set(reg) - {TOY_CODE})
-    return reg + ([TOY_CODE] if TOY_CODE in codes else []) + rest
+    return reg + sorted(codes - set(reg))
 
 
 def _json_default(o: Any) -> Any:
@@ -318,7 +316,7 @@ def _instantiate(module: str, data_root: str | None) -> TaskAdapter:
 
 
 def adapter_status(bench_cfg: Any = None) -> list[dict]:
-    """One row per registry discipline (+ TOY): module present?, data available?, reason."""
+    """One row per registry discipline: module present?, data available?, reason."""
     root = getattr(bench_cfg, "data_root", None) if bench_cfg is not None else None
     rows = []
     for d in DISCIPLINES:
@@ -342,18 +340,15 @@ def adapter_status(bench_cfg: Any = None) -> list[dict]:
             ok, why = False, f"available() raised {type(ex).__name__}: {ex}"
         row["available"], row["reason"] = bool(ok), str(why)
         rows.append(row)
-    rows.append({"code": TOY_CODE, "family": "Engineering & computing", "dataset": "synthetic regression (offline)",
-                 "metric": "RMSE", "direction": "min", "module": "toy", "implemented": True, "available": True,
-                 "reason": "synthetic"})
     return rows
 
 
 def load_adapters(bench_cfg: Any, strict: bool | None = None) -> dict[str, TaskAdapter]:
     """Instantiate the adapters a run needs.
 
-    ``bench_cfg.disciplines`` non-empty: exactly those codes (``"TOY"`` allowed); a missing/unavailable adapter
-    raises (``strict`` defaults to True). Empty: every available registry discipline (TOY is never added
-    implicitly); unavailable ones are skipped (``strict`` defaults to False).
+    ``bench_cfg.disciplines`` non-empty: exactly those codes; a missing/unavailable adapter raises (``strict``
+    defaults to True). Empty: every available registry discipline; unavailable ones are skipped (``strict``
+    defaults to False).
     """
     wanted = list(getattr(bench_cfg, "disciplines", None) or [])
     strict = bool(wanted) if strict is None else strict
@@ -362,10 +357,6 @@ def load_adapters(bench_cfg: Any, strict: bool | None = None) -> dict[str, TaskA
     out: dict[str, TaskAdapter] = {}
     problems: list[str] = []
     for code in codes:
-        if code == TOY_CODE:
-            from .tasks.toy import ToyAdapter
-            out[code] = ToyAdapter()
-            continue
         if code not in BY_CODE:
             problems.append(f"{code}: unknown discipline code")
             continue

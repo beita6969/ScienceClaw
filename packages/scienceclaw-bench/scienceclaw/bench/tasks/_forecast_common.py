@@ -10,7 +10,7 @@ Private to these five modules (the leading underscore keeps it out of the regist
 * **prefix-stable episode draws** (:func:`draw_episodes`): the sub-pool is ordered once per ``(split, seed)``
   and episode ``e`` takes block ``e`` of that order, so building ``n`` or ``n + 1`` episodes yields the same
   first ``n``. Optional group balancing (round-robin over e.g. buildings) or distinct groups per episode
-  (e.g. one item per monitoring site). Optional **conflict rule** (LEAK-4): a predicate that no two items of one
+  (e.g. one item per monitoring site). Optional **conflict rule**: a predicate that no two items of one
   episode may satisfy (e.g. initialisation times closer than a minimum spacing, so that one item's input cannot
   serve as a near-future observation of another item's target), enforced while drawing and re-checked on the result;
   ``lanes=True`` draws every episode from a single pre-built group ("lane") of the pool. Only ``src`` may reuse
@@ -178,7 +178,7 @@ def draw_episodes(pool: Sequence[PoolItem], n: int, ipe: int, rng: np.random.Gen
     Returns ``(episodes, reused)``; ``reused`` is True when ``allow_reuse`` had to recycle items (never within
     one episode). Without ``allow_reuse`` an over-request raises :class:`PoolExhausted`.
 
-    ``conflict(a, b)`` (LEAK-4) marks item pairs that must never share an episode; the greedy draw skips clashing
+    ``conflict(a, b)`` marks item pairs that must never share an episode; the greedy draw skips clashing
     items and every returned episode is re-checked (a violation raises ``ValueError``). ``lanes=True`` draws each
     episode from one group of the pool (a "lane": the adapter pre-arranges items so that a whole lane is
     conflict-free; greedy selection cannot find a perfect packing in a tight pool). Lanes larger than ``ipe``
@@ -294,7 +294,7 @@ def finish_eval(*, primary: float | None, reference: float, direction: str, marg
     """Uniform EvalResult with the DESIGN §8.6 details keys (h/z are filled by Episode.evaluate).
 
     A result without a finite primary is a *failure*: it pools the reference payload (``failed=True``) instead of
-    dropping out of the pooled metric (LEAK-5), so every held-out episode contributes exactly one payload.
+    dropping out of the pooled metric, so every held-out episode contributes exactly one payload.
     """
     ok_primary = primary is not None and math.isfinite(primary)
     details = {"reference": float(reference), "norm_score": norm_score(primary if ok_primary else None, reference,
@@ -314,7 +314,7 @@ def finish_eval(*, primary: float | None, reference: float, direction: str, marg
 def invalid_eval(msg: str, *, reference: float, direction: str, margin: float, reference_payload: Any,
                  metrics: dict[str, float] | None = None) -> EvalResult:
     """EvalResult for a malformed output: no primary, not accepted, norm_score 0, ``failed=True`` and the *reference*
-    payload as ``pooled_payload`` (a failed episode pools at reference level, never better; LEAK-5)."""
+    payload as ``pooled_payload`` (a failed episode pools at reference level, never better)."""
     return finish_eval(primary=None, reference=reference, direction=direction, margin=margin,
                        metrics=dict(metrics or {}), payload=None, reference_payload=reference_payload,
                        extra={"invalid": msg})

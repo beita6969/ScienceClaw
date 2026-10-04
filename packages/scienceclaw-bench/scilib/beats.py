@@ -3,7 +3,7 @@
 The wrapper exposes frozen audio embeddings only.  It accepts raw waveform
 values at BEATs' native 16 kHz rate, never resamples or reads task targets, and
 loads both the checkpoint and the upstream ``BEATs.py`` from explicit local
-paths.  It is a component smoke interface; task adapters must choose pooling
+paths.  It is a component interface; task adapters must choose pooling
 and any split-specific protocol before formal use.
 """
 from __future__ import annotations

@@ -2,7 +2,7 @@
 
 Every phase of a run (evolve, each resume segment, evaluate, family transfer, report) writes a *provenance receipt*
 so that any number in a report can be traced to the exact code, configuration, data and model settings that produced
-it (review findings m3+m4 and M6):
+it:
 
 * ``code``     git commit, dirty flag and a sha256 of the working-tree diff (tracked changes + untracked files),
                python / platform and the versions of the packages the pipeline imports;

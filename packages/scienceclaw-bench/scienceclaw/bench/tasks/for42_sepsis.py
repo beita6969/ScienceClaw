@@ -22,9 +22,9 @@ Reference baseline
     Logistic regression on trivial causal features (last-observation-carried-forward HR, O2Sat, Temp, SBP, MAP,
     Resp, plus Age, Gender, ICULOS, HospAdmTime; training-median imputation, z-scoring), class-balanced, fitted
     on the visible training stays; decision threshold chosen on the visible training stays to maximise normalized
-    utility. Acceptance: primary > max(reference, ``ACCEPT_FLOOR``) + ``ACCEPT_MARGIN`` (LEAK-1: an episode whose
+    utility. Acceptance: primary > max(reference, ``ACCEPT_FLOOR``) + ``ACCEPT_MARGIN`` (an episode whose
     reference utility is negative must not be passed by the all-zero output).
-Causality (LEAK-1)
+Causality
     The stays are given whole, so "the prediction for hour t may use rows 0..t only" is a protocol rule that the
     adapter checks in two ways. (1) Visible constraint ``not_positional_only``: y must not be a function of the
     position in the stay alone (hour index or distance to the end of the record) - this rejects the length-only
@@ -83,7 +83,7 @@ MAX_U_TP, MIN_U_FN, U_FP, U_TN = 1.0, -2.0, -0.05, 0.0
 POOL_SIZES = {"id": (8, 56), "val": (4, 28), "src": (16, 112), "dev": (8, 72)}   # (septic, non-septic) stays
 OOD_POOL = (8, 56)
 ACCEPT_MARGIN = 0.05          # absolute normalized-utility points above the reference
-ACCEPT_FLOOR = 0.0            # the reference used for acceptance is max(reference, ACCEPT_FLOOR) (LEAK-1)
+ACCEPT_FLOOR = 0.0            # the reference used for acceptance is max(reference, ACCEPT_FLOOR)
 CAUSAL_TOL = 0.01             # truncation probe: max fraction of prefix hours whose prediction may change
 PROBE_KEEP = (0.4, 0.8)       # truncation probe: each stay keeps a hidden fraction in this range of its hours
 PROBE_MIN_ROWS = 4            # ... and at least this many rows (stays are never cut to nothing)
@@ -179,7 +179,7 @@ def normalized_utility(obs: float, best: float, inaction: float) -> float | None
 
 
 # ----------------------------------------------------------------------------------------------------------------
-# causality checks (LEAK-1)
+# causality checks
 # ----------------------------------------------------------------------------------------------------------------
 def positional_only(preds: list[np.ndarray], min_stays: int = POSITION_MIN_STAYS) -> tuple[bool, str]:
     """True iff ``preds`` is a function of the position within the stay alone, i.e. carries no patient information.

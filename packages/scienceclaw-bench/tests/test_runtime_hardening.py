@@ -1,4 +1,4 @@
-"""Runtime hardening (review findings RT-2/4/5/6/7/8/11): transient taint, llm template / cost guards, number
+"""Runtime hardening: transient taint, llm template / cost guards, number
 parsing, node deadlines, the tool lock, summary guards and contract type / unit checks."""
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def ep():
     return make_episode(Counter(), Counter())
 
 
-# ----------------------------------------------------------------------------- RT-2
+# ----------------------------------------------------------------------------- transient taint
 class FlakyLLM:
     """Item 1 fails in the first call round, every item succeeds afterwards."""
 
@@ -86,7 +86,7 @@ def test_descendants_of_a_transient_node_are_not_cached(tmp_path) -> None:
     assert all(r.cached for r in records.values()) and llm.rounds == 2
 
 
-# ----------------------------------------------------------------------------- RT-4
+# ----------------------------------------------------------------------------- llm template checks
 def test_template_fields_and_accessors() -> None:
     assert template_fields("Rate {text} in {unit}; raw={item} {text}") == (["text", "unit", "item"], [])
     assert template_fields('Return {"label": ...} for {{literal}} {v:.2f}') == (["v"], [])
@@ -141,7 +141,7 @@ def test_parse_failure_examples_are_reported(ep, tmp_path) -> None:
     assert "parse_failure_examples" in format_summary(s)
 
 
-# ----------------------------------------------------------------------------- RT-5
+# ----------------------------------------------------------------------------- number parsing
 @pytest.mark.parametrize("text,expected", [
     ("3", 3.0), ("-3.5", -3.5), ("−3.5", -3.5), ("1,234.5", 1234.5), ("1,234,567", 1234567.0),
     ("The answer is 4", 4.0), ("1. The answer is 4", 4.0), ("Answer: 3.0.", 3.0), ("7.5, i.e. 7.5", 7.5),
@@ -153,7 +153,7 @@ def test_number_parsing(text: str, expected) -> None:
     assert parse_llm_text(text, "number") == (pytest.approx(expected) if expected is not None else None)
 
 
-# ----------------------------------------------------------------------------- RT-6
+# ----------------------------------------------------------------------------- node deadlines and tool lock
 def test_timed_out_tool_is_not_cached_and_keeps_the_tool_lock(tmp_path) -> None:
     ep = make_episode(Counter(), Counter(), max_node_s=0.3)
     release, started, calls = threading.Event(), threading.Event(), Counter()
@@ -273,7 +273,7 @@ def test_operator_node_has_an_overall_deadline(tmp_path) -> None:
     assert g.fingerprints()["o"] not in cp.records                           # first timeout of the operator: not cached
 
 
-# ----------------------------------------------------------------------------- RT-8
+# ----------------------------------------------------------------------------- summary guards
 def test_summary_failures_do_not_discard_a_valid_node(tmp_path) -> None:
     ep = make_episode(Counter(), Counter(), required=PortSchema("list"))
     huge = "def run(inputs, config):\n    return {'m': [10 ** 400, 1]}\n"     # float conversion overflows in summarize_value
@@ -290,7 +290,7 @@ def test_summary_failures_do_not_discard_a_valid_node(tmp_path) -> None:
     assert "summary_error" in fb.render()
 
 
-# ----------------------------------------------------------------------------- RT-11
+# ----------------------------------------------------------------------------- llm cost guards
 def test_oversized_llm_prompt_is_rejected(ep, tmp_path) -> None:
     big = code("big", "def run(inputs, config):\n    return {'ctx': 'x' * 40000}\n", {}, {"ctx": {"type": "text"}})
     g = llm_graph("Label {item} given {ctx}", extra=[big], edges=[("big", "ctx", "l", "big")])
@@ -328,7 +328,7 @@ def test_llm_max_tokens_is_clamped_to_the_executor_role(ep, tmp_path) -> None:
     assert records["l"].status == "error" and "max_tokens must be a positive integer" in records["l"].error and not llm4.calls
 
 
-# ----------------------------------------------------------------------------- RT-7
+# ----------------------------------------------------------------------------- contract type checks
 def test_contract_type_check_looks_at_the_value() -> None:
     entries = [{"port": "x", "check": "type", "value": "number"}]
     schemas = {"x": PortSchema("number")}

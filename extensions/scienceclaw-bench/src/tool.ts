@@ -13,7 +13,7 @@ type PluginConfig = {
   maxStdoutBytes?: number;
 };
 
-const OPERATIONS = ["catalog", "list_tasks", "smoke", "report"] as const;
+const OPERATIONS = ["catalog", "list_tasks", "report"] as const;
 type Operation = (typeof OPERATIONS)[number];
 
 function stringEnum<T extends readonly string[]>(values: T, description: string) {
@@ -124,12 +124,9 @@ export function createScienceClawBenchTool(api: OpenClawPluginApi) {
     name: "scienceclaw_bench",
     label: "ScienceClaw Benchmark",
     description:
-      "Run the isolated ScienceClaw benchmark inventory, offline TOY smoke, or report operation. Formal hidden-split evaluation is intentionally unavailable through this agent tool.",
+      "Inspect the isolated ScienceClaw benchmark: list adapters and tool refs, check task availability, or build a report for an existing run. Formal hidden-split evaluation is intentionally unavailable through this agent tool.",
     parameters: Type.Object({
       operation: stringEnum(OPERATIONS, "Safe operation to run; catalog lists all adapters, tool refs, configs, and scripts."),
-      rounds: Type.Optional(Type.Integer({ minimum: 1, maximum: 10 })),
-      workers: Type.Optional(Type.Integer({ minimum: 1, maximum: 16 })),
-      seed: Type.Optional(Type.Integer()),
       runId: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9_.-]+$", maxLength: 128 })),
     }),
     async execute(_id: string, params: Record<string, unknown>) {
@@ -147,11 +144,6 @@ export function createScienceClawBenchTool(api: OpenClawPluginApi) {
         data_root: cfg.dataRoot,
         model_root: cfg.modelRoot,
       };
-      if (operation === "smoke") {
-        request.rounds = typeof params.rounds === "number" ? params.rounds : 2;
-        request.workers = typeof params.workers === "number" ? params.workers : 1;
-        request.seed = typeof params.seed === "number" ? params.seed : 1;
-      }
       if (operation === "report") {
         if (typeof params.runId !== "string" || !params.runId.trim()) {
           throw new Error("runId is required for report");
@@ -159,7 +151,7 @@ export function createScienceClawBenchTool(api: OpenClawPluginApi) {
         request.run_id = params.runId;
       }
 
-      const timeoutMs = typeof cfg.timeoutMs === "number" ? cfg.timeoutMs : operation === "smoke" ? 300_000 : 60_000;
+      const timeoutMs = typeof cfg.timeoutMs === "number" ? cfg.timeoutMs : 60_000;
       const maxStdoutBytes = typeof cfg.maxStdoutBytes === "number" ? cfg.maxStdoutBytes : 2 * 1024 * 1024;
       const result = await runBench({
         pythonBin: typeof cfg.pythonBin === "string" && cfg.pythonBin.trim() ? cfg.pythonBin : "python3",

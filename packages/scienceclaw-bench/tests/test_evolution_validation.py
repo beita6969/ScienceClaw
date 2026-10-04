@@ -359,7 +359,7 @@ def test_schema_constraint_names_of_adapters():
         assert not P.search(name), name
 
 
-# ------------------------------------------------------------------ budget (fidelity F3, cost M3, F5/m3)
+# ------------------------------------------------------------------ budget
 def test_budget_scales_with_the_number_of_val_episodes(tmp_path):
     g = gate(tmp_path, budget_tokens_per_val_episode=100.0, budget_wall_s_per_val_episode=5.0)
     assert g.budget_for(1)["tokens"] == 100.0 and g.budget_for(6)["tokens"] == 600.0
@@ -399,7 +399,7 @@ def test_budget_counts_logical_tokens_not_cache_hits(tmp_path):
     assert g.admit(report("c", {"a": entry("D1", 1, 1.0, tokens=5.0, logical=100.0)}, ref=inc), inc)[0]
 
 
-# ------------------------------------------------------------------------ noise guard (cost M7)
+# ------------------------------------------------------------------------ noise guard
 def _four(z_inc: tuple[int, int, int, int], z_cand: tuple[int, int, int, int]):
     ids = ("a1", "a2", "b1", "b2")
     discs = ("D1", "D1", "D2", "D2")
@@ -446,7 +446,7 @@ def test_noise_guard_uses_the_score_when_z_ties(tmp_path):
     assert not g.admit(one, inc)[0] and g.admit(two, inc)[0]
 
 
-# ------------------------------------------------------------------ gateway outages (cost M2)
+# ------------------------------------------------------------------ gateway outages
 def _outage_solver(outages: dict[str, int]):
     """Val solves of the given episode ids report an infrastructure error for their first N attempts."""
     class Outage(StubSolver):

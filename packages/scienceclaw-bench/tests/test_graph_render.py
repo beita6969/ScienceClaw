@@ -1,4 +1,4 @@
-"""render_compact / ToolSpec.signature (review F3, F4): full code with a total cap, an unambiguous cut marker and
+"""render_compact / ToolSpec.signature: full code with a total cap, an unambiguous cut marker and
 port descriptions; summarize_value item_keys."""
 from __future__ import annotations
 

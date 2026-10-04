@@ -1,6 +1,6 @@
-"""Offline end-to-end check of ``python -m scienceclaw.cli smoke`` (TOY adapter + scripted fake policy).
+"""End-to-end pipeline check (synthetic adapter + scripted fake policy).
 
-One smoke run (2 rounds) is shared by all tests of this module. The assertions check that every stage of the
+One run (2 rounds) is shared by all tests of this module. The assertions check that every stage of the
 method leaves a receipt: a source episode whose evidence holds a replay-verified failure followed by a
 replay-verified success (Eq. 8-9), an evolution instance, a linked Skill+Operator bundle (Eq. 10-12), a passing
 boundary replay, source-task replay + Use check (Eq. 13), validation-gate decisions (Eq. 2-3, both an accept
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from scienceclaw.cli import main, run_smoke
+from pipeline_support import run_pipeline
 
 
 def _jsonl(path: Path) -> list[dict]:
@@ -21,15 +21,15 @@ def _jsonl(path: Path) -> list[dict]:
 
 
 @pytest.fixture(scope="module")
-def smoke(tmp_path_factory) -> dict:
-    out = tmp_path_factory.mktemp("smoke")
-    info = run_smoke(out, rounds=2, workers=1, verbose=False)
+def pipeline(tmp_path_factory) -> dict:
+    out = tmp_path_factory.mktemp("pipeline")
+    info = run_pipeline(out, rounds=2, workers=1)
     info["dir"] = Path(info["run_dir"])
     return info
 
 
-def test_source_episode_has_replay_verified_failure_then_success(smoke):
-    run = smoke["dir"]
+def test_source_episode_has_replay_verified_failure_then_success(pipeline):
+    run = pipeline["dir"]
     solves = sorted((run / "source").glob("*/solve"))
     assert len(solves) == 2                                   # one source episode per round
     ev = _jsonl(solves[0] / "evidence.jsonl")
@@ -43,8 +43,8 @@ def test_source_episode_has_replay_verified_failure_then_success(smoke):
     assert "pooled_payload" not in (solves[0] / "evidence.jsonl").read_text()
 
 
-def test_evolution_instance_and_linked_bundle(smoke):
-    run = smoke["dir"]
+def test_evolution_instance_and_linked_bundle(pipeline):
+    run = pipeline["dir"]
     stream = _jsonl(run / "stream.jsonl")
     inst = stream[0]["instances"][0]["summary"]
     assert inst["has_e_minus"] and inst["k_minus"] < inst["k_plus"]
@@ -62,8 +62,8 @@ def test_evolution_instance_and_linked_bundle(smoke):
     assert bundle
 
 
-def test_source_replay_use_check_and_gate_decisions(smoke):
-    run = smoke["dir"]
+def test_source_replay_use_check_and_gate_decisions(pipeline):
+    run = pipeline["dir"]
     cands = _jsonl(run / "candidates.jsonl")
     for c in cands:
         assert c["R_src"] is True and c["Pass"] is True and c["Use"] is True
@@ -77,9 +77,9 @@ def test_source_replay_use_check_and_gate_decisions(smoke):
     assert (run / "val_reports" / "A0.json").exists()
 
 
-def test_program_snapshots_contain_linked_components(smoke):
-    run = smoke["dir"]
-    assert smoke["snapshots"] == ["A_0", "A_1", "A_2"]
+def test_program_snapshots_contain_linked_components(pipeline):
+    run = pipeline["dir"]
+    assert pipeline["snapshots"] == ["A_0", "A_1", "A_2"]
     a0 = json.loads((run / "programs" / "A_0" / "program.json").read_text())
     assert not a0["skills"] and not a0["operators"]           # empty initial library
     a1 = json.loads((run / "programs" / "A_1" / "program.json").read_text())
@@ -88,18 +88,13 @@ def test_program_snapshots_contain_linked_components(smoke):
     assert "Linked operators:" in md
 
 
-def test_held_out_evaluation_and_report(smoke):
-    run = smoke["dir"]
+def test_held_out_evaluation_and_report(pipeline):
+    run = pipeline["dir"]
     res = _jsonl(run / "eval" / "results.jsonl")
-    assert len(res) == smoke["n_results"] == 3 * (2 + 2) + 1 + 2
+    assert len(res) == pipeline["n_results"] == 3 * (2 + 2) + 1 + 2
     assert {r["split"] for r in res} >= {"id", "ood", "rep"}
     assert (run / "report" / "report.md").exists() and (run / "report" / "report.json").exists()
-    summ = {(r["snapshot"], r["split"]): r["macro_sr"] for r in smoke["summary"]}
+    summ = {(r["snapshot"], r["split"]): r["macro_sr"] for r in pipeline["summary"]}
     assert summ[("A_0", "id")] + summ[("A_0", "ood")] < summ[("A_2", "id")] + summ[("A_2", "ood")]
-    total = next(p for p in smoke["promotions"] if p["round"] == "total")
+    total = next(p for p in pipeline["promotions"] if p["round"] == "total")
     assert total["promoted"] >= 1
-
-
-def test_cli_smoke_entry_point(tmp_path, capsys):
-    assert main(["smoke", "--out", str(tmp_path), "--rounds", "1"]) == 0
-    assert "MacroSR=" in capsys.readouterr().out

@@ -17,7 +17,7 @@ item's target time lies inside any item's input window (verified at load time), 
 visible, in any episode.
 
 Pools / splits (time-disjoint; the partition is fixed and never depends on the seed). Within an episode no two
-initialisation times are closer than ``MIN_SPACING_H = 120 h`` (LEAK-4): another item's context fields are
+initialisation times are closer than ``MIN_SPACING_H = 120 h``: another item's context fields are
 observations of a nearby item's target, so episodes are drawn from "lanes" (see :func:`lane_pools`):
 
 * per year the 146 pattern slots are cut into ranges of 32 slots separated by 4 unused guard slots (4 complete ranges
@@ -71,7 +71,7 @@ TRAIN_END = np.datetime64("2018-11-30T18", "h")
 DEV_START = np.datetime64("2018-12-01T00", "h")
 DEV_TARGET_MAX = np.datetime64("2018-12-30T18", "h")
 N_DEV = 16
-# Draw-time spacing (LEAK-4). Within one episode the initialisation times are >= MIN_SPACING_H apart, because an item
+# Draw-time spacing. Within one episode the initialisation times are >= MIN_SPACING_H apart, because an item
 # whose init is a few days after another's leaks that item's target (its context fields are near-future observations
 # of it: oracle-fitted gain over anomaly persistence 19.5 % at a 12 h gap, 49 % at 48 h, 28 % at 60 h, 15 % at 72 h,
 # 3.7 % at 120 h, 0.9 % at 240 h; earlier neighbours <= 0.4 %). The 2019 / 2020 pattern slots (60 h apart) are cut
@@ -305,7 +305,7 @@ def load_weatherbench(root: Path, partition_seed: int, cache_root: Any = None) -
 
 
 def lane_pools(items: dict[str, np.datetime64], partition_seed: int) -> tuple[dict[str, list[str]], dict[str, str]]:
-    """Arrange the initialisations into ranges and lanes (LEAK-4) and split the ranges into ``src/val/id/ood``.
+    """Arrange the initialisations into ranges and lanes and split the ranges into ``src/val/id/ood``.
 
     Per calendar year the pattern slots (``60 h`` apart, two init hours each) are numbered from the year start; slot
     ``q`` belongs to range ``q // (RANGE_SLOTS + GUARD_SLOTS)`` at position ``q % ...``; guard positions and incomplete
@@ -391,7 +391,7 @@ class Adapter(ForecastAdapterBase):
         return {k: [PoolItem(i, d.groups[i], (hours[i],)) for i in ids] for k, ids in d.pools.items()}
 
     def _draw_options(self, split: str) -> dict:
-        """LEAK-4: every episode is drawn from one lane and no two items are closer than MIN_SPACING_H."""
+        """Every episode is drawn from one lane and no two items are closer than MIN_SPACING_H."""
         return {"lanes": True, "conflict": time_spacing_conflict(lambda it: it.meta[0], MIN_SPACING_H)}
 
     # ----------------------------------------------------------------------------------------------

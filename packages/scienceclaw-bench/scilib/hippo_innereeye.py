@@ -1,4 +1,4 @@
-"""Read-only smoke wrapper for Microsoft's frozen InnerEye-HS checkpoint.
+"""Read-only wrapper for Microsoft's frozen InnerEye-HS checkpoint.
 
 The v0.5 release is a five-model 3-D U-Net trained on ADNI (MIT-licensed model
 release), not on MSD Task04.  It predicts *whole* left/right hippocampi.  FoR32
@@ -8,7 +8,7 @@ exists to verify that the public checkpoint can be loaded and run without
 training, target reads, or an invented class mapping.
 
 The small network definition below mirrors the released InnerEye UNet3D state
-layout.  It is kept here so a smoke does not need the archived AzureML runtime.
+layout.  It is kept here so inference does not need the archived AzureML runtime.
 Microsoft's source and model are MIT licensed; see the v0.5 release and the
 record in ``configs/p3_asset_manifest.json``/the FoR32 report for provenance.
 """

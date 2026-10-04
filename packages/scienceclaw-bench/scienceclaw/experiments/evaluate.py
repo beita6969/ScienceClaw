@@ -13,8 +13,8 @@ Layout written under ``<run_dir>/eval/``:
   payload path (relative to ``eval/``), usage, ... Evaluation is resumable: keys already present are skipped.
   A solve that raises -- or that ends with an infrastructure ``stop_reason`` (``policy_error``: the LLM call itself
   failed, M2) -- is logged to ``errors.jsonl`` (not to results) so a later resume retries it. A solve that
-  finished without a usable payload still contributes the adapter's uniform failure payload (LEAK-5).
-* Identical programs are solved once (M5): snapshots whose ``AgentProgram.fingerprint()`` is equal get *alias rows*
+  finished without a usable payload still contributes the adapter's uniform failure payload.
+* Identical programs are solved once: snapshots whose ``AgentProgram.fingerprint()`` is equal get *alias rows*
   (``alias_of`` = the solved snapshot, copied outcome, empty ``usage``; the original spend stays in ``alias_usage``).
   Aliases wait for an in-flight solve of the same (fingerprint, split, episode) instead of re-solving it.
 * ``eval_log.jsonl`` -- one record per phase with the provenance receipt (code, config, data, LLM settings, worker
@@ -158,7 +158,7 @@ INFRA_STOP_REASONS = frozenset({"policy_error"})
 class InfraError(RuntimeError):
     """A solve that ended for infrastructure reasons (the policy/LLM call itself failed), not because the program
     failed the task. It is raised by :func:`_solve_job` so the job lands in ``errors.jsonl`` and a later resume
-    retries it instead of recording a fake failure that would be scored as the agent's (M2). The spend of the failed
+    retries it instead of recording a fake failure that would be scored as the agent's. The spend of the failed
     attempt stays visible: ``usage`` / ``wall_s`` are copied into the error record."""
 
     def __init__(self, msg: str, *, usage: dict | None = None, wall_s: float | None = None,
@@ -203,7 +203,7 @@ def _solve_job(job: dict, program: AgentProgram, solver_factory: Callable[[], An
     payload = details.get("pooled_payload")
     payload_source = "solve"
     if payload is None:
-        # LEAK-5: every held-out episode contributes exactly one payload, also when the solve produced no usable one
+        # every held-out episode contributes exactly one payload, also when the solve produced no usable one
         payload, found = _failure_payload(ep)
         payload_source = "failure_fallback" if found else "none"
         details.setdefault("failed", True)
@@ -379,7 +379,7 @@ def _append_log(eval_dir: Path, rec: dict) -> None:
 
 def eval_provenance(run_dir: Path, cfg: RunConfig, phase: str, llm: Any, programs: dict[str, AgentProgram],
                     workers: int, extra: dict | None = None) -> dict:
-    """Provenance receipt of an evaluation phase (m3+m4) incl. the concurrency settings that decide queue time (m2).
+    """Provenance receipt of an evaluation phase incl. the concurrency settings that decide queue time.
 
     ``eval_workers`` solves run concurrently and share the LLM client's ``llm.concurrency`` slots: with more workers
     than slots the surplus solves queue inside the client while their wall clock (budget ``z``) keeps running, so

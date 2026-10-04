@@ -1,4 +1,4 @@
-"""Local-only smoke wrapper for the staged Granite TinyTimeMixer checkpoint.
+"""Local-only wrapper for the staged Granite TinyTimeMixer checkpoint.
 
 This optional component is deliberately separate from the benchmark adapters.  It
 only loads a checkpoint that the caller has placed on disk (``local_files_only``
@@ -37,7 +37,7 @@ def _checkpoint_ok(path: Path | None) -> bool:
     if path is None or not path.is_dir():
         return False
     # safetensors is the staged artifact; accepting the standard PyTorch name
-    # keeps this smoke wrapper useful for an equivalent local export.
+    # keeps this wrapper useful for an equivalent local export.
     return (path / "config.json").is_file() and any(
         (path / name).is_file() for name in ("model.safetensors", "pytorch_model.bin")
     )
@@ -85,7 +85,7 @@ def forecast(context, model_dir=None, device: str = "auto") -> np.ndarray:
 
     ``context`` contains only the past values visible to the component.  No
     future values or labels are accepted, and checkpoint loading never accesses
-    the network.  This is a component smoke interface, not a benchmark scorer.
+    the network.  This is a component interface, not a benchmark scorer.
     """
     x, path = _check(context, model_dir)
     if device == "auto":

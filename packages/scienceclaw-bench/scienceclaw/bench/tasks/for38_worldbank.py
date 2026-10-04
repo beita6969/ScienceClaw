@@ -28,7 +28,7 @@ indicators) of all IID-region economies; ``load_eval_inputs`` = each item's hist
 indicators 1990-2021; ``load_dev``/``score_dev`` = backtest on the items' own histories (origin 2017, targets
 2018-2021, all visible years).
 
-Anonymisation (review finding LEAK-6). The targets are public WDI statistics, so a policy that can recognise the
+Anonymisation. The targets are public WDI statistics, so a policy that can recognise the
 economy, the indicator and the calendar years could recall the 2022-2025 values from pre-training instead of
 forecasting. Everything the policy sees is therefore opaque: economies are ids ``E000``.. (a partition-seed hash
 permutation of *all* non-aggregate economies), indicators are series kinds ``T1``/``T2`` (targets: a positive

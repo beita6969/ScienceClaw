@@ -1,4 +1,4 @@
-"""Solver + real runtime: code_edit under fixed_workflow (F4), scrub-before-truncate of run paths (F9), the dev score
+"""Solver + real runtime: code_edit under fixed_workflow, scrub-before-truncate of run paths, the dev score
 staying out of the policy context when the config hides it. Skipped while a dependency module is missing."""
 from __future__ import annotations
 

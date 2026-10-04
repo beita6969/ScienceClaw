@@ -202,7 +202,7 @@ def _visible_strings(ep, outs) -> list[str]:
 
 
 def test_visible_view_is_anonymised(eps):
-    """LEAK-6: the policy sees no economy name/code, no indicator identity, no source name and no calendar year."""
+    """the policy sees no economy name/code, no indicator identity, no source name and no calendar year."""
     d = _ADAPTER.data()
     names = sorted({m["name"] for m in d.meta.values()})
     codes = sorted(d.meta)

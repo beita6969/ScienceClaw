@@ -1,7 +1,7 @@
-"""Experiment pipeline integrity: program de-duplication (M5), infrastructure retries (M2), usage ledger and resume
-accumulation (M6), provenance receipts (m3+m4), logical vs billed tokens, coverage-aware reporting (LEAK-5).
+"""Experiment pipeline integrity: program de-duplication, infrastructure retries, usage ledger and resume
+accumulation, provenance receipts, logical vs billed tokens, coverage-aware reporting.
 
-Offline: a local stub Evolver / Solver, the TOY adapter and no LLM.
+Uses a local stub Evolver / Solver, the synthetic adapter and no LLM.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 from scienceclaw.bench.metrics import (coverage_gaps, expected_coverage, performance_index)
-from scienceclaw.bench.tasks.toy import ToyAdapter, toy_truth
+from synthetic_adapter import SyntheticAdapter, synthetic_truth
 from scienceclaw.config import BenchConfig, RunConfig
 from scienceclaw.core.program import AgentProgram, Bundle
 from scienceclaw.core.skills import Skill
@@ -64,7 +64,7 @@ class MeterLLM:
 
 
 class Solver:
-    """Toy solver: true function iff the program has a Skill; usage carries policy/executor token fields."""
+    """Stub solver: true function iff the program has a Skill; usage carries policy/executor token fields."""
 
     calls: list = []
     lock = threading.Lock()
@@ -75,7 +75,7 @@ class Solver:
             Solver.calls.append((program.fingerprint(), episode.split, episode.id))
         X = episode.tool("load_eval_inputs").fn({}, {})["X_eval"]
         yt = episode.tool("load_train").fn({}, {})["y_train"]
-        y = toy_truth(X) if program.skills else np.full(len(X), yt.mean())
+        y = synthetic_truth(X) if program.skills else np.full(len(X), yt.mean())
         ev = episode.evaluate(y, None)
         ev.reproducible = True
         usage = {"total_tokens": 10, "policy_logical_tokens": 100, "executor_prompt_tokens": 7,
@@ -91,7 +91,7 @@ def _programs():
 
 
 def _episodes(n=2, split="id"):
-    return ToyAdapter().build_episodes(split, n, 3, 6)
+    return SyntheticAdapter().build_episodes(split, n, 3, 6)
 
 
 def _jobs(snaps, eps, split="id"):
@@ -100,7 +100,7 @@ def _jobs(snaps, eps, split="id"):
 
 def _cfg(tmp_path, rounds=2):
     cfg = RunConfig(name="t", runs_root=str(tmp_path / "runs"))
-    cfg.bench = BenchConfig(disciplines=["TOY"], items_per_episode=6, rounds=rounds, n_val=1, n_id=2, n_ood=1, seed=3)
+    cfg.bench = BenchConfig(disciplines=["SYN"], items_per_episode=6, rounds=rounds, n_val=1, n_id=2, n_ood=1, seed=3)
     return cfg
 
 
@@ -113,10 +113,10 @@ def counting_evolver(monkeypatch):
 
 @pytest.fixture()
 def run_dir(tmp_path, counting_evolver):
-    return run_stream(_cfg(tmp_path), adapters={"TOY": ToyAdapter()}, llm=MeterLLM())
+    return run_stream(_cfg(tmp_path), adapters={"SYN": SyntheticAdapter()}, llm=MeterLLM())
 
 
-# ---------------------------------------------------------------------------------- M5: program de-duplication
+# ---------------------------------------------------------------------------------- program de-duplication
 def test_run_jobs_aliases_identical_programs(tmp_path):
     base, _ = _programs()
     twin = copy.deepcopy(base)
@@ -204,7 +204,7 @@ def test_run_jobs_different_programs_are_not_aliased(tmp_path):
     assert out["done"] == 4 and out["aliased"] == 0 and len(Solver.calls) == 4
 
 
-# ---------------------------------------------------------------------------------- M2: infrastructure stop reasons
+# ---------------------------------------------------------------------------------- infrastructure stop reasons
 def test_policy_error_is_an_error_not_a_result(tmp_path):
     base, _ = _programs()
     ep = _episodes(1)[0]
@@ -245,7 +245,7 @@ def test_finished_failures_are_results_not_errors(tmp_path):
     assert read_results(tmp_path / "eval" / "results.jsonl")[0]["stop_reason"] == "step_budget"
 
 
-# ---------------------------------------------------------------------------------- LEAK-5: uniform failure payload
+# ---------------------------------------------------------------------------------- uniform failure payload
 def test_solve_without_payload_falls_back_to_the_failure_payload(tmp_path):
     base, _ = _programs()
     ep = _episodes(1)[0]
@@ -260,13 +260,13 @@ def test_solve_without_payload_falls_back_to_the_failure_payload(tmp_path):
     row = _solve_job({"snapshot": "A_0", "split": "id", "episode": ep}, base, NoPayload, ed)
     assert row["payload_source"] == "failure_fallback" and row["failed"] is True and row["z"] == 0
     payload = json.loads((ed / row["pooled_payload"]).read_text())
-    assert payload["y_pred"] is None and len(payload["y_true"]) == len(payload["y_ref"])   # TOY failure payload
+    assert payload["y_pred"] is None and len(payload["y_true"]) == len(payload["y_ref"])   # SYN failure payload
     ok = _solve_job({"snapshot": "A_1", "split": "id", "episode": ep}, base, Solver, ed)
     assert ok["payload_source"] == "solve" and ok["failed"] is False
 
 
 def test_episode_evaluate_returns_a_payload_for_failures():
-    ad = ToyAdapter()
+    ad = SyntheticAdapter()
     ep = ad.build_episodes("id", 1, 3, 6)[0]
     for bad in (None, "garbage", [1.0, 2.0], [float("nan")] * 6, {"y": 1}):
         res = ep.evaluate(bad, None)
@@ -304,9 +304,9 @@ def test_performance_index_flags_incomplete_coverage():
 
 def test_expected_by_discipline_from_manifest(run_dir):
     man = json.loads((run_dir / "splits.json").read_text())
-    assert expected_by_discipline(man, "id") == {"TOY": 2} and expected_by_discipline(man, "ood") == {"TOY": 1}
+    assert expected_by_discipline(man, "id") == {"SYN": 2} and expected_by_discipline(man, "ood") == {"SYN": 1}
     assert expected_by_discipline(man, "rep", "A_0") == {}
-    assert expected_by_discipline(man, "rep", "A_2") == {"TOY": 2}
+    assert expected_by_discipline(man, "rep", "A_2") == {"SYN": 2}
     assert expected_by_discipline({}, "id") is None
 
 
@@ -327,7 +327,7 @@ def test_report_separates_logical_billed_and_alias_rows(run_dir):
     """A_3 is a copy of A_2: its rows are aliases (nothing billed), yet its logical cost equals A_2's."""
     shutil.copytree(run_dir / "programs" / "A_2", run_dir / "programs" / "A_3")
     Solver.calls = []
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     evaluate_snapshots(run_dir, "all", adapters=ads, solver_factory=Solver, workers=2, include_rep=False)
     rows = read_results(run_dir / "eval" / "results.jsonl")
     a3 = [r for r in rows if r["snapshot"] == "A_3"]
@@ -344,7 +344,7 @@ def test_report_separates_logical_billed_and_alias_rows(run_dir):
 
 
 def test_report_marks_incomplete_snapshot_pi_as_nan(run_dir):
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     evaluate_snapshots(run_dir, "all", adapters=ads, solver_factory=Solver, workers=1, include_rep=False)
     path = run_dir / "eval" / "results.jsonl"
     lines = path.read_text().splitlines()
@@ -353,7 +353,7 @@ def test_report_marks_incomplete_snapshot_pi_as_nan(run_dir):
     path.write_text("\n".join(ln for i, ln in enumerate(lines) if i != drop) + "\n")       # A_2 lost one id episode
     rep = json.loads((build_report(run_dir, adapters=ads, n_boot=20).parent / "report.json").read_text())
     s = {(r["snapshot"], r["split"]): r for r in rep["summary"]}
-    assert s[("A_2", "id")]["complete"] is False and s[("A_2", "id")]["incomplete_disciplines"] == ["TOY"]
+    assert s[("A_2", "id")]["complete"] is False and s[("A_2", "id")]["incomplete_disciplines"] == ["SYN"]
     assert s[("A_2", "id")]["n_episodes"] == 1 and s[("A_2", "id")]["n_expected"] == 2
     assert s[("A_2", "id")]["pi"] != s[("A_2", "id")]["pi"]                                # NaN
     assert s[("A_0", "id")]["complete"] is True and s[("A_0", "id")]["pi"] == pytest.approx(100.0)
@@ -361,7 +361,7 @@ def test_report_marks_incomplete_snapshot_pi_as_nan(run_dir):
     assert any("coverage incomplete" in w and "id/A_2" in w for w in rep["warnings"])
 
 
-# ---------------------------------------------------------------------------------- M6: usage ledger / resume
+# ---------------------------------------------------------------------------------- usage ledger / resume
 def test_usage_ledger_records_segments_and_detects_killed_ones(tmp_path):
     llm = MeterLLM()
     with P.UsageLedger(tmp_path, "evolve", llm, {"phase": "evolve"}, extra={"resume": False}) as led:
@@ -393,10 +393,10 @@ def test_usage_delta_and_add_trees():
 
 def test_resume_accumulates_usage_instead_of_overwriting(tmp_path, counting_evolver):
     llm = MeterLLM()
-    rd = run_stream(_cfg(tmp_path), adapters={"TOY": ToyAdapter()}, llm=llm)
+    rd = run_stream(_cfg(tmp_path), adapters={"SYN": SyntheticAdapter()}, llm=llm)
     first = json.loads((rd / "run.json").read_text())
     llm2 = MeterLLM()                      # a new process: its client counters start at zero
-    run_stream(None, adapters={"TOY": ToyAdapter()}, llm=llm2, resume_dir=rd)
+    run_stream(None, adapters={"SYN": SyntheticAdapter()}, llm=llm2, resume_dir=rd)
     recs = [r for r in P.read_ledger(rd / "usage.jsonl") if r["status"] != "started"]
     assert len(recs) == 2 and all(r["phase"] == "evolve" for r in recs)
     usage = json.loads((rd / "usage.json").read_text())
@@ -410,10 +410,10 @@ def test_resume_accumulates_usage_instead_of_overwriting(tmp_path, counting_evol
 
 def test_resume_imports_a_legacy_usage_json(tmp_path, counting_evolver):
     llm = MeterLLM()
-    rd = run_stream(_cfg(tmp_path), adapters={"TOY": ToyAdapter()}, llm=llm)
+    rd = run_stream(_cfg(tmp_path), adapters={"SYN": SyntheticAdapter()}, llm=llm)
     (rd / "usage.jsonl").unlink()                                         # a run from before the ledger existed
     (rd / "usage.json").write_text(json.dumps({"llm": {"total": {"prompt_tokens": 1000}}, "wall_s": 5.0}))
-    run_stream(None, adapters={"TOY": ToyAdapter()}, llm=MeterLLM(), resume_dir=rd)
+    run_stream(None, adapters={"SYN": SyntheticAdapter()}, llm=MeterLLM(), resume_dir=rd)
     usage = json.loads((rd / "usage.json").read_text())
     assert usage["llm"]["total"]["prompt_tokens"] == 1100 and usage["segments"] == 2
     recs = P.read_ledger(rd / "usage.jsonl")
@@ -421,7 +421,7 @@ def test_resume_imports_a_legacy_usage_json(tmp_path, counting_evolver):
     assert json.loads((rd / "run.json").read_text())["wall_s"] >= 5.0
 
 
-# ---------------------------------------------------------------------------------- m3+m4: provenance receipts
+# ---------------------------------------------------------------------------------- provenance receipts
 def test_provenance_receipt_fields(tmp_path):
     cfg = _cfg(tmp_path)
     prov = P.provenance(cfg, "evaluate", llm=MeterLLM("/x/cache.sqlite"), extra={"eval_workers": 4})
@@ -467,7 +467,7 @@ def test_dataset_hashes_cover_manifests_and_receipts(tmp_path):
 
 
 def test_evaluate_writes_provenance_to_eval_log_and_ledger(run_dir):
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     evaluate_snapshots(run_dir, ["A_0", "A_1"], adapters=ads, solver_factory=Solver, workers=2, include_rep=False,
                        llm=MeterLLM())
     log = [json.loads(x) for x in (run_dir / "eval" / "eval_log.jsonl").read_text().splitlines()]
@@ -486,17 +486,17 @@ def test_more_workers_than_llm_slots_warns(run_dir):
 
     conc = load_config(run_dir / "config.yaml").llm.concurrency
     with pytest.warns(RuntimeWarning, match="llm.concurrency"):
-        evaluate_snapshots(run_dir, ["A_0"], adapters={"TOY": ToyAdapter()}, solver_factory=Solver, workers=conc + 1,
+        evaluate_snapshots(run_dir, ["A_0"], adapters={"SYN": SyntheticAdapter()}, solver_factory=Solver, workers=conc + 1,
                            include_rep=False)
     log = [json.loads(x) for x in (run_dir / "eval" / "eval_log.jsonl").read_text().splitlines()]
     assert log[-1]["provenance"]["eval_workers"] == conc + 1 and log[-1]["provenance"]["warnings"]
-    rep = json.loads((build_report(run_dir, adapters={"TOY": ToyAdapter()}, n_boot=10).parent / "report.json")
+    rep = json.loads((build_report(run_dir, adapters={"SYN": SyntheticAdapter()}, n_boot=10).parent / "report.json")
                      .read_text())
     assert any("llm.concurrency" in w for w in rep["warnings"])
 
 
 def test_report_contains_ledger_and_provenance(run_dir):
-    ads = {"TOY": ToyAdapter()}
+    ads = {"SYN": SyntheticAdapter()}
     evaluate_snapshots(run_dir, "all", adapters=ads, solver_factory=Solver, workers=1, include_rep=False)
     md = build_report(run_dir, adapters=ads, n_boot=10)
     rep = json.loads((md.parent / "report.json").read_text())

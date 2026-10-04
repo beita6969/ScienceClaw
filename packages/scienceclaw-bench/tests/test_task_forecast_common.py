@@ -163,7 +163,7 @@ def check_eval_paths(ep: Episode, ref_y: Any, oracle_y: Any, malformed_ys: list[
         b = ep.evaluate(bad, None)
         assert b.z == 0 and not b.accepted and b.primary is None
         assert not all(b.h.values()), f"no constraint fired for {type(bad).__name__}"
-        # LEAK-5: a malformed output pools the *reference* payload (failed=True), it never drops out of the pool
+        # a malformed output pools the *reference* payload (failed=True), it never drops out of the pool
         assert b.details["pooled_payload"] is not None and b.details["norm_score"] == 0.0
         assert b.details["pooled_payload"] == b.details["reference_payload"] and b.details["failed"] is True
         assert math.isclose(adapter.pooled_metric([b.details]), b.details["reference"], rel_tol=1e-9)
@@ -211,7 +211,7 @@ def _min_gap(ep) -> float:
 
 
 def test_draw_episodes_conflict_min_spacing_greedy() -> None:
-    """LEAK-4: a conflict rule keeps conflicting items out of one episode, prefix-stable and deterministic."""
+    """a conflict rule keeps conflicting items out of one episode, prefix-stable and deterministic."""
     pool = [fc.PoolItem(f"t{h}", "g", (h,)) for h in range(0, 400, 4)]          # 100 items, 4 h apart
     conflict = fc.time_spacing_conflict(lambda it: it.meta[0], 40)
     e3, _ = fc.draw_episodes(pool, 3, 5, fc.make_rng("c", 1), conflict=conflict)

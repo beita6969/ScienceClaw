@@ -6,7 +6,7 @@ package inside the TypeScript ScienceClaw gateway.  The package keeps its own
 boundaries so the gateway can evolve without changing the benchmark contracts.
 
 The native gateway bridge invokes `benchctl.py` through a small JSON protocol.
-Only task inventory, the offline TOY smoke run, and report generation are
+Only the catalog, task availability, and report generation for existing runs are
 exposed to the agent tool.  Formal ID/OOD evaluation remains an explicit
 server-side operation and is not exposed through the gateway bridge.
 

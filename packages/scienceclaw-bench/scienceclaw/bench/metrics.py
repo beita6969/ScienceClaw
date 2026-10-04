@@ -102,7 +102,7 @@ def pooled_scores(results_by_discipline: Mapping[str, list[Mapping[str, Any]]], 
 
     Each result is a dict holding the episode's pooled payload inline (``"pooled_payload"`` or
     ``details["pooled_payload"]``) or a path to it (``"pooled_payload_path"``, or a string ``"pooled_payload"``;
-    relative paths resolve against ``base_dir``). Since LEAK-5 every solved held-out episode carries a payload (a
+    relative paths resolve against ``base_dir``). Every solved held-out episode carries a payload (a
     failed episode carries the adapter's uniform failure payload, see ``Episode.evaluate``); results that still have
     none are excluded here, so callers must check :func:`pooled_coverage` / :func:`expected_coverage` before
     comparing methods (:func:`performance_index` does so through ``coverage=``). A discipline with no payload scores
@@ -133,7 +133,7 @@ def expected_coverage(results_by_discipline: Mapping[str, list[Mapping[str, Any]
 
     ``expected`` comes from the split manifest. An episode that was never solved counts as missing, and duplicate
     result lines of one episode count once, so a pooled score can be flagged incomplete instead of silently covering
-    only the episodes that happened to finish (LEAK-5). Disciplines only in ``expected`` report 0 payloads.
+    only the episodes that happened to finish. Disciplines only in ``expected`` report 0 payloads.
     """
     out: dict[str, tuple[int, int]] = {}
     for d in dict.fromkeys([*results_by_discipline, *expected]):
@@ -160,7 +160,7 @@ class PIResult(dict):
     * ``disciplines``: disciplines entering the macro average (reference score valid for the normalization)
     * ``excluded``: ``{discipline: reason}`` for disciplines dropped for every method
     * ``incomplete``: ``{method: {discipline: (have, want)}}`` for methods whose pooled-payload coverage of an
-      included discipline is incomplete; their macro PI is NaN (a partial pool is not comparable, LEAK-5)
+      included discipline is incomplete; their macro PI is NaN (a partial pool is not comparable)
     """
 
     def __init__(self, macro: dict[str, float], per_discipline: dict[str, dict[str, float]], reference: str,
@@ -232,7 +232,7 @@ def performance_index(scores: Mapping[str, Mapping[str, float | None]], referenc
     (default: failure earns nothing) or is averaged over its remaining disciplines when ``missing="skip"``.
 
     ``coverage`` (optional, ``{method: {discipline: (have, want)}}`` from :func:`expected_coverage`) makes the index
-    coverage-aware (LEAK-5): a pooled score computed from fewer episodes than the split promises is not comparable,
+    coverage-aware: a pooled score computed from fewer episodes than the split promises is not comparable,
     so for a method with an incomplete included discipline that discipline's PI_d and the macro PI are NaN (listed
     in ``result.incomplete``); an incomplete *reference* discipline is excluded for every method. When ``coverage``
     is given, a method or discipline missing from it counts as having no coverage.

@@ -9,12 +9,12 @@
   the first segment (``provenance``) and of every resume segment (``resumes[].provenance``)
 * ``programs/A_r/`` — snapshots (written by the Evolver; any missing snapshot is saved here from its return value)
 * ``usage.jsonl``   — append-only ledger, one record per process segment and phase (start/end time, wall time,
-  ``llm.usage()`` delta, provenance). A resume adds its own record instead of overwriting (M6)
+  ``llm.usage()`` delta, provenance). A resume adds its own record instead of overwriting
 * ``usage.json``    — the evolution-phase sum of that ledger (``llm`` total / by role / by tag, ``wall_s``, number of
   segments; ``unclosed`` lists segments of killed processes whose spend is not recorded = lower bound)
 * whatever the Evolver writes (``episodes/``, ``candidates.jsonl``, ``metrics.jsonl`` ...)
 
-The LLM client is created from ``cfg.llm`` unless one is injected (tests / smoke use ``llm.fake.FakeLLM``).
+The LLM client is created from ``cfg.llm`` unless one is injected (tests use ``llm.fake.FakeLLM``).
 """
 from __future__ import annotations
 
@@ -98,8 +98,7 @@ def run_stream(cfg: RunConfig | None, adapters: dict | None = None, llm: Any = N
         cfg.dump(run_dir / "config.yaml")
         status = {"name": cfg.name, "run_dir": str(run_dir), "status": "running",
                   "started": datetime.now().isoformat(timespec="seconds"), "code": code_version(),
-                  "llm_injected": llm is not None,
-                  "note": "rebuild experiment; never back-fills numbers of the submitted paper"}
+                  "llm_injected": llm is not None}
     _write_json(run_dir / "run.json", status)
     if adapters is None:
         adapters = load_adapters(cfg.bench)
@@ -120,7 +119,7 @@ def run_stream(cfg: RunConfig | None, adapters: dict | None = None, llm: Any = N
         llm = LLMClient(cfg.llm)
     from ..evolution.evolver import Evolver
 
-    # provenance receipt of THIS segment (m3+m4): first segment -> status["provenance"], resume -> resumes[-1]
+    # provenance receipt of THIS segment: first segment -> status["provenance"], resume -> resumes[-1]
     prov = provenance(cfg, "evolve", llm=llm, extra={"split_sha256": manifest["sha256"],
                                                      "resume": resume_dir is not None})
     if resume_dir is not None:
@@ -130,7 +129,7 @@ def run_stream(cfg: RunConfig | None, adapters: dict | None = None, llm: Any = N
     _write_json(run_dir / "run.json", status)
 
     try:
-        # M6: cost/wall of every segment is appended to usage.jsonl; usage.json / run.json wall_s are its sums
+        # cost/wall of every segment is appended to usage.jsonl; usage.json / run.json wall_s are its sums
         with UsageLedger(run_dir, "evolve", llm, prov, extra={"resume": resume_dir is not None}):
             snapshots = Evolver(cfg, llm, plan, run_dir).run(program0 or AgentProgram())
     except BaseException as ex:

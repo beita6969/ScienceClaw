@@ -123,7 +123,7 @@ def test_evaluator_reference_oracle_malformed(adapter, episodes):
     assert adapter.pooled_metric([]) is None
 
 
-# ------------------------------------------------------------------------------------------------ LEAK-1: causality
+# ------------------------------------------------------------------------------------------------ causality
 def _stay_lengths(n=8):
     return [30 + 4 * i for i in range(n)]
 

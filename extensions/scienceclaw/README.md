@@ -1,12 +1,12 @@
 # ScienceClaw benchmark bridge
 
 This optional plugin exposes the isolated Python benchmark package through one
-native agent tool, `scienceclaw_bench`. It supports `catalog`, `list_tasks`, and
+native agent tool, `scienceclaw_eval`. It supports `catalog`, `list_tasks`, and
 `report` (for a run directory under `runRoot`). Formal hidden ID/OOD evaluation
 stays server-side and is deliberately not reachable through the agent tool.
 
 Configure the plugin with an explicit `repoRoot` pointing at
-`packages/scienceclaw-bench`. `dataRoot`, `modelRoot`, `runRoot`, and
+`packages/scienceclaw`. `dataRoot`, `modelRoot`, `runRoot`, and
 `pythonBin` are deployment settings; they are never accepted as agent
 parameters. Keep datasets, weights, caches, and credentials outside Git.
 
@@ -18,17 +18,17 @@ checkout and Python paths for the host that runs the gateway:
 {
   plugins: {
     entries: {
-      "scienceclaw-bench": {
+      "scienceclaw": {
         enabled: true,
         config: {
-          repoRoot: "<checkout>/packages/scienceclaw-bench",
+          repoRoot: "<checkout>/packages/scienceclaw",
           pythonBin: "<venv>/bin/python",
         },
       },
     },
   },
   agents: {
-    list: [{ id: "main", tools: { allow: ["scienceclaw_bench"] } }],
+    list: [{ id: "main", tools: { allow: ["scienceclaw_eval"] } }],
   },
 }
 ```

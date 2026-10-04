@@ -7,11 +7,11 @@ connected through a small, typed boundary:
 | Layer | Location | Responsibility |
 | --- | --- | --- |
 | Gateway and long-lived agent | repository root (`src/`, `extensions/`, `skills/`) | OpenClaw routing, provider/session handling, memory, and the original skill/plugin system |
-| Benchmark engine | `packages/scienceclaw-bench/scienceclaw/` | typed graphs, adapters, replay, scoring, receipts, and evolution candidates |
-| Scientific operators | `packages/scienceclaw-bench/scilib/` | frozen dataset tools and optional pretrained wrappers |
+| Benchmark engine | `packages/scienceclaw/scienceclaw/` | typed graphs, adapters, replay, scoring, receipts, and evolution candidates |
+| Scientific operators | `packages/scienceclaw/scilib/` | frozen dataset tools and optional pretrained wrappers |
 | Dataset skills | `skills/scienceclaw-benchmark-for30/` … `skills/scienceclaw-benchmark-for52/` | task contracts, tool routing, and evidence rules for FoR30–FoR52 |
 | Evolution skill | `skills/scienceclaw-evolution/` | candidate replay, visible-dev gates, provenance, and promotion policy |
-| Native bridge | `extensions/scienceclaw-bench/` | bounded JSON calls for catalog, task availability, and reports |
+| Native bridge | `extensions/scienceclaw/` | bounded JSON calls for catalog, task availability, and reports |
 
 The gateway bridge does not receive provider credentials or arbitrary shell
 commands. Formal ID/OOD evaluation and remote launchers remain explicit
@@ -30,9 +30,9 @@ record its provenance in the episode receipt.
 
 ## Deployment roots and optional stacks
 
-Install the lightweight engine with `pip install -e packages/scienceclaw-bench`.
+Install the lightweight engine with `pip install -e packages/scienceclaw`.
 On a host that will run domain tools, add one or more optional stacks, for
-example `pip install -e 'packages/scienceclaw-bench[vision,audio,nlp]'` or
+example `pip install -e 'packages/scienceclaw[vision,audio,nlp]'` or
 `[all]` on a prepared GPU image. The extras are dependency groups only; model
 weights remain deployment-local and are never pulled into this repository.
 
@@ -53,7 +53,7 @@ is consumed by the pretrained wrappers and the Slurm launchers.
 
 1. Load `skills/scienceclaw-benchmark/SKILL.md` for routing policy.
 2. Load the matching `skills/scienceclaw-benchmark-for30` through `for52` skill.
-3. Use the optional `scienceclaw_bench` tool for catalog, task availability, or
+3. Use the optional `scienceclaw_eval` tool for catalog, task availability, or
    report inspection.
 4. Run formal evaluation with the existing server-side launcher and preserve
    its config, hashes, and per-episode receipts.

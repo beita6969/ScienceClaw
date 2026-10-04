@@ -26,7 +26,7 @@ provenance and configuration used.
 
 ## Workflow
 
-1. Read `docs/tasks/FoR49.md` and call `scienceclaw_bench` with
+1. Read `docs/tasks/FoR49.md` and call `scienceclaw_eval` with
    `operation=catalog` before changing a route.
 2. Build the candidate from visible `load_train` data and use `score_dev` or the
    documented visible split for selection. Keep the output shape, unit, and hard

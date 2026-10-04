@@ -8,14 +8,14 @@ metadata:
 
 # ScienceClaw self-evolution
 
-Use the Python engine under `packages/scienceclaw-bench/scienceclaw/evolution/` as
+Use the Python engine under `packages/scienceclaw/scienceclaw/evolution/` as
 the authoritative evolution implementation. The gateway's long-lived agent and
 the benchmark engine remain separate: the gateway supplies sessions and skills;
 the engine supplies typed programs, replay, receipts, and promotion decisions.
 
 ## Choose the run mode
 
-- To inspect a finished run, call the optional `scienceclaw_bench` tool with
+- To inspect a finished run, call the optional `scienceclaw_eval` tool with
   `operation=report` and that run's `runId`.
 - For a real benchmark, load `scienceclaw-benchmark` and the matching
   `scienceclaw-benchmark-for*` skill first. The server-side stream launcher owns

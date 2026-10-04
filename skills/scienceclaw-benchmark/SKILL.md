@@ -12,7 +12,7 @@ loop that produces and validates skills/operators.
 
 ## Routing
 
-1. Call `scienceclaw_bench(operation=catalog)` once at the start of a task and
+1. Call `scienceclaw_eval(operation=catalog)` once at the start of a task and
    record the adapter, tool refs, config names, and launcher names it returns.
    Call `operation=list_tasks` when availability or data-root status matters.
 2. Load exactly one matching dataset skill, `scienceclaw-benchmark-for30`
@@ -22,7 +22,7 @@ loop that produces and validates skills/operators.
 3. Use `load_train` and the adapter's visible `score_dev` (or its documented
    visible substitute) to compare one frozen route with a named baseline. Keep
    tool/checkpoint/preprocessing provenance in the run receipt.
-4. Use `scienceclaw_bench(operation=report)` with the `runId` of an existing
+4. Use `scienceclaw_eval(operation=report)` with the `runId` of an existing
    server-side run to inspect its report.
 5. Keep the benchmark engine and gateway separate: the gateway routes and
    records; the Python package owns typed graphs, adapters, replay, scoring,

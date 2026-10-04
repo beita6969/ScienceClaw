@@ -1,5 +1,5 @@
 {
-  "id": "scienceclaw-bench",
+  "id": "scienceclaw",
   "name": "ScienceClaw Benchmark",
   "description": "Optional bridge to the isolated Python ScienceClaw benchmark package.",
   "configSchema": {
@@ -16,7 +16,7 @@
     }
   },
   "uiHints": {
-    "repoRoot": { "label": "Benchmark package root", "help": "Path to packages/scienceclaw-bench" },
+    "repoRoot": { "label": "Benchmark package root", "help": "Path to packages/scienceclaw" },
     "pythonBin": { "label": "Python executable", "help": "Interpreter with the benchmark package installed" },
     "runRoot": { "label": "Run directory", "advanced": true },
     "dataRoot": { "label": "Dataset root", "advanced": true },

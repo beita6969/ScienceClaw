@@ -1,8 +1,8 @@
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/scienceclaw-bench";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/scienceclaw";
 import { createScienceClawBenchTool } from "./src/tool.js";
 
 const plugin = {
-  id: "scienceclaw-bench",
+  id: "scienceclaw",
   name: "ScienceClaw Benchmark",
   description: "Optional bridge to the isolated Python ScienceClaw benchmark package.",
   register(api: OpenClawPluginApi) {

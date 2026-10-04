@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { Type } from "@sinclair/typebox";
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/scienceclaw-bench";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/scienceclaw";
 
 type PluginConfig = {
   pythonBin?: string;
@@ -121,7 +121,7 @@ async function runBench(params: {
 
 export function createScienceClawBenchTool(api: OpenClawPluginApi) {
   return {
-    name: "scienceclaw_bench",
+    name: "scienceclaw_eval",
     label: "ScienceClaw Benchmark",
     description:
       "Inspect the isolated ScienceClaw benchmark: list adapters and tool refs, check task availability, or build a report for an existing run. Formal hidden-split evaluation is intentionally unavailable through this agent tool.",
@@ -135,7 +135,7 @@ export function createScienceClawBenchTool(api: OpenClawPluginApi) {
         throw new Error(`operation must be one of: ${OPERATIONS.join(", ")}`);
       }
       const cfg = asConfig(api);
-      const repoRoot = resolveConfigured(cfg.repoRoot, path.resolve(process.cwd(), "packages/scienceclaw-bench"));
+      const repoRoot = resolveConfigured(cfg.repoRoot, path.resolve(process.cwd(), "packages/scienceclaw"));
       const runRoot = resolveConfigured(cfg.runRoot, path.join(repoRoot, "runs"));
       const request: Record<string, unknown> = {
         schema: 1,

@@ -168,9 +168,9 @@
       "types": "./dist/plugin-sdk/qwen-portal-auth.d.ts",
       "default": "./dist/plugin-sdk/qwen-portal-auth.js"
     },
-    "./plugin-sdk/scienceclaw-bench": {
-      "types": "./dist/plugin-sdk/scienceclaw-bench.d.ts",
-      "default": "./dist/plugin-sdk/scienceclaw-bench.js"
+    "./plugin-sdk/scienceclaw": {
+      "types": "./dist/plugin-sdk/scienceclaw.d.ts",
+      "default": "./dist/plugin-sdk/scienceclaw.js"
     },
     "./plugin-sdk/synology-chat": {
       "types": "./dist/plugin-sdk/synology-chat.d.ts",

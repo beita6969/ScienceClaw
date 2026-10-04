@@ -116,13 +116,16 @@ SPECS: list[dict[str, Any]] = [
          pre=[{"port": "labels", "check": "nonempty"}], post=[{"port": "priors", "check": "range", "value": [0.0, 1.0]}],
          tags=["medical imaging", "segmentation", "volume", "3D", "atlas", "prior", "hippocampus", "baseline"]),
     dict(id="hippocampus_binary_mask_innereye", tool="hippo_innereeye.predict_binary",
-         description="Whole-hippocampus binary mask (left and right hippocampi merged) of a 3-D T1-weighted brain MRI volume from the pretrained InnerEye 3-D U-Net "
-                     "(trained on ADNI); it does not separate anterior and posterior parts.",
-         inputs={"volume": p("array", "3-D MRI volume, any intensity scale", shape=("D", "H", "W"), dtype="float")},
-         outputs={"mask": p("array", "uint8 mask, 1 = hippocampus", shape=("D", "H", "W"), dtype="int")},
-         code="from scilib import hippo_innereeye\nreturn {'mask': hippo_innereeye.predict_binary(inputs['volume'])[0]}",
+         description="Whole-hippocampus binary mask (left and right hippocampi merged) of a whole-head 3-D T1-weighted brain MRI volume from the pretrained InnerEye "
+                     "3-D U-Net (trained on ADNI); it does not separate anterior and posterior parts and finds almost nothing in small hippocampus crops.",
+         inputs={"volume": p("array", "whole-head 3-D MRI volume at about 1 mm voxels, axes in the voxel order of the NIfTI file (as read by nibabel), any intensity scale",
+                             shape=("X", "Y", "Z"), dtype="float")},
+         outputs={"mask": p("array", "uint8 mask in the axes of the input, 1 = hippocampus", shape=("X", "Y", "Z"), dtype="int")},
+         code="import numpy as np\nfrom scilib import hippo_innereeye\n"
+              "mask = hippo_innereeye.predict_binary(np.transpose(inputs['volume'], (2, 1, 0)))[0]\n"
+              "return {'mask': np.ascontiguousarray(np.transpose(mask, (2, 1, 0)))}",
          pre=[{"port": "volume", "check": "finite"}], post=[{"port": "mask", "check": "range", "value": [0, 1]}],
-         tags=["medical imaging", "MRI", "brain", "hippocampus", "segmentation", "volume", "3D", "pretrained", "unet", "innereye"]),
+         tags=["medical imaging", "MRI", "brain", "hippocampus", "segmentation", "volume", "3D", "pretrained", "unet", "innereye", "ADNI"]),
     dict(id="hippocampus_segmentation_unet3d", tool="hippo_unet.fit_predict",
          description="Anterior / posterior hippocampus segmentation of 3-D MRI crops with an ensemble of 3-D U-Nets trained from scratch on the labelled volumes "
                      "(instance normalisation, cross-entropy + Dice loss, rotation / scale / shift augmentation, shifted test-time averaging); a GPU is needed for the "

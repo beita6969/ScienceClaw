@@ -2,7 +2,7 @@
 # Mac -> (Japan SOCKS route) -> VPS HTTP receiver. One dataset at a time: tar+gzip (nice, 1 process) -> 400 MB parts -> sha256 -> curl PUT -> delete staging.
 # Light on the Mac: one gzip + one curl at a time.
 SRC=/Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets
-ST=/private/tmp/claude-501/sc-scratch/mig/up; mkdir -p $ST
+ST="${SCIENCECLAW_MIGRATION_SCRATCH:-${TMPDIR:-/tmp}/scienceclaw-migration}"; mkdir -p "$ST"
 PX="--proxy socks5h://127.0.0.1:10882"; VPS=http://185.212.56.211:38422
 for d in "$@"; do
   rm -rf $ST/$d; mkdir -p $ST/$d

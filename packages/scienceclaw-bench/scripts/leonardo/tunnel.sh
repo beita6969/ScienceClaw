@@ -4,7 +4,7 @@
 # Incremental: a forward whose server is still listed and answers /health keeps its port (so running clients are not
 # disturbed); forwards of vanished servers are cancelled, new servers get the lowest free port, broken forwards are redone.
 # The forwards live in a dedicated persistent ControlMaster (~/.ssh/cm-sc-leo, opened here if missing; do not share
-# ~/.ssh/cm-claude-leo, which other sessions may take over) and are managed with ssh -O forward/cancel.
+# ~/.ssh/cm-scienceclaw-leo, which other sessions may take over) and are managed with ssh -O forward/cancel.
 L=/leonardo_scratch/large/userexternal/rqian000
 SOCK="$HOME/.ssh/cm-sc-leo"; STATE="${TMPDIR:-/tmp}/sc-tunnel-${EPDIR:-endpoints}.state"; BASE=${PORT_BASE:-18000}
 ssh -S "$SOCK" -O check leonardo >/dev/null 2>&1 || ssh -o BatchMode=yes -o ControlMaster=yes -o ControlPath="$SOCK" -o ControlPersist=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=6 -fN leonardo

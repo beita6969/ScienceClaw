@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: scripts/resume_pipeline.sh <run_dir>   — continue evolve in place, then evaluate + report.
-# Launch detached so it survives Claude session restarts:
+# Launch detached so it survives launcher restarts:
 #   nohup scripts/resume_pipeline.sh runs/X > logs/X.resume.log 2>&1 &
 set -euo pipefail
 cd "$(dirname "$0")/.."

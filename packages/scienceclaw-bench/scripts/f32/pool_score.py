@@ -1,11 +1,11 @@
 """Score one-shot pool predictions with the task's own scorer (Adapter._score: mean over cases of the mean Dice of labels 1 and 2, plus NSD)
 and the location-atlas reference on the same cases. Mac side; usage: python scripts/f32/pool_score.py out.npz"""
-import sys, json
+import os, sys, json
 import numpy as np
 sys.path.insert(0, ".")
 from scienceclaw.bench.tasks.for32_msd_hippocampus import Adapter, atlas_predict
 
-a = Adapter(cache_dir="/private/tmp/claude-501/sc-scratch/sota/g1_work/cache32")
+a = Adapter(cache_dir=os.environ.get("SCIENCECLAW_TASK_CACHE", "/tmp/scienceclaw-task-cache"))
 z = np.load(sys.argv[1]); res = {}
 for pool in ("val", "id", "ood"):
     sel = [i for i, q in enumerate(z["pools"]) if q == pool]

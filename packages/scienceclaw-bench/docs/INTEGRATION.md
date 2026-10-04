@@ -22,9 +22,9 @@ visible-dev validation, hard-constraint checks, reproducibility, provenance,
 and the configured budget gate before promotion.
 
 The package copy includes the benchmark source, operators, configs, launch
-scripts, tests, reports, and documentation. Datasets, model weights, caches,
-run outputs, logs, virtual environments, and credentials are deployment-local
-and are excluded by `.gitignore`. Before adding a new operator or skill, keep
+scripts, tests, and documentation. Dataset deliveries, model weights, caches,
+run outputs, formal reports, logs, virtual environments, and credentials are
+deployment-local and are excluded from the public code checkout. Before adding a new operator or skill, keep
 its source and routing metadata in the package or root skill directory, then
 record its provenance in the episode receipt.
 

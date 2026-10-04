@@ -17,10 +17,22 @@ The adapter currently declares these tool references:
 - `load_eval_inputs`
 - `load_train`
 - `log_mel_spectrogram`
+- `audio_embedding` (optional frozen AST/CLAP pooled features; requires the configured local or remote encoder)
 
 Treat the list as a capability inventory, not permission to call every tool.
 Select one frozen route plus a clearly named baseline, then record the exact
 provenance and configuration used.
+
+Keep `log_mel_spectrogram` as the default route. When the audio encoder is
+available, call `audio_embedding` on both visible training and evaluation
+waveforms, then use `scilib.anomsound.embedding_scores` and
+`scilib.anomsound.rank_average` to produce one score per evaluation clip. The
+AST/CLAP route is a candidate to compare against the log-mel route; it is not a
+ reason to change the adapter's default or to access hidden labels.
+The current visible comparison is positive but modest: pooled embeddings with
+the rank-averaged `nn2_pool` component reached 0.5592 on the ID pool versus
+0.5473 for the log-mel route, so keep it as an optional candidate rather than
+claiming a universal replacement.
 
 ## Workflow
 

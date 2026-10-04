@@ -556,6 +556,27 @@ class DCASE2024Task2Adapter:
             S = np.stack([log_mel(w, int(sr), n_fft, hop, n_mels) for w in W])
             return {"log_mel": S, "frame_rate": float(sr / hop)}
 
+        def audio_embedding_tool(inputs: dict, config: dict) -> dict:
+            """Optional frozen AST/CLAP features; the default route remains log-mel."""
+            from scilib import audioenc
+            W = np.asarray(inputs.get("waveforms"), dtype=np.float32)
+            if W.ndim != 2:
+                raise ValueError("waveforms must be a 2-D array (n_clips, n_samples)")
+            L = np.asarray(inputs.get("lengths"), dtype=np.int64).reshape(-1)
+            if L.size != W.shape[0] or L.size < 1 or L.min() < 1 or L.max() > W.shape[1]:
+                raise ValueError("lengths must hold one value per waveform row within the padded width")
+            sr = float(inputs.get("sample_rate", config.get("sample_rate", 16000.0)))
+            model = str(config.get("model", "ast_audioset"))
+            kind = str(config.get("kind", "pooled"))
+            if model not in audioenc.MODELS:
+                raise ValueError(f"model must be one of {sorted(audioenc.MODELS)}")
+            if kind not in audioenc.MODELS[model][3]:
+                raise ValueError(f"kind must be one of {audioenc.MODELS[model][3]} for {model!r}")
+            E = np.asarray(audioenc.embed(W, L, sr, model=model, kind=kind), dtype=np.float32)
+            if E.ndim != 2 or E.shape[0] != W.shape[0] or not np.all(np.isfinite(E)):
+                raise ValueError("audio encoder returned an invalid embedding matrix")
+            return {"embeddings": E, "model": model, "kind": kind}
+
         n_tr = len(train)
         tools = [
             ToolSpec("load_train", f"{n_tr} normal source-domain training clips of the machine type (no anomalies, no "
@@ -578,6 +599,15 @@ class DCASE2024Task2Adapter:
                      {"log_mel": PortSchema("array", ("n", "frames", "n_mels"), unit="dB", dtype="float"),
                       "frame_rate": PortSchema("number", unit="Hz")},
                      log_mel_tool, config_doc="{n_fft: int (1024), hop: int (512), n_mels: int (128), sample_rate: Hz (16000)}"),
+            ToolSpec("audio_embedding", "Optional frozen pooled AST or CLAP audio embeddings. Use only when the configured "
+                     "local/remote audio encoder is available; this is additive and does not replace log-mel.",
+                     {"waveforms": PortSchema("array", ("n", "T3"), dtype="float"),
+                      "lengths": PortSchema("array", ("n",), dtype="int"),
+                      "sample_rate": PortSchema("number", unit="Hz")},
+                     {"embeddings": PortSchema("array", ("n", "d"), dtype="float"),
+                      "model": PortSchema("text"), "kind": PortSchema("text")},
+                     audio_embedding_tool,
+                     config_doc="{model: 'ast_audioset'|'clap_htsat', kind: 'pooled'|'logits'|'proj', sample_rate: Hz (16000)}"),
         ]
         constraints: list[ConstraintSpec] = [c_vector(n, "one anomaly score per evaluation clip"), c_finite(n)]
 
@@ -615,7 +645,8 @@ class DCASE2024Task2Adapter:
             "is not given.\n"
             f"Visible data: load_train returns {n_tr} normal source-domain training clips of the same machine type with "
             "their attribute strings (no anomalous and no target-domain training clips exist); load_eval_inputs returns "
-            "the evaluation clips; log_mel_spectrogram computes log-mel spectrograms.\n"
+            "the evaluation clips; log_mel_spectrogram computes log-mel spectrograms. The optional audio_embedding "
+            "tool exposes frozen AST/CLAP features when a configured encoder backend is available.\n"
             f"Deliverable y: a 1-D float array of length {n}; y[i] is the anomaly score of the i-th clip returned by "
             "load_eval_inputs (higher = more likely anomalous). Evaluation metric: official DCASE 2024 Task 2 score = "
             "harmonic mean of AUC(source), AUC(target) and pAUC (FPR <= 0.1).\n"

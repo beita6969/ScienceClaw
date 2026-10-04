@@ -199,10 +199,10 @@ def test_episodes_disjoint_stratified_deterministic(real, plan):
         real.build_episodes("src", 1, 5, items_per_episode=6)
 
 
-def test_visible_data_rules_and_no_label_leak(real, plan):
+def test_visible_data_rules_and_no_label_leak(real, plan, monkeypatch):
     ep = plan["val"][0]
     t = {x.name: x for x in ep.tools}
-    assert set(t) == {"load_train", "load_eval_inputs", "log_mel_spectrogram"} and ep._dev_evaluate is None
+    assert set(t) == {"load_train", "load_eval_inputs", "log_mel_spectrogram", "audio_embedding"} and ep._dev_evaluate is None
     tr, ev = t["load_train"].fn({}, {}), t["load_eval_inputs"].fn({}, {})
     assert set(tr) == {"waveforms", "lengths", "domains", "attributes", "sample_rate"}
     assert set(ev) == {"waveforms", "lengths", "sample_rate"} and ev["waveforms"].shape[0] == 16
@@ -219,6 +219,16 @@ def test_visible_data_rules_and_no_label_leak(real, plan):
     assert S["log_mel"].shape[0] == 2 and S["log_mel"].shape[2] == 32
     with pytest.raises(ValueError):
         t["log_mel_spectrogram"].fn({"waveforms": ev["waveforms"][:2]}, {"n_mels": 4})
+    # The pretrained route is optional and additive; a deterministic stub checks its
+    # ToolSpec contract without requiring GPU weights in the CPU test environment.
+    def fake_embed(waveforms, lengths, sample_rate, model, kind):
+        assert model == "ast_audioset" and kind == "pooled" and sample_rate == 16000.0
+        return np.arange(len(waveforms) * 3, dtype=np.float32).reshape(len(waveforms), 3) + 1
+
+    monkeypatch.setattr("scilib.audioenc.embed", fake_embed)
+    E = t["audio_embedding"].fn({"waveforms": ev["waveforms"][:2], "lengths": ev["lengths"][:2],
+                                  "sample_rate": ev["sample_rate"]}, {})
+    assert E["embeddings"].shape == (2, 3) and np.isfinite(E["embeddings"]).all()
     # nothing the policy can see carries a file name or label
     visible = json.dumps([ep.objective, ep.lineage["item_ids"], ep.lineage["train_item_ids"], [x.description for x in ep.tools]])
     assert not re.search(r"\.wav|_test_|_train_|section_\d\d", visible) and all(HANDLE.match(i) for i in ep.lineage["item_ids"])

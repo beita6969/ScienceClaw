@@ -33,12 +33,17 @@ provenance and configuration used.
 2. Build the candidate from visible `load_train` data and use `score_dev` or the
    documented visible split for selection. Keep the output shape, unit, and hard
    constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
+3. For mixed study pools, prefer `psych_domain_adaptive_predict` for the
+   label-free route: it keeps q-learning for study IDs seen in training and
+   uses the pooled GBDT branch for unseen study IDs. Use `psych_fixed_predict`
+   as the incumbent comparison. The route is already strongest on the visible
+   held-out-study pool; do not expose study targets or split flags to it.
+4. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
    weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
+5. For self-evolution, let the solver produce a replayable graph, attribute the
    passing change to a skill/operator bundle, and validate it against the
    incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
+6. For formal work, use only an approved mutually exclusive launcher and record
    the manifest tag. If capacity or a compliant asset is missing, record the
    blocker instead of retrying an evaluated item.
 

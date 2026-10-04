@@ -216,7 +216,14 @@ def _load(model: str, device: str):
     info = provenance(model)
     if not info["available"]:
         raise RuntimeError(f"clip_retrieval: frozen encoder unavailable: {info['reason']}; provenance={info}")
+    import inspect
+
     import open_clip
+
+    # open_clip renamed the keyword that controls ``torch.load(weights_only=...)`` from ``load_weights_only`` (2.31, 2.32) to
+    # ``weights_only`` (3.x); the other spelling would be forwarded to the model constructor.
+    weights_only_kw = ("weights_only" if "weights_only" in inspect.signature(open_clip.create_model_and_transforms).parameters
+                       else "load_weights_only")
 
     # ``pretrained`` receives a concrete path.  It must not be the registry
     # name (which could trigger a hub lookup in open_clip); this is the central
@@ -237,7 +244,7 @@ def _load(model: str, device: str):
             # plain state-dict.  It is hash-pinned above, so opting out of
             # PyTorch's weights-only restriction is safe for this staged file
             # and is required by torch >=2.6.
-            load_weights_only=False,
+            **{weights_only_kw: False},
         )
     finally:
         for key, value in old_offline.items():

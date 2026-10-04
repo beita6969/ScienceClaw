@@ -50,6 +50,7 @@ __all__ = ["check", "solve_all", "majority_status", "decide"]
 _LABELS = ("sat", "unsat", "unknown")
 _GRACE_S = 2.0
 _LOGIC_RE = re.compile(r"\(\s*set-logic\s+([A-Za-z_]+)\s*\)")
+_CORES_RE = re.compile(r"\(\s*set-option\s+:produce-unsat-(?:cores|assumptions)\s+(?:true|false)\s*\)")
 
 
 def _z3():
@@ -71,7 +72,8 @@ def check(query: str, timeout_s: float = 10.0, rlimit: int | None = None, memory
     try:
         _set_memory(memory_mb)
         ctx = z3.Context()
-        fs = z3.parse_smt2_string(str(query), ctx=ctx)
+        # with unsat-core tracking on, the parser turns a named assertion into (=> name F), which a plain solver may leave unsatisfied
+        fs = z3.parse_smt2_string(_CORES_RE.sub("", str(query)), ctx=ctx)
         m = _LOGIC_RE.search(str(query))
         try:
             s = z3.SolverFor(m.group(1), ctx=ctx) if m else z3.Solver(ctx=ctx)

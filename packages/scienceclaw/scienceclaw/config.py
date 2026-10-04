@@ -29,9 +29,10 @@ class ModelRole:
 
 @dataclass
 class LLMConfig:
-    # Chat-model backend: "openai" (OpenAI-compatible HTTP, the default) or "package.module:factory" for a custom
-    # implementation of scienceclaw.llm.interface.ChatModel.
+    # Chat-model backend: "openai" (OpenAI-compatible HTTP, the default), "command" (a local program) or
+    # "package.module:factory" for a custom implementation of scienceclaw.llm.interface.ChatModel.
     backend: str = "openai"
+    command: str = ""                       # backend "command": program that reads the prompt on stdin (see llm/command.py)
     base_url: str = ""                      # empty -> $SCIENCECLAW_API_BASE_URL, then the credentials file
     # Self-hosted OpenAI-compatible servers (vLLM). When non-empty they REPLACE the gateway: requests are spread over
     # these base URLs (least in-flight, failing ones cooled down) and the credentials file is never read or sent.

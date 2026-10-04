@@ -2,9 +2,17 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
+import os
 from pathlib import Path
 
 import yaml
+
+
+def _default_data_root() -> str:
+    return os.environ.get(
+        "SCIENCECLAW_DATA_ROOT",
+        str(Path.home() / ".cache" / "scienceclaw" / "datasets"),
+    )
 
 
 @dataclass
@@ -84,7 +92,9 @@ class BenchConfig:
     n_id: int = 4
     n_ood: int = 4
     seed: int = 20260928
-    data_root: str = "/Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets"
+    # Resolved from the deployment environment; checked-in YAML may leave it
+    # empty to keep configs portable across laptops and HPC hosts.
+    data_root: str = field(default_factory=_default_data_root)
 
 
 @dataclass
@@ -126,6 +136,11 @@ def _build(cls, data: dict | None, base=None):
         if f.name not in data:
             continue
         v = data[f.name]
+        # An empty value in a checked-in portable YAML means "use the runtime
+        # deployment root", rather than replacing the dataclass default with
+        # an unusable empty path.
+        if cls is BenchConfig and f.name == "data_root" and v == "":
+            continue
         ft = f.type if not isinstance(f.type, str) else eval(f.type, globals())  # noqa: S307 - local dataclass names only
         if is_dataclass(ft) and isinstance(v, dict):
             kwargs[f.name] = _build(ft, v, getattr(base, f.name))

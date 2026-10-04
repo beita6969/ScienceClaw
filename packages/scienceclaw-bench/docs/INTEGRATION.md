@@ -28,6 +28,27 @@ and are excluded by `.gitignore`. Before adding a new operator or skill, keep
 its source and routing metadata in the package or root skill directory, then
 record its provenance in the episode receipt.
 
+## Deployment roots and optional stacks
+
+Install the lightweight engine with `pip install -e packages/scienceclaw-bench`.
+On a host that will run domain tools, add one or more optional stacks, for
+example `pip install -e 'packages/scienceclaw-bench[vision,audio,nlp]'` or
+`[all]` on a prepared GPU image. The extras are dependency groups only; model
+weights remain deployment-local and are never pulled into this repository.
+
+Point the runtime at the externally managed data and weight roots:
+
+```bash
+export SCIENCECLAW_DATA_ROOT=/srv/scienceclaw/datasets
+export SCIENCECLAW_MODELS=/srv/scienceclaw/models
+```
+
+`SCIENCECLAW_DATA_ROOT` should contain the Hugging Face-delivered dataset
+snapshot in the directory layout expected by the selected FoR adapter. If it
+is omitted, the package falls back to `~/.cache/scienceclaw/datasets`; the
+checked-in YAML files do not contain a machine-specific path. `SCIENCECLAW_MODELS`
+is consumed by the pretrained wrappers and Leonardo launchers.
+
 ## Quick orientation
 
 1. Load `skills/scienceclaw-benchmark/SKILL.md` for routing policy.

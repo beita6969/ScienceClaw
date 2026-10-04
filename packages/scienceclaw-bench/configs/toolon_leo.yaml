@@ -29,4 +29,4 @@ bench:
   n_id: 4
   n_ood: 4
   seed: 20260928
-  data_root: /leonardo_scratch/large/userexternal/rqian000/scienceclaw-data/datasets
+  data_root: ""

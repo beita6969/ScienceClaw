@@ -65,9 +65,21 @@ def main() -> int:
 
             task_dir = repo_root / "scienceclaw" / "bench" / "tasks"
             tool_refs: set[str] = set()
-            for source in sorted(task_dir.glob("*.py")):
+            # Report the tools of the registered FoR adapters.  There are a
+            # couple of experimental task modules in this directory (for
+            # example the SWE-bench prototype) that are not part of the
+            # 23-discipline route; exposing their names here made the gateway
+            # catalog claim capabilities that no registered adapter could
+            # actually dispatch.  ``ToolSpec`` is often formatted across
+            # lines, so allow whitespace after the opening parenthesis; this
+            # also includes optional/pretrained tools such as FoR30's
+            # ``predict_pretrained`` in the catalog.
+            for discipline in DISCIPLINES:
+                source = task_dir / f"{discipline.module}.py"
+                if not source.is_file():
+                    continue
                 text = source.read_text(encoding="utf-8")
-                tool_refs.update(re.findall(r'ToolSpec\("([A-Za-z0-9_]+)"', text))
+                tool_refs.update(re.findall(r'ToolSpec\s*\(\s*"([A-Za-z0-9_]+)"', text))
             configs = sorted(p.name for p in (repo_root / "configs").iterdir() if p.is_file())
             scripts = sorted(str(p.relative_to(repo_root)) for p in (repo_root / "scripts").rglob("*") if p.is_file() and p.suffix in {".py", ".sh", ".sbatch"})
             return emit({"schema": 1, "status": "ok", "op": op,

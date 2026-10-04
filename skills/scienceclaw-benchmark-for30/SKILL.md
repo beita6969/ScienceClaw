@@ -14,7 +14,14 @@ maximize is better. The adapter module is
 
 The adapter currently declares these tool references:
 
-- See the adapter source and `scienceclaw_bench` catalog.
+- `load_train`
+- `load_eval_inputs`
+- `load_dev_inputs`
+- `score_dev`
+- `score_pretrained_dev` (when the frozen checkpoint is available)
+- `predict_pretrained` (when the frozen checkpoint is available)
+- `predict_weyler` (when the frozen checkpoint is available)
+- `predict_hapt` (diagnostic-only cross-domain checkpoint, when available)
 
 Treat the list as a capability inventory, not permission to call every tool.
 Select one frozen route plus a clearly named baseline, then record the exact
@@ -27,6 +34,10 @@ provenance and configuration used.
 2. Build the candidate from visible `load_train` data and use `score_dev` or the
    documented visible split for selection. Keep the output shape, unit, and hard
    constraints from the adapter unchanged.
+   On GPU hosts, prefer `predict_pretrained` as the primary PhenoBench route;
+   use `score_pretrained_dev` only as a trusted visible diagnostic. `predict_weyler`
+   is a separate frozen comparison, and `predict_hapt` is diagnostic-only and
+   must never be submitted as the PhenoBench result.
 3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
    weights, infer hidden targets, or use an evaluation item to choose a skill.
 4. For self-evolution, let the solver produce a replayable graph, attribute the

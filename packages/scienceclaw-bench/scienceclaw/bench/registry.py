@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import importlib
 import os
+from pathlib import Path
 from dataclasses import dataclass
 
-DATA_ROOT = os.environ.get("SCIENCECLAW_DATA_ROOT", "/Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets")
+DATA_ROOT = os.environ.get("SCIENCECLAW_DATA_ROOT", str(Path.home() / ".cache" / "scienceclaw" / "datasets"))
 
 FAMILIES = ("Life & health", "Physical & Earth", "Engineering & computing", "Social & behavior", "Humanities & law")
 

@@ -15,3 +15,8 @@ logs/
 # Re-apply generated-file exclusions after the case-insensitive Core/ rule.
 scienceclaw/**/__pycache__/
 scienceclaw/**/*.pyc
+# Benchmark report scripts keep source only; generated traces/results stay local.
+reports/**/scripts/**/*.log
+reports/**/scripts/**/*.json
+reports/**/scripts/**/*_manifest.txt
+reports/**/scripts/**/*_out.txt

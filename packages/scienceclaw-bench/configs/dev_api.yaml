@@ -23,4 +23,4 @@ bench:
   n_id: 1
   n_ood: 1
   seed: 20260928
-  data_root: /Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets
+  data_root: ""

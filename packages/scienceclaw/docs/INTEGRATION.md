@@ -12,8 +12,8 @@ connected through a small, typed boundary:
 | Canvas skill | `skills/scienceclaw-canvas/` | how the gateway agent orchestrates a task on the canvas |
 | Dataset skills | `skills/scienceclaw-benchmark-for30/` … `skills/scienceclaw-benchmark-for52/` | task contracts, tool routing, and evidence rules for FoR30–FoR52 |
 | Evolution skill | `skills/scienceclaw-evolution/` | candidate replay, visible-dev gates, provenance, and promotion policy |
-| Canvas, tools, program | `packages/scienceclaw/scienceclaw/{canvas,tools,program}/` | stepwise typed-workflow sessions, the scilib/weights registry, the versioned Skill/Operator store |
-| Native plugin | `extensions/scienceclaw/` | `scienceclaw_canvas`, `scienceclaw_tools`, `scienceclaw_program`, `scienceclaw_eval` over `python -m scienceclaw.rpc` |
+| Canvas, tools, program | `packages/scienceclaw/scienceclaw/{canvas,tools,program}/`, `evolution/live.py` | stepwise typed-workflow sessions, the scilib/weights registry, the versioned Skill/Operator store, gated evolution from finished sessions |
+| Native plugin | `extensions/scienceclaw/` | `scienceclaw_canvas`, `scienceclaw_tools`, `scienceclaw_program`, `scienceclaw_evolve`, `scienceclaw_eval` over `python -m scienceclaw.rpc` |
 
 The engine process does not receive provider credentials, and live task inputs
 are read only from the configured input roots. Formal ID/OOD evaluation and
@@ -57,7 +57,8 @@ is consumed by the pretrained wrappers and the Slurm launchers.
    (`scienceclaw_canvas`, `scienceclaw_tools`).
 2. For benchmark work load `skills/scienceclaw-benchmark/SKILL.md` and the matching
    `skills/scienceclaw-benchmark-for30` through `for52` skill.
-3. Use `scienceclaw_program` to inspect or roll back the active Skill/Operator version and
+3. Use `scienceclaw_program` to inspect or roll back the active Skill/Operator version,
+   `scienceclaw_evolve` to learn from a verified session through the validation gate, and
    `scienceclaw_eval` for catalog, task availability or report inspection.
 4. Run formal evaluation with the existing server-side launcher and preserve
    its config, hashes, and per-episode receipts.

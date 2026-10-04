@@ -4,7 +4,7 @@ Registers the ScienceClaw engine (`packages/scienceclaw`) as optional agent tool
 gateway agent acts as the policy of the engine: it edits a typed workflow graph step by step
 (`scienceclaw_canvas`), finds scientific tools and pretrained-model wrappers
 (`scienceclaw_tools`), and inspects or rolls back the versioned Skill/Operator program
-(`scienceclaw_program`). `scienceclaw_eval` inspects the ScienceClaw-Eval catalog, the installed
+(`scienceclaw_program`), and turns verified sessions into gated program updates (`scienceclaw_evolve`). `scienceclaw_eval` inspects the ScienceClaw-Eval catalog, the installed
 task data and finished-run reports.
 
 | Tool | Operations |
@@ -12,6 +12,7 @@ task data and finished-run reports.
 | `scienceclaw_canvas` | `open`, `act`, `render`, `replay`, `finish`, `status`, `list` |
 | `scienceclaw_tools` | `search`, `show`, `status`, `weights` |
 | `scienceclaw_program` | `summary`, `skills`, `operators`, `show`, `history`, `rollback` |
+| `scienceclaw_evolve` | `val_add`, `val_list`, `val_remove`, `propose`, `gate`, `run`, `status`, `candidates`, `show` |
 | `scienceclaw_eval` | `catalog`, `list_tasks`, `report` |
 
 The plugin keeps one long-lived Python process (`python -m scienceclaw.rpc`, line-delimited
@@ -40,7 +41,9 @@ given under `llm`, or any backend registered through `scienceclaw.llm.interface`
   agents: {
     list: [{
       id: "main",
-      tools: { allow: ["scienceclaw_canvas", "scienceclaw_tools", "scienceclaw_program", "scienceclaw_eval"] },
+      tools: {
+        allow: ["scienceclaw_canvas", "scienceclaw_tools", "scienceclaw_program", "scienceclaw_evolve", "scienceclaw_eval"],
+      },
     }],
   },
 }

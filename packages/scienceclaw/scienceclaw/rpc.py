@@ -11,7 +11,9 @@ The process is long-lived so that canvas sessions keep their graphs, checkpoints
 * ``canvas.open|act|render|replay|finish|status|list``: typed workflow orchestration (live tasks or benchmark episodes);
 * ``tools.search|show|status`` and ``weights.status|plan``: the scientific tool library and its pretrained weights;
 * ``program.summary|skills|operators|show|history|rollback``: the versioned agent program (Skills and Operators);
-* ``eval.catalog|list_tasks|report``: the ScienceClaw-Eval benchmark (formal hidden-split evaluation is not exposed).
+* ``eval.catalog|list_tasks|report``: the ScienceClaw-Eval benchmark (formal hidden-split evaluation is not exposed);
+* ``evolve.val_add|val_list|val_remove|propose|gate|run|status|candidates|candidate``: program self-evolution from finished
+  live sessions (``propose``, ``gate`` and ``run`` are background jobs polled with ``evolve.status``).
 
 Environment: ``SCIENCECLAW_HOME`` (state, default ``~/.scienceclaw``), ``SCIENCECLAW_INPUT_ROOTS`` (directories live tasks may
 read, ``os.pathsep``-separated, default: the working directory), ``SCIENCECLAW_CONFIG`` (optional run config with the ``llm``
@@ -53,6 +55,8 @@ class Service:
         self.sessions: dict[str, Any] = {}
         self._store = None
         self._llm = None
+        self._cfg = None
+        self._evolution = None
         roots = os.environ.get("SCIENCECLAW_INPUT_ROOTS")
         self.input_roots = [Path(p).expanduser() for p in roots.split(os.pathsep) if p] if roots else [Path.cwd()]
         self.methods: dict[str, Callable[[dict], Any]] = {
@@ -66,6 +70,10 @@ class Service:
             "program.operators": self.program_operators, "program.show": self.program_show,
             "program.history": self.program_history, "program.rollback": self.program_rollback,
             "eval.catalog": self.eval_catalog, "eval.list_tasks": self.eval_list_tasks, "eval.report": self.eval_report,
+            "evolve.val_add": self.evolve_val_add, "evolve.val_list": self.evolve_val_list,
+            "evolve.val_remove": self.evolve_val_remove, "evolve.propose": self.evolve_propose,
+            "evolve.gate": self.evolve_gate, "evolve.run": self.evolve_run, "evolve.status": self.evolve_status,
+            "evolve.candidates": self.evolve_candidates, "evolve.candidate": self.evolve_candidate,
         }
 
     # ------------------------------------------------------------------------------------------ shared
@@ -79,14 +87,25 @@ class Service:
     def program(self):
         return self.store.open()
 
+    def run_config(self):
+        if self._cfg is None:
+            from scienceclaw.config import LLMConfig, RunConfig, load_config
+            cfg_path = os.environ.get("SCIENCECLAW_CONFIG")
+            self._cfg = load_config(cfg_path) if cfg_path else RunConfig(llm=LLMConfig(cache_path=str(self.home / "llm_cache.sqlite")))
+        return self._cfg
+
     def llm(self):
         if self._llm is None:
-            from scienceclaw.config import LLMConfig, load_config
             from scienceclaw.llm import build_chat_model
-            cfg_path = os.environ.get("SCIENCECLAW_CONFIG")
-            cfg = load_config(cfg_path).llm if cfg_path else LLMConfig(cache_path=str(self.home / "llm_cache.sqlite"))
-            self._llm = build_chat_model(cfg)
+            self._llm = build_chat_model(self.run_config().llm)
         return self._llm
+
+    @property
+    def evolution(self):
+        if self._evolution is None:
+            from scienceclaw.evolution import LiveEvolution
+            self._evolution = LiveEvolution(self.store, self.home, self.llm(), self.run_config(), self.input_roots)
+        return self._evolution
 
     def _session(self, params: dict):
         sid = str(params.get("session_id", ""))
@@ -254,6 +273,60 @@ class Service:
         if run_dir.parent != run_root or not run_dir.is_dir():
             raise ValueError("run_id is outside the configured run root or does not exist")
         return {"run_id": run_id, "report": str(build_report(run_dir))}
+
+    # ------------------------------------------------------------------------------------------ evolve
+    def _finished_live_session(self, p: dict):
+        s = self._session(p)
+        if s.kind != "live" or not s.closed:
+            raise ValueError("this needs a finished live session (canvas.finish)")
+        return s
+
+    def evolve_val_add(self, p: dict) -> dict:
+        if p.get("session_id"):
+            s = self._finished_live_session(p)
+            if not (s.result is not None and s.result.passed):
+                raise ValueError("only a task whose session passed verification can serve as a validation task")
+            spec = s.spec
+        else:
+            spec = p.get("task")
+            if not isinstance(spec, dict):
+                raise ValueError("evolve.val_add needs 'task' (a task declaration) or 'session_id' (a finished, passed session)")
+        return self.evolution.val_add(spec, p.get("id"))
+
+    def evolve_val_list(self, p: dict) -> dict:
+        return {"tasks": [{"id": r["id"], "objective": r["spec"].get("objective", ""), "added": r["added"]}
+                          for r in self.evolution.val_list()]}
+
+    def evolve_val_remove(self, p: dict) -> dict:
+        self._need(p, "id")
+        return self.evolution.val_remove(str(p["id"]))
+
+    def evolve_propose(self, p: dict) -> dict:
+        self._need(p, "session_id")
+        s, evo = self._finished_live_session(p), self.evolution
+        return evo.start_job("propose", lambda: evo.propose(s, p.get("variant")))
+
+    def evolve_gate(self, p: dict) -> dict:
+        self._need(p, "candidate_id")
+        evo, cid = self.evolution, str(p["candidate_id"])
+        evo.candidate(cid)
+        return evo.start_job("gate", lambda: evo.gate(cid))
+
+    def evolve_run(self, p: dict) -> dict:
+        self._need(p, "session_id")
+        s, evo = self._finished_live_session(p), self.evolution
+        return evo.start_job("run", lambda: evo.run(s, p.get("variant")))
+
+    def evolve_status(self, p: dict) -> dict:
+        return self.evolution.job(p.get("job_id"), float(p.get("wait_s") or 0))
+
+    def evolve_candidates(self, p: dict) -> dict:
+        return {"candidates": self.evolution.candidates(), "head": self.program().version}
+
+    def evolve_candidate(self, p: dict) -> dict:
+        self._need(p, "candidate_id")
+        rec = self.evolution.candidate(str(p["candidate_id"]))
+        return {k: v for k, v in rec.items() if k != "source"} | {"source_session": rec["source"]["session_id"]}
 
     # ---------------------------------------------------------------------------------------- dispatch
     def handle(self, line: str) -> dict:

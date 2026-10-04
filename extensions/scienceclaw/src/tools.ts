@@ -211,6 +211,79 @@ export function createEvalTool(worker: EngineWorker) {
   };
 }
 
+const EVOLVE_OPS = ["val_add", "val_list", "val_remove", "propose", "gate", "run", "status", "candidates", "show"] as const;
+
+export function createEvolveTool(worker: EngineWorker) {
+  return {
+    name: "scienceclaw_evolve",
+    label: "ScienceClaw Evolution",
+    description:
+      "Verifiable self-evolution of the agent program from finished canvas sessions. A session that was replay-verified " +
+      "can yield a candidate Skill/Operator bundle (operation=propose); a candidate is promoted only after the gate " +
+      "(operation=gate): the source task is re-solved with the candidate (it must pass and use the new components), then " +
+      "the registered validation tasks are solved with the incumbent and the candidate under the frozen model, and the " +
+      "candidate is admitted only if no hard constraint regresses, cost stays within budget and the validation score " +
+      "strictly improves. Register validation tasks first (val_add, with task=<task declaration> or sessionId of a passed " +
+      "session) and only with tasks the user confirms as representative; the source task cannot validate its own " +
+      "candidate. operation=run does propose and gate in one job. propose/gate/run are background jobs: poll " +
+      "operation=status (waitSeconds up to 300). candidates and show list the candidates and their decisions; " +
+      "scienceclaw_program(operation=rollback) undoes a promotion.",
+    parameters: Type.Object({
+      operation: enumOf(EVOLVE_OPS, "val_add | val_list | val_remove | propose | gate | run | status | candidates | show"),
+      sessionId: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9_-]{4,40}$", maxLength: 40 })),
+      task: Type.Optional(Obj),
+      id: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$" })),
+      candidateId: Type.Optional(Type.String({ pattern: "^c[0-9]{4,}$" })),
+      variant: Type.Optional(
+        enumOf(["full", "workflow_only", "skill_only", "operator_only", "unlinked"] as const, "which parts of the repair to learn"),
+      ),
+      jobId: Type.Optional(Type.String({ pattern: "^[a-f0-9]{10}$" })),
+      waitSeconds: Type.Optional(Type.Integer({ minimum: 0, maximum: 300 })),
+    }),
+    async execute(_id: string, params: Record<string, unknown>) {
+      const op = String(params.operation ?? "");
+      if (!(EVOLVE_OPS as readonly string[]).includes(op)) {
+        throw new Error(`operation must be one of: ${EVOLVE_OPS.join(", ")}`);
+      }
+      switch (op) {
+        case "val_add":
+          return result(
+            pretty(await worker.call("evolve.val_add", { task: params.task, session_id: params.sessionId, id: params.id })),
+            undefined,
+          );
+        case "val_list":
+          return result(pretty(await worker.call("evolve.val_list")), undefined);
+        case "val_remove":
+          return result(pretty(await worker.call("evolve.val_remove", { id: required(params, "id") })), undefined);
+        case "propose":
+        case "run": {
+          const job = await worker.call(`evolve.${op}`, { session_id: required(params, "sessionId"), variant: params.variant });
+          return result(`${pretty(job)}\nPoll with scienceclaw_evolve(operation=status, waitSeconds=120).`, job);
+        }
+        case "gate": {
+          const job = await worker.call("evolve.gate", { candidate_id: required(params, "candidateId") });
+          return result(`${pretty(job)}\nPoll with scienceclaw_evolve(operation=status, waitSeconds=120).`, job);
+        }
+        case "status": {
+          const wait = typeof params.waitSeconds === "number" ? params.waitSeconds : 0;
+          const job = await worker.call("evolve.status", { job_id: params.jobId, wait_s: wait }, (wait + 30) * 1000);
+          return result(pretty(job), job);
+        }
+        case "candidates":
+          return result(pretty(await worker.call("evolve.candidates")), undefined);
+        default:
+          return result(pretty(await worker.call("evolve.candidate", { candidate_id: required(params, "candidateId") })), undefined);
+      }
+    },
+  };
+}
+
 export function createScienceClawTools(_api: OpenClawPluginApi, worker: EngineWorker) {
-  return [createCanvasTool(worker), createToolsTool(worker), createProgramTool(worker), createEvalTool(worker)];
+  return [
+    createCanvasTool(worker),
+    createToolsTool(worker),
+    createProgramTool(worker),
+    createEvolveTool(worker),
+    createEvalTool(worker),
+  ];
 }

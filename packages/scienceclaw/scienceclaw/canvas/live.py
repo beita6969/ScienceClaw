@@ -140,8 +140,10 @@ def build_live_episode(spec: dict[str, Any], *, task_id: str, input_roots: list[
             ok, msg = cs.check(y, trace)
             h[cs.name], msgs[cs.name] = bool(ok), msg
         ok_all = all(h.values())
+        share = sum(h.values()) / len(h) if h else 1.0
         return EvalResult(metrics={"constraints_passed": float(sum(h.values())), "constraints_total": float(len(h))},
-                          primary=1.0 if ok_all else 0.0, direction="max", h=h, h_msgs=msgs, accepted=ok_all, completed=True)
+                          primary=1.0 if ok_all else 0.0, direction="max", h=h, h_msgs=msgs, accepted=ok_all, completed=True,
+                          details={"norm_score": share})
 
     b = dict(spec.get("budget") or {})
     budget = Budget(**{k: type(getattr(Budget(), k))(v) for k, v in b.items() if k in Budget.__dataclass_fields__})

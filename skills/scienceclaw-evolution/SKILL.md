@@ -31,6 +31,24 @@ ID/OOD evaluation. Use the
 checked-in launcher for an explicitly approved server-side batch and retain its
 manifest and receipts.
 
+## Evolve from your own sessions
+
+A finished, replay-verified canvas session is a source episode. With the optional
+`scienceclaw_evolve` tool the same gate that governs benchmark evolution applies to live work:
+
+1. Register validation tasks with `operation=val_add` — tasks the user confirms as
+   representative, given as a task declaration or as the `sessionId` of a passed session.
+   Keep them disjoint from the task a candidate is learned from; the engine refuses to
+   validate a candidate on its own source.
+2. `operation=propose` (or `run`, which also gates) builds the linked Skill/Operator bundle
+   from the session's repair. `operation=gate` re-solves the source task with the candidate
+   (`R_src = Pass ∧ Use`), then solves the validation tasks with the incumbent and the
+   candidate under the frozen model, and promotes only on `H_val`, budget and strict
+   `Q_val` improvement. These are background jobs: poll `operation=status`.
+3. Read `operation=show` for the decision and reasons. A candidate without validation tasks or
+   without an available model stays pending; it is never promoted by default. Promotions
+   are versioned and reversible with `scienceclaw_program(operation=rollback)`.
+
 ## Candidate loop
 
 1. Freeze the incumbent program and record its source revision, tool registry,

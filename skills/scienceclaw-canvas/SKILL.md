@@ -50,7 +50,8 @@ returns real feedback.
   wrappers need staged weights (`scienceclaw_tools(operation=weights)`).
 - Never ask for, print or store credentials. The engine process does not receive
   gateway or provider keys.
-- Use `scienceclaw_program` to see which Skills and Operators are active, and
-  `scienceclaw-evolution` for how they are improved and rolled back.
+- Use `scienceclaw_program` to see which Skills and Operators are active. When a verified
+  session contained a real repair (a failed replay fixed by an edit), offer to learn from it
+  with `scienceclaw_evolve`; see `scienceclaw-evolution` for the gate and rollback.
 - For benchmark disciplines use `scienceclaw-benchmark`; its episodes open with
   `episode={discipline, split, index}` and keep hidden targets sealed.

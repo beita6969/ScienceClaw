@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 from ..core.program import AgentProgram, Bundle
+from ..runtime.sandbox import protect
 from .attribution import extract_instances
 from .bundle import build_bundle, bundle_summary
 from .validation import (ValidationGate, ValReport, _fresh_dir, _numeric_usage, _safe, infra_error_of, qval_key,
@@ -172,6 +173,7 @@ class Evolver:
         uncommitted receipts (partial candidates.jsonl / stream.jsonl / rounds.jsonl lines) are dropped.
         """
         self.run_dir.mkdir(parents=True, exist_ok=True)
+        protect(self.run_dir)
         stream = list(self.plan.source_stream())
         rounds: list[Any] = []
         by_round: dict[str, list[Any]] = {}

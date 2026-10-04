@@ -72,7 +72,7 @@ KNOWN_ROOTS = frozenset({   # single-component absolute paths flagged on their o
 _URL_PREFIXES = ("http://", "https://", "ftp://", "ftps://", "s3://", "gs://", "gcs://", "hf://", "file://", "ssh://")
 _PATH_COMPONENT = re.compile(r"[A-Za-z0-9_.@+~-]+")
 _WINDOWS_ABS = re.compile(r"^[A-Za-z]:[\\/]")
-_DATASET_MARKERS = ("datasets/scienceclaw",)
+_DATASET_MARKERS = ("datasets/scienceclaw", ".cache/scienceclaw/datasets")
 _CREDENTIAL_MARKERS = (".config/scienceclaw", "client.json", "/.ssh", ".ssh/", "id_rsa", "id_ed25519", ".netrc", ".aws/",
                        "api_key", "api-key", "apikey", "secret_key", "access_token", "credentials.json",
                        "openai_api_key", "anthropic_api_key", ".pgpass", ".git-credentials")

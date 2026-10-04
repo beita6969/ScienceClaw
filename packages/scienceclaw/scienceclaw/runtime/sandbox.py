@@ -103,6 +103,50 @@ def build_env(work_dir: Path) -> dict[str, str]:
     return env
 
 
+_protected: list[str] = []
+
+
+def protect(path: str | Path) -> None:
+    """Make a directory (run receipts, evaluator payloads) unreadable to code nodes, except their own work directory."""
+    resolved = str(Path(path).expanduser().resolve())
+    if resolved not in _protected:
+        _protected.append(resolved)
+
+
+def protected_paths() -> list[str]:
+    """Locations code nodes must not read or write: benchmark data, evaluator payloads and runs, engine state, credentials."""
+    home = Path.home()
+    out = [os.environ.get("SCIENCECLAW_DATA_ROOT"), os.environ.get("SCIENCECLAW_RUN_ROOT"), os.environ.get("SCIENCECLAW_HOME"),
+           str(home / ".cache" / "scienceclaw" / "datasets"), str(home / ".config" / "scienceclaw"), str(home / ".scienceclaw"),
+           str(home / ".ssh"), str(home / ".aws"), str(home / ".gnupg")]
+    return [p for p in out if p] + list(_protected)
+
+
+_isolation_prefix: list[str] | None = None
+
+
+def isolation_prefix() -> list[str]:
+    """Command prefix that runs a worker in new user, network and pid namespaces (no network at all, no view of other processes).
+
+    ``SCIENCECLAW_SANDBOX_ISOLATION``: ``auto`` (default) uses it when ``unshare`` works here, ``off`` never, ``require`` fails
+    when it is unavailable. Namespaces drop supplementary groups, so files readable only through a group are not visible.
+    """
+    global _isolation_prefix
+    mode = os.environ.get("SCIENCECLAW_SANDBOX_ISOLATION", "auto")
+    if mode == "off":
+        return []
+    if _isolation_prefix is None:
+        prefix = ["unshare", "--user", "--map-root-user", "--net", "--pid", "--fork", "--mount-proc", "--kill-child"]
+        try:
+            ok = subprocess.run(prefix + ["true"], capture_output=True, timeout=20).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            ok = False
+        _isolation_prefix = prefix if ok else []
+    if mode == "require" and not _isolation_prefix:
+        raise RuntimeError("SCIENCECLAW_SANDBOX_ISOLATION=require but user/net/pid namespaces are not available here")
+    return list(_isolation_prefix)
+
+
 def _kill_group(proc: subprocess.Popen) -> None:
     try:
         os.killpg(proc.pid, signal.SIGKILL)
@@ -131,7 +175,7 @@ def run_code_node(node: Any, input_values: dict, run_dir: str | Path, timeout_s:
     save_value(dict(input_values), in_path)
     spec = {"node_id": str(node.id), "code_path": str(code_path), "inputs_path": str(in_path),
             "outputs_path": str(out_path), "meta_path": str(meta_path), "config": dict(node.config or {}),
-            "declared_outputs": list(node.outputs)}
+            "declared_outputs": list(node.outputs), "deny_paths": protected_paths(), "allow_paths": [str(work)]}
     spec_path = work / "_spec.json"
     spec_path.write_text(json.dumps(spec, default=str), encoding="utf-8")
     stdout_path, stderr_path = work / "_stdout.txt", work / "_stderr.txt"
@@ -142,7 +186,7 @@ def run_code_node(node: Any, input_values: dict, run_dir: str | Path, timeout_s:
         t0 = time.monotonic()
         with open(stdout_path, "wb") as out_f, open(stderr_path, "wb") as err_f:
             proc = subprocess.Popen(
-                [sys.executable, "-m", WORKER_MODULE, str(spec_path)], cwd=str(work), env=build_env(work),
+                [*isolation_prefix(), sys.executable, "-m", WORKER_MODULE, str(spec_path)], cwd=str(work), env=build_env(work),
                 stdin=subprocess.DEVNULL, stdout=out_f, stderr=err_f, start_new_session=True)
             try:
                 rc = proc.wait(timeout=max(0.1, float(timeout_s)))

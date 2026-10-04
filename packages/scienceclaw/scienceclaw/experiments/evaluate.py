@@ -44,6 +44,7 @@ from typing import Any, Callable, Iterable
 
 from ..config import RunConfig, load_config
 from ..core.program import AgentProgram
+from ..runtime.sandbox import protect
 from .provenance import UsageLedger, provenance, sha256_file
 from .run_stream import SNAPSHOT_RE, snapshot_dirs
 
@@ -178,6 +179,7 @@ def _failure_payload(ep: Any) -> tuple[Any, bool]:
 
 
 def _solve_job(job: dict, program: AgentProgram, solver_factory: Callable[[], Any], eval_dir: Path) -> dict:
+    protect(eval_dir)
     ep = job["episode"]
     snap, split = job["snapshot"], job["split"]
     ep_dir = eval_dir / _safe(snap) / split / _safe(ep.id)

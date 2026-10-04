@@ -95,7 +95,14 @@ def main() -> int:
             if not 1 <= workers <= 16:
                 raise ValueError("workers must be between 1 and 16")
             info = run_smoke(run_root, rounds=rounds, workers=workers, verbose=False, seed=seed)
-            return emit({"schema": 1, "status": "ok", "op": op, "result": info})
+            # Keep the generated run identifier in the protocol response so a
+            # caller can immediately hand it to the report operation without
+            # parsing filesystem paths.  Older callers may still rely on the
+            # nested run_dir field, so retain the full result unchanged.
+            run_dir = info.get("run_dir") if isinstance(info, dict) else None
+            run_id = Path(str(run_dir)).name if run_dir else None
+            return emit({"schema": 1, "status": "ok", "op": op,
+                         "run_id": run_id, "result": info})
 
         if op == "report":
             from scienceclaw.experiments.report import build_report

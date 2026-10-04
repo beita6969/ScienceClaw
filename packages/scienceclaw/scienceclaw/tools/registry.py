@@ -196,7 +196,7 @@ def get(tool_id: str) -> ToolEntry:
 def module_doc(module: str) -> str:
     """The interface description of a whole module (the text the policy sees for ``scilib.<module>``)."""
     path = SCILIB_DIR / f"{module}.py"
-    if not path.is_file() or module in _SKIP_MODULES:
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", module) or not path.is_file() or module in _SKIP_MODULES:
         raise KeyError(f"unknown scilib module {module!r}")
     return ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
 

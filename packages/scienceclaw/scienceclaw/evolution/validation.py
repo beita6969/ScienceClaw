@@ -77,6 +77,18 @@ def _graph_nodes(g: Any) -> Iterable[Any]:
     return list(getattr(g, "nodes", {}).values())
 
 
+def _feeding_submit(g: Any) -> set[str] | None:
+    """Ids of the nodes that contribute to the submit node (None when the graph has none or cannot be read)."""
+    if g is None:
+        return None
+    if isinstance(g, dict):
+        from ..core.graph import WorkflowGraph
+
+        g = WorkflowGraph.from_dict(g)
+    sink = g.submit_node() if hasattr(g, "submit_node") else None
+    return None if sink is None else g.ancestors([sink]) | {sink}
+
+
 def source_evidence(result: Any) -> Any | None:
     """e_src: the passing replay-verified evidence of a source solve (the solver's final one, else the first)."""
     passing = [e for e in (getattr(result, "evidence", None) or []) if bool(getattr(e, "passed", False))]
@@ -104,7 +116,8 @@ def _node_ran_ok(trace: Any, nid: str) -> bool:
 def used_refs(result: Any) -> set[str]:
     """Refs used in the passing evidence e_src of a solve (version suffix stripped), see module docstring.
 
-    * ``op:<id>``    - an operator node with that ref is in e_src's graph and ran ok in e_src's trace;
+    * ``op:<id>``    - an operator node with that ref is in e_src's graph, feeds its submit node and ran ok in e_src's
+      trace;
     * ``skill:<id>`` - listed in ``uses`` of an effective step (``feedback.action_ok`` is True) with
       ``step <= e_src.step``.
 
@@ -125,7 +138,10 @@ def used_refs(result: Any) -> set[str]:
         if last is not None and int(getattr(rec, "step", 0)) > int(last):
             continue
         refs |= {norm_ref(u) for u in (getattr(rec, "uses", None) or []) if str(u).startswith("skill:")}
+    feeding = _feeding_submit(graph)
     for n in _graph_nodes(graph):
+        if feeding is not None and n.id not in feeding:
+            continue
         if getattr(n, "kind", None) == "operator" and getattr(n, "ref", None) and _node_ran_ok(trace, n.id):
             r = str(n.ref)
             refs.add(norm_ref(r if r.startswith("op:") else f"op:{r}"))

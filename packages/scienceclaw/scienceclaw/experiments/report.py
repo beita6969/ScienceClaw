@@ -102,6 +102,18 @@ def load_candidates(run_dir: Path) -> list[dict]:
     for line in p.read_text().splitlines():
         if line.strip():
             out.append(json.loads(line))
+    # under per_round_argmax a candidate is promoted at the end of its round: the decision lives in rounds.jsonl
+    rounds = run_dir / "rounds.jsonl"
+    chosen = set()
+    if rounds.exists():
+        for line in rounds.read_text().splitlines():
+            if line.strip():
+                d = json.loads(line)
+                if d.get("accepted") and d.get("chosen"):
+                    chosen.add(d["chosen"])
+    for c in out:
+        if c.get("cand_id") in chosen:
+            c["accepted"] = True
     return out
 
 

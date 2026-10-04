@@ -124,7 +124,6 @@ def extract_instances(result: Any, max_instances: int = 1) -> list[EvolutionInst
         rejected: list[dict] = []
         for k in sorted(s for s in steps if lo <= s <= k_plus):
             rec = steps[k]
-            uses |= {str(u) for u in (getattr(rec, "uses", None) or [])}
             raw = getattr(rec, "action", None)
             if raw is None or getattr(rec, "parse_error", None):
                 continue
@@ -133,6 +132,7 @@ def extract_instances(result: Any, max_instances: int = 1) -> list[EvolutionInst
                 rejected.append({"step": k, "action": raw if isinstance(raw, dict) else _action_dict(raw),
                                  "error": fb.get("action_error") or "; ".join(fb.get("validation_errors") or [])})
                 continue
+            uses |= {str(u) for u in (getattr(rec, "uses", None) or [])}
             delta.append(to_action(raw))
             delta_steps.append(k)
         fb_minus = _feedback_dict(getattr(steps.get(k_minus), "feedback", None)) if k_minus is not None else None

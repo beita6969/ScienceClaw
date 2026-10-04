@@ -44,12 +44,37 @@ def _schema(d: dict | None, default_type: str = "any") -> PortSchema:
                       dtype=d.get("dtype"), description=str(d.get("description", "")))
 
 
+DENIED_PARTS = frozenset({".ssh", ".aws", ".gnupg", ".kube", ".docker", ".netrc"})
+_denied_paths: list[Path] = []
+
+
+def deny_paths(paths: list[Path]) -> None:
+    """Locations no task input may point into (the engine's own state, credential stores), whatever the input roots say."""
+    _denied_paths[:] = [Path(p).expanduser().resolve() for p in paths]
+
+
+def check_roots(roots: list[Path]) -> list[str]:
+    """Reasons why a set of input roots is unsafe (empty when acceptable): a root must not be the filesystem root or the
+    home directory, nor contain the engine's state or a credential store."""
+    problems = []
+    for r in roots:
+        rr = r.expanduser().resolve()
+        if rr == Path(rr.anchor) or rr == Path.home().resolve():
+            problems.append(f"{rr} is too broad to serve as an input root")
+        for d in _denied_paths:
+            if d == rr or rr in d.parents:
+                problems.append(f"{rr} contains {d}, which must stay out of reach")
+    return problems
+
+
 def resolve_input(path: str, roots: list[Path]) -> Path:
     """The file behind ``path`` if it lies inside an allowed input root (symlinks resolved)."""
     p = Path(path).expanduser()
     p = (p if p.is_absolute() else roots[0] / p).resolve()
     if not any(p == r.resolve() or r.resolve() in p.parents for r in roots):
         raise SpecError(f"input {path!r} is outside the allowed input roots {[str(r) for r in roots]}")
+    if DENIED_PARTS & set(p.parts) or any(d == p or d in p.parents for d in _denied_paths):
+        raise SpecError(f"input {path!r} points into a protected location")
     if not p.is_file():
         raise SpecError(f"input file not found: {path!r}")
     if p.stat().st_size > MAX_INPUT_BYTES:
@@ -59,6 +84,8 @@ def resolve_input(path: str, roots: list[Path]) -> Path:
 
 def _loader(path: Path, fmt: str):
     def load(inputs: dict, config: dict) -> dict:
+        if path.resolve() != path:
+            raise SpecError(f"input {path.name!r} changed after the task was declared (it is now a link)")
         if fmt in ("csv", "tsv"):
             import pandas as pd
             return {"data": pd.read_csv(path, sep="\t" if fmt == "tsv" else ",")}

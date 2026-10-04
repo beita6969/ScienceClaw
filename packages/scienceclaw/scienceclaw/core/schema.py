@@ -30,7 +30,10 @@ class PortSchema:
         d = asdict(self)
         d["shape"] = list(self.shape) if self.shape is not None else None
         d["provenance"] = list(self.provenance)
-        return {k: v for k, v in d.items() if v not in (None, "", [])} | {"type": self.type}
+        out = {k: v for k, v in d.items() if v not in (None, "", [])} | {"type": self.type}
+        if self.shape is not None:
+            out["shape"] = list(self.shape)             # a scalar's shape () is meaningful, unlike an absent one
+        return out
 
     @classmethod
     def from_dict(cls, d: dict | "PortSchema" | None) -> "PortSchema":

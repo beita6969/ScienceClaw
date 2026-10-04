@@ -260,9 +260,10 @@ SPECS: list[dict[str, Any]] = [
                  "z": p("array", "0/1 treatment indicator", shape=("n",), dtype="int"),
                  "y": p("array", "observed outcome", shape=("n",), dtype="float"),
                  "methods": p("list", "method names, for example ['regression_adjustment', 'impute_lgbm', 'aipw_hgb']")},
-         outputs={"scores": p("table", "one row per method with rmse_sd, bias_sd and seconds")},
+         outputs={"scores": p("table", "one row per method with rmse_sd and bias_sd (units of the outcome standard deviation)")},
          code=("from scilib import causal\n"
-               "return {'scores': causal.semi_synthetic_check(inputs['X'], inputs['z'], inputs['y'], methods=tuple(inputs['methods']), n_rep=2)}"),
+               "out = causal.semi_synthetic_check(inputs['X'], inputs['z'], inputs['y'], methods=tuple(inputs['methods']), n_rep=2)\n"
+               "return {'scores': out.drop(columns='seconds')}"),
          pre=[{"port": "X", "check": "finite"}, {"port": "methods", "check": "nonempty"}], post=[],
          tags=["causal inference", "model selection", "simulation", "benchmark", "treatment effect", "validation"]),
     # ------------------------------------------------------------------------------------------ clinical time series

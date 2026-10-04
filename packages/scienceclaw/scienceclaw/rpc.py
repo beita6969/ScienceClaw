@@ -35,6 +35,7 @@ from typing import Any, Callable
 log = logging.getLogger("scienceclaw.rpc")
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 _SESSION_ID = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
+PRACTICE_SPLITS = ("src", "val")
 
 
 def _json_safe(value: Any) -> Any:
@@ -59,6 +60,9 @@ class Service:
         self._evolution = None
         roots = os.environ.get("SCIENCECLAW_INPUT_ROOTS")
         self.input_roots = [Path(p).expanduser() for p in roots.split(os.pathsep) if p] if roots else [Path.cwd()]
+        from scienceclaw.canvas.live import check_roots, deny_paths
+        deny_paths([self.home, Path.home() / ".config" / "scienceclaw", Path.home() / ".ssh"])
+        self.root_problems = check_roots(self.input_roots)
         self.methods: dict[str, Callable[[dict], Any]] = {
             "ping": self.ping,
             "canvas.open": self.canvas_open, "canvas.act": self.canvas_act, "canvas.render": self.canvas_render,
@@ -125,6 +129,9 @@ class Service:
     # ------------------------------------------------------------------------------------------ canvas
     def canvas_open(self, p: dict) -> dict:
         from scienceclaw.canvas import CanvasSession, build_live_episode
+        if self.root_problems and not p.get("episode"):
+            raise ValueError("unsafe input roots: " + "; ".join(self.root_problems) + " (set inputRoots to a dedicated workspace)")
+        self._evict_closed()
         sid = uuid.uuid4().hex[:12]
         run_dir = self.home / "sessions" / sid
         program = self.program()
@@ -157,8 +164,16 @@ class Service:
             row = next((r for r in adapter_status(cfg) if r["code"] == code), None)
             raise RuntimeError(f"{ex}" + (f" ({row['reason']})" if row and row.get("reason") else "")) from None
         split, index = str(ref.get("split", "src")), int(ref.get("index", 0))
-        episodes = adapter.build_episodes(split, index + 1, int(ref.get("seed", 0)), int(ref.get("items", 16)))
+        if split not in PRACTICE_SPLITS:
+            raise ValueError(f"only the practice splits {PRACTICE_SPLITS} can be opened here; held-out splits are evaluated server-side")
+        episodes = adapter.build_episodes(split, index + 1, cfg.seed, int(ref.get("items", 16)))
         return episodes[index]
+
+    def _evict_closed(self, keep: int = 64) -> None:
+        """Forget the oldest finished sessions once more than ``keep`` are held (their receipts stay on disk)."""
+        closed = [sid for sid, s in self.sessions.items() if s.closed]
+        for sid in closed[: max(0, len(self.sessions) - keep)]:
+            del self.sessions[sid]
 
     def canvas_act(self, p: dict) -> dict:
         self._need(p, "session_id", "action")
@@ -169,7 +184,10 @@ class Service:
         return {"graph": s.render(), "status": s.status()}
 
     def canvas_replay(self, p: dict) -> dict:
-        return self._session(p).replay()
+        s = self._session(p)
+        if s.closed:
+            raise ValueError("the session is finished; open a new one to replay again")
+        return s.replay()
 
     def canvas_finish(self, p: dict) -> dict:
         return self._session(p).finish()

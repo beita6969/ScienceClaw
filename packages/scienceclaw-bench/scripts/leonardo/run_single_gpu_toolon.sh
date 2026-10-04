@@ -59,7 +59,7 @@ PY
     [ -n "$ref" ] && required_tool_args+=(--required-tool "$ref")
   done
 fi
-export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets
+export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets SCIENCECLAW_MODELS=$L/models
 export SCIENCECLAW_REMOTE_SPOOL=$SPOOL SCIENCECLAW_MLIP_CACHE=$L/sc-tools/mlip
 export SCIENCECLAW_MAX_SUBPROCS=${SUBPROCS:-8} OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1

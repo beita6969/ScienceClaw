@@ -1,2 +1,0 @@
-iid 2730 pairs: {'overlap': 0.3681, 'rr': 0.4518, 'nli_ent': 0.4207, 'nli_ev': 0.3553, 'emb_cos': 0.4648, 'rr_rank+cos': 0.486}
-ood 1641 pairs: {'overlap': 0.3533, 'rr': 0.4309, 'nli_ent': 0.417, 'nli_ev': 0.3381, 'emb_cos': 0.4371, 'rr_rank+cos': 0.4671}

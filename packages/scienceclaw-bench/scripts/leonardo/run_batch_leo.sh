@@ -26,7 +26,7 @@ if [ -f "${ffmpeg_glob[0]:-}" ]; then
 else
   unset SCIENCECLAW_FFMPEG || true
 fi
-export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets SCIENCECLAW_REMOTE_SPOOL=$R/remote_spool \
+export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets SCIENCECLAW_MODELS=$L/models SCIENCECLAW_REMOTE_SPOOL=$R/remote_spool \
        SCIENCECLAW_MLIP_CACHE=$L/sc-tools/mlip \
        SCIENCECLAW_MAX_SUBPROCS=${SUBPROCS:-24} OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 CONFIG_PATH=${SCIENCECLAW_CONFIG_PATH:-configs/toolon_leo.yaml}

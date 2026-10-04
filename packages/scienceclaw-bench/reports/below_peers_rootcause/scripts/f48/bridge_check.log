@@ -1,2 +1,0 @@
-bridge: fit 157s, predict 118s
-max |score diff| 0.266; mAP bridge 0.9493 table 0.9437

@@ -1,8 +1,0 @@
-chronos_2     first call  10.7s | n=256 len= 120 H=24:  0.071s ->  3625.3 series/s  out (256, 24, 3)
-chronos_2     first call  10.7s | n=256 len= 300 H=24:  0.126s ->  2038.7 series/s  out (256, 24, 3)
-chronos_2     first call  10.7s | n= 64 len=1461 H= 7:  0.051s ->  1257.6 series/s  out (64, 7, 3)
-chronos_2     first call  10.7s | n= 64 len=1461 H=28:  0.051s ->  1243.0 series/s  out (64, 28, 3)
-chronos_bolt  first call   0.3s | n=256 len= 120 H=24:  0.068s ->  3744.4 series/s  out (256, 24, 3)
-chronos_bolt  first call   0.3s | n=256 len= 300 H=24:  0.076s ->  3349.0 series/s  out (256, 24, 3)
-chronos_bolt  first call   0.3s | n= 64 len=1461 H= 7:  0.045s ->  1427.4 series/s  out (64, 7, 3)
-chronos_bolt  first call   0.3s | n= 64 len=1461 H=28:  0.044s ->  1439.2 series/s  out (64, 28, 3)

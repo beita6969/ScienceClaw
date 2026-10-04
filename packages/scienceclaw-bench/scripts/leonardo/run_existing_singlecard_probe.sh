@@ -24,7 +24,7 @@ if [[ "$TAG" == SOTA* ]]; then
 fi
 cd "$F/scienceclaw"
 export HF_HOME=$L/cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
-export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets
+export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets SCIENCECLAW_MODELS=$L/models
 export SCIENCECLAW_REMOTE_SPOOL=$R/remote_spool
 export SCIENCECLAW_MLIP_CACHE=${SCIENCECLAW_MLIP_CACHE:-$L/sc-tools/mlip}
 export SCIENCECLAW_MAX_SUBPROCS=8 OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2

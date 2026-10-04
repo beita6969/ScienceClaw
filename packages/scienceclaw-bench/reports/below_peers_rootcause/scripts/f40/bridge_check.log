@@ -1,6 +1,0 @@
-ToyCar ast_audioset: 24+16 clips in 32 s
-ToyCar clap_htsat: 24+16 clips in 28 s
-ToyCar: max |embedding diff| 0; max |score diff| 0; official bridge 0.703/0.688/0.671 table 0.703/0.688/0.671
-bearing ast_audioset: 24+16 clips in 30 s
-bearing clap_htsat: 24+16 clips in 25 s
-bearing: max |embedding diff| 0; max |score diff| 0; official bridge 0.812/0.766/0.671 table 0.812/0.766/0.671

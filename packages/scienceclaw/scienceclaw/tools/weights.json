@@ -435,7 +435,7 @@
       "id": "beats_iter3",
       "title": "BEATs iter3 audio encoder",
       "kind": "huggingface",
-      "source": "https://huggingface.co/lpepino/beats_ckpts",
+      "source": "lpepino/beats_ckpts",
       "used_by": [
         "beats"
       ],
@@ -458,7 +458,7 @@
       "id": "granite_ttm_r2",
       "title": "IBM Granite TinyTimeMixer r2",
       "kind": "huggingface",
-      "source": "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2",
+      "source": "ibm-granite/granite-timeseries-ttm-r2",
       "used_by": [
         "granite"
       ],

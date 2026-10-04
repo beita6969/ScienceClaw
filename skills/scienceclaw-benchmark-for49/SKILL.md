@@ -31,6 +31,13 @@ provenance and configuration used.
 2. Build the candidate from visible `load_train` data and use `score_dev` or the
    documented visible split for selection. Keep the output shape, unit, and hard
    constraints from the adapter unchanged.
+   For the visible-dev solver route, start with
+   `z3_check(query_timeout_s=30, workers=8, memory_mb=4096)` and let
+   `score_dev` choose it against the 10-second baseline. This is the current
+   fast/high-recall default: on three local `val` dev episodes (seeds 900–902)
+   it produced accuracies 0.9375, 1.0000, and 0.8750 with no wrong definite
+   answers. The 120-second setting is an escalation for a difficult formal
+   episode when the episode wall budget allows it; it is not a scorer change.
 3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
    weights, infer hidden targets, or use an evaluation item to choose a skill.
 4. For self-evolution, let the solver produce a replayable graph, attribute the

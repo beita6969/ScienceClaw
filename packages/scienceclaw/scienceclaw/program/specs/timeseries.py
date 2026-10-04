@@ -33,8 +33,8 @@ SPECS: list[dict[str, Any]] = [
          pre=[{"port": "histories", "check": "nonempty"}, {"port": "method", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
          tags=["forecasting", "time series", "seasonal", "theta", "ets", "arima", "baseline"]),
     dict(id="forecast_backtest_method_ranking", tool="forecast.backtest_panel",
-         description="Rolling-origin backtest on a panel of seasonal series: the last steps of each series are held out at several origins, four methods "
-                     "(repeat_season, theta, stl_ets, ets_damped_add) forecast them, and the mean absolute scaled error (MASE) per method plus the ranking is returned.",
+         description="Rolling-origin backtest on a panel of seasonal series: the last steps of each series are held out at several origins, five methods "
+                     "(repeat_season, seasonal_average, theta, holt_damped, stl_ets) forecast them, and the mean absolute scaled error (MASE) per method plus the ranking is returned.",
          inputs={"histories": p("list", "list of 1-D float series, oldest value first; each must be longer than 2 * period + 2 + horizon * n_origins"),
                  "horizon": p("number", "length of each held-out window", unit="1"),
                  "period": p("number", "observations per season (12 monthly, 4 quarterly, 1 none)", unit="1"),
@@ -42,7 +42,7 @@ SPECS: list[dict[str, Any]] = [
          outputs={"mase": p("dict", "{method: mean MASE over series and origins} (lower is better; 1 = as accurate as the in-sample seasonal naive)"),
                   "ranked": p("list", "method names from lowest to highest MASE")},
          code="from scilib import forecast\nbt = forecast.backtest_panel(inputs['histories'], int(inputs['horizon']), int(inputs['period']), "
-              "methods=('repeat_season', 'theta', 'stl_ets', 'ets_damped_add'), n_origins=int(inputs['n_origins']), global_models=(), n_jobs=1)\n"
+              "methods=('repeat_season', 'seasonal_average', 'theta', 'holt_damped', 'stl_ets'), n_origins=int(inputs['n_origins']), global_models=(), n_jobs=1)\n"
               "return {'mase': bt['mase'], 'ranked': bt['ranked']}",
          pre=[{"port": "histories", "check": "nonempty"}], post=[{"port": "ranked", "check": "nonempty"}],
          tags=["forecasting", "backtest", "model selection", "mase", "rolling origin", "time series"]),
@@ -69,6 +69,15 @@ SPECS: list[dict[str, Any]] = [
          pre=[{"port": "forecasts", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
          tags=["forecasting", "ensemble", "combination", "median", "time series"]),
     # ---------------------------------------------------------------------------------------------- pretrained forecasters
+    dict(id="chronos_median_forecast_nonnegative_panel", tool="forecast.pretrained_forecast",
+         description="Median forecast of a panel of non-negative series (counts, sales, demand, tourism, loads) from the pretrained Chronos-2 model, zero-shot: log1p scale, "
+                     "the last 120 observations as context, no seasonal period needed.",
+         inputs={"histories": p("list", "list of 1-D float series, oldest value first, no NaN, all values >= 0 (series with negative values are used as they are)"),
+                 "horizon": p("number", "number of future steps to forecast (1..1024)", unit="1")},
+         outputs={"forecast": p("array", "median forecast of the steps after the end of each history, in the units of the input", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import forecast\nreturn {'forecast': forecast.pretrained_forecast(inputs['histories'], int(inputs['horizon']), 'chronos_2')}",
+         pre=[{"port": "histories", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "time series", "pretrained", "chronos", "foundation model", "zero-shot", "panel", "seasonal"]),
     dict(id="granite_ttm_point_forecast", tool="granite.forecast",
          description="Point forecast of 96 future steps from the last 512 values of univariate series with the pretrained IBM Granite TinyTimeMixer r2 (3 M parameters), zero-shot.",
          inputs={"context": p("array", "the 512 most recent values of each series, oldest first, no NaN", shape=("n", 512), dtype="float")},

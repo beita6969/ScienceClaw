@@ -143,7 +143,7 @@ def _disable_network() -> None:
 
 _PATH_EVENTS = frozenset({"open", "os.listdir", "os.scandir", "os.chdir", "os.mkdir", "os.remove", "os.rename", "os.rmdir",
                           "os.truncate", "os.symlink", "os.link", "shutil.copyfile", "shutil.copytree", "shutil.move"})
-_PROC_FOREIGN = re.compile(r"^/proc/(?!self/|thread-self/)\d+/(?:environ|mem|maps|cmdline|fd|cwd|root)")
+_PROC_FOREIGN = re.compile(r"^/proc/(\d+)/(?:environ|mem|maps|cmdline|fd|cwd|root)")
 
 
 def _install_audit_guard(deny: list[str], allow: list[str]) -> None:
@@ -182,7 +182,8 @@ def _install_audit_guard(deny: list[str], allow: list[str]) -> None:
         except TypeError:
             return
         full = real(path)
-        if _PROC_FOREIGN.match(full):
+        m = _PROC_FOREIGN.match(full)
+        if m and m.group(1) != str(os.getpid()):
             raise PermissionError(f"code nodes may not inspect other processes ({event} {path!r})")
         if under(full, deny_r) and not under(full, allow_r):
             raise PermissionError(f"code nodes may not access protected data ({event} {path!r})")

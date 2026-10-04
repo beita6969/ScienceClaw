@@ -151,4 +151,61 @@ SPECS: list[dict[str, Any]] = [
          pre=[{"port": "train_images", "check": "nonempty"}, {"port": "eval_images", "check": "nonempty"}],
          post=[{"port": "captions", "check": "len_eq_port", "value": "eval_items"}],
          tags=["vision", "image", "caption", "retrieval", "nearest neighbour", "pretrained", "clip", "multilingual"]),
+    dict(id="image_patch_features_dinov2", tool="phenoseg_deep.patch_features",
+         description="Dense patch features of images from the frozen self-supervised DINOv2 ViT-B/14 encoder: one 768-d vector per 14 x 14 patch of the image resized to "
+                     "the given longer side; general-purpose visual descriptors for pixel or patch classification, clustering, similarity search and segmentation "
+                     "of natural, agricultural or aerial images.",
+         inputs={"images": p("array", "uint8 RGB images", shape=_IMG, dtype="int"),
+                 "size": p("number", "longer image side after resizing, a multiple of 14 (e.g. 476 or 728); the grid has about size / 14 patches along it", unit="px")},
+         outputs={"features": p("array", "patch features of the last layer, grid of about size / 14 patches per side", shape=("n", "gh", "gw", 768), dtype="float")},
+         code="from scilib import phenoseg_deep\n"
+              "return {'features': phenoseg_deep.patch_features(inputs['images'], backbone='dinov2_base', size=int(inputs['size']))}",
+         pre=[{"port": "images", "check": "nonempty"}], post=[{"port": "features", "check": "finite"}],
+         tags=["vision", "image", "embedding", "features", "self-supervised", "pretrained", "dinov2", "vit", "patch", "segmentation"]),
+    dict(id="field_class_probabilities_dinov2_lgbm", tool="phenoseg_deep.predict_deep_probs",
+         description="Per-pixel probabilities of soil, crop and weed for top-down field images from a LightGBM classifier on frozen DINOv2 ViT-B/14 patch features "
+                     "(PCA-reduced) plus colour / texture features, fitted on the labelled images; the probabilities feed the panoptic post-processing.",
+         inputs={"train_images": p("array", "uint8 RGB labelled field images", shape=("n_train", "H", "W", 3), dtype="int"),
+                 "train_semantics": p("array", _SEMANTICS, shape=("n_train", "H", "W"), dtype="int"),
+                 "images": p("array", "uint8 RGB field images to classify", shape=_IMG, dtype="int"),
+                 "size": p("number", "longer image side seen by DINOv2 after resizing, a multiple of 14 (728 for full quality, 476 on CPU)", unit="px")},
+         outputs={"probabilities": p("array", "class probabilities, channels (soil, crop, weed)", shape=("n", "H", "W", 3), dtype="float")},
+         code="from scilib import phenoseg_deep\n"
+              "model = phenoseg_deep.fit_deep_classifier(inputs['train_images'], inputs['train_semantics'], backbone='dinov2_base', size=int(inputs['size']))\n"
+              "return {'probabilities': phenoseg_deep.predict_deep_probs(model, inputs['images'])}",
+         pre=[{"port": "train_images", "check": "nonempty"}, {"port": "images", "check": "nonempty"}],
+         post=[{"port": "probabilities", "check": "range", "value": [0.0, 1.0]}],
+         tags=_FIELD_TAGS + ["dinov2", "lightgbm", "pretrained", "pixel classifier", "class probabilities", "crop weed soil"]),
+    dict(id="field_panoptic_segmentation_dinov2_lgbm", tool="phenoseg_deep.fit_predict_deep",
+         description="Hierarchical panoptic segmentation of top-down field images (soil / crop / weed, crop plants, crop leaves) from frozen DINOv2 ViT-B/14 patch "
+                     "features and a LightGBM pixel classifier fitted on the labelled images, followed by distance-transform watershed instances.",
+         inputs={"train_images": p("array", "uint8 RGB labelled field images", shape=("n_train", "H", "W", 3), dtype="int"),
+                 "train_semantics": p("array", _SEMANTICS, shape=("n_train", "H", "W"), dtype="int"),
+                 "images": p("array", "uint8 RGB field images to segment", shape=_IMG, dtype="int"),
+                 "size": p("number", "longer image side seen by DINOv2 after resizing, a multiple of 14 (728 for full quality, 476 on CPU)", unit="px")},
+         outputs={"panoptic": p("dict", _PANOPTIC)},
+         code="from scilib import phenoseg_deep\n"
+              "return {'panoptic': phenoseg_deep.fit_predict_deep(inputs['train_images'], inputs['train_semantics'], inputs['images'], backbone='dinov2_base', "
+              "size=int(inputs['size']))}",
+         pre=[{"port": "train_images", "check": "nonempty"}, {"port": "images", "check": "nonempty"}], post=[],
+         tags=_FIELD_TAGS + ["dinov2", "lightgbm", "pretrained", "watershed", "crop weed soil"]),
+    dict(id="field_hierarchical_panoptic_weyler", tool="phenobench_weyler.predict_panoptic",
+         description="Hierarchical instance segmentation of top-down field images with the frozen PRBonn instance-embedding ERFNet trained on PhenoBench: crop plants "
+                     "and crop leaves as instances (semantics only separates soil from crop, weeds are never predicted). The network runs at 1024 x 1024: other sizes "
+                     "are upsampled and the maps subsampled back to the input size.",
+         inputs={"images": p("array", "uint8 RGB field images", shape=_IMG, dtype="int")},
+         outputs={"panoptic": p("dict", "dict of integer arrays (n, H, W): 'semantics' (0 soil, 1 crop), 'plant_instances' (ids >= 1 per crop plant, 0 = none), "
+                                        "'leaf_instances' (ids >= 1 per crop leaf, 0 = none)")},
+         code="import numpy as np\nfrom PIL import Image\nfrom scilib import phenobench_weyler\n"
+              "x = inputs['images']\nn, H, W = x.shape[:3]\nside = 1024\n"
+              "if (H, W) != (side, side):\n"
+              "    x = np.stack([np.asarray(Image.fromarray(im).resize((side, side), Image.BILINEAR)) for im in x])\n"
+              "out = phenobench_weyler.predict_panoptic(x, batch_size=1)\n"
+              "if (H, W) != (side, side):\n"
+              "    ys = np.minimum(((np.arange(H) + 0.5) * side / H).astype(int), side - 1)\n"
+              "    xs = np.minimum(((np.arange(W) + 0.5) * side / W).astype(int), side - 1)\n"
+              "    out = {k: v[:, ys][:, :, xs] for k, v in out.items()}\n"
+              "return {'panoptic': out}",
+         pre=[{"port": "images", "check": "nonempty"}], post=[],
+         tags=_FIELD_TAGS + ["pretrained", "weyler", "instance embedding", "erfnet", "phenobench"]),
 ]

@@ -163,6 +163,17 @@ def _dist(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     return np.sqrt(np.maximum((A ** 2).sum(1)[:, None] + (B ** 2).sum(1)[None, :] - 2.0 * A @ B.T, 0.0))
 
 
+def _lof_factor(pool: np.ndarray, lof_neighbors: int) -> np.ndarray:
+    """``negative_outlier_factor_`` of a Local Outlier Factor fitted on the rows of ``pool``. Inside a sandboxed code node the
+    default neighbour search is refused (its thread-pool control reads /proc/self/maps); the tree search finds the same neighbours."""
+    from sklearn.neighbors import LocalOutlierFactor
+    k = int(max(1, min(lof_neighbors, len(pool) - 1)))
+    try:
+        return LocalOutlierFactor(n_neighbors=k).fit(pool).negative_outlier_factor_
+    except PermissionError:
+        return LocalOutlierFactor(n_neighbors=k, algorithm="kd_tree").fit(pool).negative_outlier_factor_
+
+
 def _finite(v: np.ndarray) -> np.ndarray:
     """Replace non-finite scores by the largest finite one (or 0), so ranks and metrics stay defined."""
     v = np.asarray(v, dtype=float)
@@ -176,7 +187,6 @@ def _finite(v: np.ndarray) -> np.ndarray:
 def component_scores(train_mels, eval_mels, n_bands: int = 8, lof_neighbors: int = 5) -> dict:
     """Raw anomaly scores of the eval clips, one (n_eval,) array per name in ``COMPONENTS`` (see the module docstring)."""
     from sklearn.covariance import LedoitWolf
-    from sklearn.neighbors import LocalOutlierFactor
     tr, ev = _mel_list(train_mels, "train_mels"), _mel_list(eval_mels, "eval_mels")
     if tr[0].shape[1] != ev[0].shape[1]:
         raise ValueError(f"train and eval clips have different numbers of mel bins ({tr[0].shape[1]} vs {ev[0].shape[1]})")
@@ -196,7 +206,7 @@ def component_scores(train_mels, eval_mels, n_bands: int = 8, lof_neighbors: int
     # 'm' descriptor: LOF in the pool, Mahalanobis to the training mean
     Mt, Me = _zscore(clip_descriptors(tr, "m"), clip_descriptors(ev, "m"))
     pool = np.vstack([Mt, Me])
-    lof = -LocalOutlierFactor(n_neighbors=int(max(1, min(lof_neighbors, len(pool) - 1)))).fit(pool).negative_outlier_factor_[n_t:]
+    lof = -_lof_factor(pool, lof_neighbors)[n_t:]
     prec = LedoitWolf().fit(Mt).precision_
     dm = Me - Mt.mean(axis=0)
     maha = np.einsum("ij,jk,ik->i", dm, prec, dm)
@@ -221,7 +231,6 @@ def _unit_rows(X, name: str) -> np.ndarray:
 
 def embedding_scores(train_emb, eval_emb, lof_neighbors: int = 5) -> dict:
     """Raw anomaly scores of the eval rows from embedding vectors, one (n_eval,) array per name in ``EMBEDDING_COMPONENTS``."""
-    from sklearn.neighbors import LocalOutlierFactor
     Et, Ee = _unit_rows(train_emb, "train_emb"), _unit_rows(eval_emb, "eval_emb")
     if Et.shape[1] != Ee.shape[1]:
         raise ValueError(f"train and eval embeddings have different dimensions ({Et.shape[1]} vs {Ee.shape[1]})")
@@ -237,7 +246,7 @@ def embedding_scores(train_emb, eval_emb, lof_neighbors: int = 5) -> dict:
     np.fill_diagonal(d_ee, np.inf)
     nn_pool = np.minimum(nn_train, d_ee.min(axis=1)) if n_e > 1 else nn_train.copy()
     pool = np.vstack([Et, Ee])
-    lof = -LocalOutlierFactor(n_neighbors=int(max(1, min(lof_neighbors, len(pool) - 1)))).fit(pool).negative_outlier_factor_[n_t:]
+    lof = -_lof_factor(pool, lof_neighbors)[n_t:]
     return {k: _finite(v) for k, v in {"nn_train": nn_train, "nn2_pool": nn2_pool, "nn_pool": nn_pool, "lof": lof}.items()}
 
 

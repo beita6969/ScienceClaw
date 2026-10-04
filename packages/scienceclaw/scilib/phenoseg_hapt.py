@@ -176,16 +176,42 @@ def _network():
 _MODEL = None
 
 
+def _read_checkpoint(path: Path):
+    """``torch.load`` of the Lightning checkpoint without importing ``pytorch_lightning``: the file pickles one callback class
+    (``ModelCheckpoint``) next to the tensors, and every ``pytorch_lightning`` class is read as an empty placeholder."""
+    import pickle
+    import types
+
+    import torch
+
+    class _Placeholder:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __setstate__(self, state):
+            self.__dict__.update(state if isinstance(state, dict) else {})
+
+    class _Unpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if module.split(".")[0] == "pytorch_lightning":
+                return _Placeholder
+            return super().find_class(module, name)
+
+    loader = types.ModuleType("lightning_free_pickle")
+    loader.__dict__.update({k: getattr(pickle, k) for k in ("load", "loads", "dump", "dumps", "UnpicklingError", "HIGHEST_PROTOCOL")})
+    loader.Unpickler = _Unpickler
+    return torch.load(str(path), map_location="cpu", weights_only=False, pickle_module=loader)
+
+
 def _load(device: str):
     global _MODEL
-    import torch
 
     if _MODEL is None:
         p = checkpoint_path()
         if p is None:
             raise RuntimeError("HAPT checkpoint is not staged")
         net = _network()()
-        raw = torch.load(str(p), map_location="cpu", weights_only=False)
+        raw = _read_checkpoint(p)
         state = raw.get("state_dict", raw)
         state = {k[6:] if k.startswith("model.") else k: v for k, v in state.items()}
         state = {k: v for k, v in state.items() if not k.startswith(("sem_loss.",))}

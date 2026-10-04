@@ -9,10 +9,12 @@ set D_val is a set of tasks the user registered as representative. The same mach
 * **propose** builds the linked Skill/Operator bundle from the session (attribution, edit split, Patch_Theta0 skill candidates,
   boundary-replayed operator candidates) and stores it as a pending candidate. Nothing about the active program changes.
 * **gate** re-solves the source task with the candidate (R_src = Pass and Use), then solves D_val with the incumbent and the
-  candidate under the frozen language model, and admits the candidate only if H_val holds, the cost stays within the budget B
-  and Q_val strictly improves. An admitted candidate becomes the new head of the :class:`ProgramStore` with a receipt; a
-  rejected one is kept with its reasons. A candidate is never promoted without validation tasks, and the task it was learned
-  from can never validate it.
+  candidate under the frozen language model, and admits the candidate only if H_val holds (absolute: every hard constraint on
+  every validation task), the cost stays within the budget B and Q_val = MacroSR strictly improves. A candidate is never
+  admitted without enough validation tasks, the task it was learned from can never validate it, and a candidate derived from an
+  older program is refused when a component it changes has moved on.
+* **promote** makes an admitted candidate the head of the :class:`ProgramStore` with a receipt. It is the user's decision
+  (``scienceclaw live promote``); only with ``auto_promote`` does the gate promote by itself.
 
 Both stages call the language model, so they run as background jobs while the engine keeps serving canvas sessions.
 """
@@ -22,6 +24,7 @@ import dataclasses
 import hashlib
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -38,7 +41,7 @@ from scienceclaw.evolution.validation import (ValidationGate, ValReport, infra_e
                                               use_check)
 from scienceclaw.evolution.variants import bundles_for_variant, check_variant
 from scienceclaw.llm.client import LLMError
-from scienceclaw.program.store import ProgramStore
+from scienceclaw.program.store import ProgramStore, StaleHead
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +67,30 @@ def task_key(spec: dict, input_roots: list[Path]) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
+# Eq. 2-3 as written: every hard constraint holds on every validation task, and MacroSR must strictly improve.
+LIVE_GATE = {"hval_mode": "absolute", "qval": "macrosr"}
+
+
+def _file_digest(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def task_digest(spec: dict, input_roots: list[Path]) -> str:
+    """Content identity of a live task: the whole declaration and the bytes of every input and held-out file it reads."""
+    files = {}
+    for item in spec.get("inputs") or []:
+        files[f"input:{item.get('name')}"] = _file_digest(resolve_input(str(item.get("path", "")), input_roots))
+    for c in spec.get("constraints") or []:
+        if c.get("check") == "metric":
+            files[f"holdout:{c.get('name') or 'metric'}"] = _file_digest(resolve_input(str(c.get("target", "")), input_roots))
+    payload = {"spec": spec, "files": files}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:16]
+
+
 def _brief(rep: ValReport) -> dict[str, Any]:
     return {"program": rep.program_version, "macro_sr": rep.macro_sr, "norm_score": rep.norm_score, "h_val": rep.h_val,
             "logical_tokens": rep.cost.get("logical_tokens"), "wall_s": rep.wall_s, "resolved": rep.n_resolved,
@@ -73,7 +100,10 @@ def _brief(rep: ValReport) -> dict[str, Any]:
 class LiveEvolution:
     """Candidate generation, gating and promotion for one program store."""
 
-    def __init__(self, store: ProgramStore, home: Path, llm: Any, cfg: RunConfig, input_roots: list[Path]) -> None:
+    def __init__(self, store: ProgramStore, home: Path, llm: Any, cfg: RunConfig, input_roots: list[Path], *,
+                 auto_promote: bool = False, min_val_tasks: int = 2) -> None:
+        self.auto_promote = auto_promote
+        self.min_val_tasks = max(1, int(min_val_tasks))
         self.store = store
         self.root = Path(home) / "evolution"
         self.llm = llm
@@ -98,8 +128,9 @@ class LiveEvolution:
                 raise SpecError(f"this task is already registered as {row['id']!r}")
             if row["id"] == vid:
                 raise SpecError(f"validation id {vid!r} is taken")
-        build_live_episode(spec, task_id=f"val-{vid}-{key[:8]}", input_roots=self.input_roots)
-        row = {"id": vid, "key": key, "added": time.strftime("%Y-%m-%dT%H:%M:%S"), "spec": spec}
+        digest = task_digest(spec, self.input_roots)
+        build_live_episode(spec, task_id=f"val-{vid}-{digest[:10]}", input_roots=self.input_roots)
+        row = {"id": vid, "key": key, "digest": digest, "added": time.strftime("%Y-%m-%dT%H:%M:%S"), "spec": spec}
         _write_json(self._val_dir() / f"{vid}.json", row)
         return {k: v for k, v in row.items() if k != "spec"} | {"objective": spec.get("objective", "")}
 
@@ -115,12 +146,16 @@ class LiveEvolution:
         return {"removed": vid, "remaining": len(self.val_list())}
 
     def _val_episodes(self) -> tuple[list[Any], dict[str, str]]:
+        """The episodes of D_val and, per task that cannot be used as registered, why (the gate refuses to run then)."""
         episodes, errors = [], {}
         for row in self.val_list():
             try:
-                episodes.append(build_live_episode(row["spec"], task_id=f"val-{row['id']}-{row['key'][:8]}",
+                digest = task_digest(row["spec"], self.input_roots)
+                if digest != row.get("digest"):
+                    raise SpecError("its inputs or held-out data changed since it was registered; remove it and register it again")
+                episodes.append(build_live_episode(row["spec"], task_id=f"val-{row['id']}-{digest[:10]}",
                                                    input_roots=self.input_roots))
-            except SpecError as ex:
+            except (SpecError, OSError) as ex:
                 errors[row["id"]] = str(ex)
         return episodes, errors
 
@@ -203,8 +238,22 @@ class LiveEvolution:
         nums = [int(m.group(1)) for v in self.store.versions() if (m := re.fullmatch(r"A(\d+)", v))]
         return f"A{max(nums, default=0) + 1}"
 
+    def _config_digest(self) -> str:
+        """What a stored report depends on besides the program and the tasks: the solver settings and the model behind Theta_0."""
+        roles = {}
+        for role in ("policy", "executor", "patch"):
+            try:
+                roles[role] = self.llm.role_config(role).model
+            except Exception:                           # an unconfigured role has no model to pin
+                roles[role] = ""
+        llm = self.cfg.llm
+        ident = {"solver": dataclasses.asdict(self.cfg.solver), "roles": roles, "backend": llm.backend,
+                 "command": llm.command or os.environ.get("SCIENCECLAW_LLM_COMMAND", ""),
+                 "pass_requires_acceptance": bool(self.cfg.evolution.pass_requires_acceptance)}
+        return hashlib.sha256(json.dumps(ident, sort_keys=True, default=str).encode()).hexdigest()[:12]
+
     def _report_path(self, program: AgentProgram) -> Path:
-        return self.root / "reports" / f"{program.fingerprint()}.json"
+        return self.root / "reports" / f"{program.fingerprint()}-{self._config_digest()}.json"
 
     def _cached_report(self, program: AgentProgram) -> ValReport | None:
         p = self._report_path(program)
@@ -213,8 +262,22 @@ class LiveEvolution:
     def _save_report(self, program: AgentProgram, rep: ValReport) -> None:
         _write_json(self._report_path(program), rep.to_dict())
 
+    def _conflicts(self, bundle: Bundle, source: AgentProgram, head: AgentProgram) -> list[str]:
+        """Components the bundle changes whose version moved since the session's program (the bundle is not based on head)."""
+        out = []
+        for kind, comps, src, cur in (("skill", bundle.skills, source.skills, head.skills),
+                                      ("op", bundle.operators, source.operators, head.operators)):
+            for c in comps:
+                if c.id in cur and (c.id not in src or src[c.id].version != cur[c.id].version):
+                    out.append(f"{kind}:{c.id}")
+        return out
+
     def gate(self, cid: str) -> dict[str, Any]:
-        """Validate a pending candidate on top of the active program and promote it iff the gate admits it."""
+        """Validate a pending candidate on top of the active program; promote it iff the gate admits it and promotion is automatic.
+
+        Without ``auto_promote`` an admitted candidate becomes ``ready`` and waits for :meth:`promote` (the user, outside the
+        agent's tools): the agent that proposes candidates and registers validation tasks never promotes by itself.
+        """
         rec = self.candidate(cid)
         if rec["status"] != "pending":
             raise ValueError(f"candidate {cid} is {rec['status']}; only pending candidates can be gated")
@@ -231,22 +294,33 @@ class LiveEvolution:
             return {"candidate": cid, "status": status, "reason": reason, **extra}
 
         val_eps, val_errors = self._val_episodes()
-        if not val_eps:
-            return settle("pending", "blocked: no validation tasks are registered, so Q_val cannot be compared; register "
-                                     "representative tasks (not the source task) and gate again",
-                          val_errors=val_errors)
+        if val_errors:
+            return settle("pending", "blocked: validation tasks cannot be used as registered, and a smaller D_val would weaken "
+                                     "the gate: " + "; ".join(f"{k}: {v}" for k, v in val_errors.items()), val_errors=val_errors)
+        need = max(self.min_val_tasks, int(evo_cfg.min_improved_episodes))
+        if len(val_eps) < need:
+            return settle("pending", f"blocked: {len(val_eps)} validation task(s) registered, at least {need} are required; "
+                                     "register representative tasks (not the source task) and gate again")
         if any(row["key"] == key for row in self.val_list()):
             return settle("pending", "blocked: the source task is itself a validation task, but D_src and D_val must be "
                                      "disjoint; remove it from the validation tasks and gate again")
 
         head = self.store.open()
+        source_prog = self.store.load(rec["source"]["program_version"])
+        if source_prog is None:
+            return settle("pending", f"blocked: program {rec['source']['program_version']} the candidate was derived from "
+                                     "is no longer in the store")
         bundle = Bundle.from_dict(_read_json(self._cdir(cid) / "bundle.json"))
+        stale = self._conflicts(bundle, source_prog, head)
+        if stale:
+            return settle("pending", f"blocked: {stale} changed in program {head.version} since the candidate was derived "
+                                     f"from {source_prog.version}; learn it again from a new session", stale=stale)
         cand, omega = head.apply(bundle, new_version=self._next_version())
         source_ep = build_live_episode(spec, task_id=f"src-{key[:8]}", input_roots=self.input_roots)
 
         from scienceclaw.agent.solver import Solver
         solver = Solver(self.cfg.solver, self.llm, evo_cfg)
-        eff = dataclasses.replace(evo_cfg, min_improved_episodes=max(1, min(int(evo_cfg.min_improved_episodes), len(val_eps))))
+        eff = dataclasses.replace(evo_cfg, **LIVE_GATE)
         work = self._cdir(cid) / "gate"
         try:
             ok_src, sres = source_replay_check(cand, omega, source_ep, solver, work / "source_replay",
@@ -274,19 +348,47 @@ class LiveEvolution:
             return settle("pending", f"blocked: language model unavailable ({ex})")
 
         gate_info = {**r_src, "H_val": crep.h_val, "admitted": admitted, "validation_tasks": [e.id for e in val_eps],
-                     "min_improved_episodes": eff.min_improved_episodes, "reasons": reasons,
+                     "gate": LIVE_GATE, "min_improved_episodes": eff.min_improved_episodes, "reasons": reasons,
                      "incumbent": _brief(inc), "candidate_report": _brief(crep)}
         if not admitted:
             return settle("rejected", "the validation gate did not admit the candidate "
                                       f"(feasible={reasons.get('feasible')}, improved={reasons.get('improved')})", **gate_info)
-        if self.store.head() != head.version:
-            return settle("pending", f"blocked: the active program moved to {self.store.head()} during validation; gate again",
-                          **gate_info)
-        self.store.commit(cand, {"event": "promote", "candidate": cid, "parent": head.version, "omega": omega,
-                                 "source": {"session_id": rec["source"]["session_id"], "task_key": key},
-                                 "gate": gate_info})
-        return settle("promoted", f"admitted: program {head.version} -> {cand.version}", version=cand.version,
-                      omega=omega, **gate_info)
+        record = {"version": cand.version, "omega": omega, "base": head.version, "fingerprint": cand.fingerprint(), **gate_info}
+        if not self.auto_promote:
+            return settle("ready", f"admitted over {head.version}; promote it with `scienceclaw live promote {cid}`", **record)
+        return self._promote(rec, cand, record, settle)
+
+    def _promote(self, rec: dict[str, Any], cand: AgentProgram, record: dict[str, Any], settle: Callable[..., dict]) -> dict[str, Any]:
+        try:
+            self.store.commit(cand, {"event": "promote", "candidate": rec["id"], "parent": record["base"], "omega": record["omega"],
+                                     "source": {"session_id": rec["source"]["session_id"], "task_key": rec["source"]["task_key"]},
+                                     "gate": record}, expected_parent=record["base"])
+        except StaleHead as ex:
+            return settle("pending", f"blocked: {ex}; gate again", **record)
+        return settle("promoted", f"admitted: program {record['base']} -> {cand.version}", **record)
+
+    def promote(self, cid: str) -> dict[str, Any]:
+        """Make an admitted (``ready``) candidate the active program. This is the user's decision, not the agent's."""
+        rec = self.candidate(cid)
+        if rec["status"] != "ready":
+            raise ValueError(f"candidate {cid} is {rec['status']}; only candidates admitted by the gate ('ready') can be promoted")
+        record = {k: v for k, v in (rec["decision"] or {}).items() if k not in ("reason", "time", "wall_s")}
+        head = self.store.open()
+        if head.version != record["base"]:
+            raise StaleHead(f"the active program is {head.version}, the candidate was validated on {record['base']}; gate it again")
+        cand, omega = head.apply(Bundle.from_dict(_read_json(self._cdir(cid) / "bundle.json")), new_version=record["version"])
+        if cand.fingerprint() != record["fingerprint"]:
+            raise ValueError("the program that would result is not the one the gate validated")
+        t0 = time.monotonic()
+
+        def settle(status: str, reason: str, **extra: Any) -> dict[str, Any]:
+            rec["status"] = status
+            rec["decision"] = {"reason": reason, "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                               "wall_s": round(time.monotonic() - t0, 2), **extra}
+            self._save(rec)
+            return {"candidate": cid, "status": status, "reason": reason, **extra}
+
+        return self._promote(rec, cand, record, settle)
 
     # ------------------------------------------------------------------------------------------- jobs
     def start_job(self, kind: str, fn: Callable[[], Any]) -> dict[str, Any]:

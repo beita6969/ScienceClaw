@@ -36,18 +36,22 @@ manifest and receipts.
 A finished, replay-verified canvas session is a source episode. With the optional
 `scienceclaw_evolve` tool the same gate that governs benchmark evolution applies to live work:
 
-1. Register validation tasks with `operation=val_add` — tasks the user confirms as
-   representative, given as a task declaration or as the `sessionId` of a passed session.
-   Keep them disjoint from the task a candidate is learned from; the engine refuses to
-   validate a candidate on its own source.
+1. Register at least two validation tasks with `operation=val_add` — tasks the user confirms as
+   representative, given as a task declaration (with constraints) or as the `sessionId` of a passed
+   session. Keep them disjoint from the task a candidate is learned from; the engine refuses to
+   validate a candidate on its own source, and a validation task whose files changed blocks the gate.
 2. `operation=propose` (or `run`, which also gates) builds the linked Skill/Operator bundle
    from the session's repair. `operation=gate` re-solves the source task with the candidate
    (`R_src = Pass ∧ Use`), then solves the validation tasks with the incumbent and the
-   candidate under the frozen model, and promotes only on `H_val`, budget and strict
-   `Q_val` improvement. These are background jobs: poll `operation=status`.
-3. Read `operation=show` for the decision and reasons. A candidate without validation tasks or
-   without an available model stays pending; it is never promoted by default. Promotions
-   are versioned and reversible with `scienceclaw_program(operation=rollback)`.
+   candidate under the frozen model, and admits it only if every hard constraint holds on every
+   validation task, cost stays within budget and the success rate strictly improves. A candidate
+   derived from an older program is refused when a component it changes has moved on. These are
+   background jobs: poll `operation=status`.
+3. Read `operation=show` for the decision and reasons. An admitted candidate is `ready`; the user
+   promotes it with `scienceclaw live promote <id>` (or enabled automatic promotion in the plugin
+   configuration). Nothing is promoted without validation tasks or an available model. Promotions
+   are versioned, leave receipts and are reversible with `scienceclaw_program(operation=rollback)`
+   or `scienceclaw live rollback <version>`.
 
 ## Candidate loop
 

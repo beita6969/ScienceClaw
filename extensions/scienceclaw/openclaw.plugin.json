@@ -55,6 +55,9 @@
       "maxResponseBytes": {
         "type": "integer",
         "minimum": 4096
+      },
+      "autoPromote": {
+        "type": "boolean"
       }
     }
   },
@@ -111,6 +114,11 @@
     },
     "maxResponseBytes": {
       "label": "Maximum response size (bytes)",
+      "advanced": true
+    },
+    "autoPromote": {
+      "label": "Promote validated changes automatically",
+      "help": "Off by default: an admitted program change waits for the user to promote it with `scienceclaw live promote`",
       "advanced": true
     }
   }

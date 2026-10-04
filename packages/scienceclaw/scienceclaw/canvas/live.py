@@ -27,6 +27,7 @@ _FORMAT_TYPE = {"csv": "table", "tsv": "table", "parquet": "table", "json": "any
                 "txt": "text", "text": "text"}
 _CHECKS = ("finite", "shape", "type", "range", "nonempty", "len_eq_input", "metric")
 _METRICS = ("mae", "mse", "rmse", "smape", "r2", "accuracy", "f1_macro", "auc")
+_HIGHER_IS_BETTER = frozenset({"r2", "accuracy", "f1_macro", "auc"})
 MAX_INPUT_BYTES = 512 * 1024 * 1024
 
 
@@ -138,7 +139,8 @@ def _score(metric: str, truth: np.ndarray, y: np.ndarray) -> float:
 def _metric_constraint(entry: dict, input_roots: list[Path]) -> ConstraintSpec:
     """A quality criterion against a held-out file the workflow never sees: it is evaluator-only (not a visible constraint)."""
     name = str(entry.get("name") or "metric")
-    metric, direction = str(entry.get("metric", "")), str(entry.get("direction", "min"))
+    metric = str(entry.get("metric", ""))
+    direction = str(entry.get("direction") or ("max" if metric in _HIGHER_IS_BETTER else "min"))
     if metric not in _METRICS or direction not in ("min", "max") or not isinstance(entry.get("value"), (int, float)):
         raise SpecError(f"constraint {name!r}: metric needs 'metric' in {_METRICS}, 'direction' min|max and a numeric 'value'")
     truth = np.asarray(_holdout(resolve_input(str(entry.get("target", "")), input_roots), entry.get("column"))).reshape(-1)
@@ -167,6 +169,16 @@ def _metric_constraint(entry: dict, input_roots: list[Path]) -> ConstraintSpec:
 
     desc = str(entry.get("description") or f"{metric} against held-out data must be {op} {threshold:g}")
     return ConstraintSpec(name, desc, check, False, grade)
+
+
+def _schema_constraint(schema: PortSchema) -> ConstraintSpec:
+    """The declared deliverable schema (type, shape, probability range) as a visible hard constraint."""
+    from scienceclaw.runtime.executor import schema_issues
+
+    def check(y: Any, trace: Any) -> tuple[bool, str]:
+        issues = schema_issues(y, schema)
+        return not issues, "; ".join(issues) if issues else "ok"
+    return ConstraintSpec("output_schema", f"the deliverable y matches the declared output: {schema.render()}", check, True)
 
 
 def _constraint(entry: dict, loaders: dict[str, Any]) -> ConstraintSpec:
@@ -227,6 +239,9 @@ def build_live_episode(spec: dict[str, Any], *, task_id: str, input_roots: list[
     constraints = [_metric_constraint(c, input_roots) if c.get("check") == "metric" else _constraint(c, loaders)
                    for c in spec.get("constraints", []) or []]
     out = _schema(spec.get("required_output"), "any")
+    if out.type == "any" and out.shape is None and not constraints:
+        raise SpecError("a task needs something to verify: declare at least one constraint or a typed 'required_output'")
+    constraints.insert(0, _schema_constraint(out))
 
     def evaluate(y: Any, trace: Any) -> EvalResult:
         h = {}

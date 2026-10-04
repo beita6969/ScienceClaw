@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -157,6 +158,33 @@ def cmd_weights(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_live(args: argparse.Namespace) -> int:
+    """Review, promote and roll back the program changes learned from live sessions (the user's side of the gate)."""
+    from .config import RunConfig
+    from .program.store import ProgramStore
+    from .evolution.live import LiveEvolution
+
+    home = Path(args.home or os.environ.get("SCIENCECLAW_HOME") or Path.home() / ".scienceclaw").expanduser()
+    store = ProgramStore(home / "program")
+    evo = LiveEvolution(store, home, None, RunConfig(), [])
+    if args.action == "candidates":
+        rows = [{"id": c["id"], "status": c["status"], "variant": c["variant"], "decision": str(c["decision"])[:70]}
+                for c in evo.candidates()]
+        _print_table(rows, ["id", "status", "variant", "decision"])
+        print(f"\nactive program: {store.head()}")
+    elif args.action == "show":
+        print(json.dumps(evo.candidate(args.target), indent=1, default=str))
+    elif args.action == "promote":
+        res = evo.promote(args.target)
+        print(json.dumps({k: res[k] for k in ("candidate", "status", "reason")}, indent=1))
+    elif args.action == "rollback":
+        print(f"active program: {store.rollback(args.target)}")
+    else:
+        for h in store.history():
+            print(json.dumps({k: h.get(k) for k in ("time", "version", "event", "candidate", "parent", "from", "to")}, default=str))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m scienceclaw.cli", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -218,6 +246,16 @@ def build_parser() -> argparse.ArgumentParser:
     a = ws.add_parser("verify")
     a.add_argument("ids", nargs="*")
     s.set_defaults(fn=cmd_weights)
+
+    s = sub.add_parser("live", help="candidates learned from live sessions: review, promote, roll back")
+    s.add_argument("--home", default=None, help="engine state directory (default $SCIENCECLAW_HOME or ~/.scienceclaw)")
+    ls = s.add_subparsers(dest="action", required=True)
+    ls.add_parser("candidates")
+    ls.add_parser("history")
+    for name in ("show", "promote", "rollback"):
+        a = ls.add_parser(name)
+        a.add_argument("target", help="candidate id (show, promote) or program version (rollback)")
+    s.set_defaults(fn=cmd_live)
     return p
 
 

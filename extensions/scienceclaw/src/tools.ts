@@ -219,13 +219,15 @@ export function createEvolveTool(worker: EngineWorker) {
     label: "ScienceClaw Evolution",
     description:
       "Verifiable self-evolution of the agent program from finished canvas sessions. A session that was replay-verified " +
-      "can yield a candidate Skill/Operator bundle (operation=propose); a candidate is promoted only after the gate " +
-      "(operation=gate): the source task is re-solved with the candidate (it must pass and use the new components), then " +
-      "the registered validation tasks are solved with the incumbent and the candidate under the frozen model, and the " +
-      "candidate is admitted only if no hard constraint regresses, cost stays within budget and the validation score " +
-      "strictly improves. Register validation tasks first (val_add, with task=<task declaration> or sessionId of a passed " +
-      "session) and only with tasks the user confirms as representative; the source task cannot validate its own " +
-      "candidate. operation=run does propose and gate in one job. propose/gate/run are background jobs: poll " +
+      "can yield a candidate Skill/Operator bundle (operation=propose). operation=gate re-solves the source task with the " +
+      "candidate (it must pass and use the new components), then solves the registered validation tasks with the incumbent and " +
+      "the candidate under the frozen model; the candidate is admitted only if every hard constraint holds on every validation " +
+      "task, cost stays within budget and the validation success rate strictly improves. An admitted candidate is 'ready': the " +
+      "USER promotes it (`scienceclaw live promote <id>`); you cannot, unless the user enabled automatic promotion. Register at " +
+      "least two validation tasks first (val_add, with task=<declaration with constraints> or sessionId of a passed session), " +
+      "only tasks the user confirms as representative; the source task cannot validate its own candidate, a validation task " +
+      "whose files changed blocks the gate, and a candidate derived from an older program is refused when a component it " +
+      "changes has moved on. operation=run does propose and gate in one job. propose/gate/run are background jobs: poll " +
       "operation=status (waitSeconds up to 300). candidates and show list the candidates and their decisions; " +
       "scienceclaw_program(operation=rollback) undoes a promotion.",
     parameters: Type.Object({

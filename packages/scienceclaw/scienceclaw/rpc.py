@@ -108,7 +108,8 @@ class Service:
     def evolution(self):
         if self._evolution is None:
             from scienceclaw.evolution import LiveEvolution
-            self._evolution = LiveEvolution(self.store, self.home, self.llm(), self.run_config(), self.input_roots)
+            self._evolution = LiveEvolution(self.store, self.home, self.llm(), self.run_config(), self.input_roots,
+                                            auto_promote=os.environ.get("SCIENCECLAW_AUTO_PROMOTE") == "1")
         return self._evolution
 
     def _session(self, params: dict):

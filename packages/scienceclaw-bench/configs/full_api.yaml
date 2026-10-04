@@ -1,0 +1,30 @@
+# Paper-scale API run: all available disciplines (empty list), 7 rounds (7 x 23 = 161 source episodes),
+# n_val 2, n_id 4 x 16 = 64 items, n_ood 4 x 16 = 64 items per discipline. Other keys: DESIGN.md defaults.
+name: full_api
+runs_root: runs
+llm:
+  credentials_file: ~/.config/student-api/client.json
+  policy: {model: lab-gpt-5.4-mini, max_tokens: 6000, temperature: 0.0, reasoning_effort: low, json_mode: true}
+  executor: {model: lab-gpt-5.4-mini, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  patch: {model: lab-gpt-5.4-mini, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  concurrency: 16
+  cache_path: cache/llm_cache.sqlite
+  use_cache: true
+solver:
+  max_steps: 12
+evolution:
+  variant: full
+  update_schedule: per_candidate
+  qval: macrosr_then_score
+  budget_tokens_per_val_episode: 250000.0   # B scales with |D_val| (46 val episodes at full scale)
+  budget_beta: 0.5
+  min_improved_episodes: 2
+bench:
+  disciplines: []
+  items_per_episode: 16
+  rounds: 7
+  n_val: 2
+  n_id: 4
+  n_ood: 4
+  seed: 20260928
+  data_root: /Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets

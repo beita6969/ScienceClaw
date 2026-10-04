@@ -1,0 +1,44 @@
+{
+ "val": {
+  "n": 32,
+  "mean_dsc": 0.8756,
+  "ci95": [
+   0.8667,
+   0.8845
+  ],
+  "ant": 0.8875,
+  "post": 0.8637,
+  "nsd_1mm": 0.9385,
+  "min_case": 0.8103,
+  "median_case": 0.8808,
+  "reference_atlas": 0.6963
+ },
+ "id": {
+  "n": 64,
+  "mean_dsc": 0.8597,
+  "ci95": [
+   0.8521,
+   0.8671
+  ],
+  "ant": 0.8667,
+  "post": 0.8527,
+  "nsd_1mm": 0.9223,
+  "min_case": 0.7384,
+  "median_case": 0.8596,
+  "reference_atlas": 0.7006
+ },
+ "ood": {
+  "n": 64,
+  "mean_dsc": 0.863,
+  "ci95": [
+   0.8513,
+   0.875
+  ],
+  "ant": 0.8779,
+  "post": 0.8482,
+  "nsd_1mm": 0.9131,
+  "min_case": 0.6964,
+  "median_case": 0.8763,
+  "reference_atlas": 0.6916
+ }
+}

@@ -74,6 +74,7 @@ const requiredSubpathEntries = [
   "open-prose",
   "phone-control",
   "qwen-portal-auth",
+  "scienceclaw-bench",
   "synology-chat",
   "talk-voice",
   "test-utils",

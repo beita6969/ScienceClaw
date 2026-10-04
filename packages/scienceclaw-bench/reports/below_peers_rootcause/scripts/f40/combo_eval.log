@@ -1,0 +1,32 @@
+current ensemble                          src 0.4500 val 0.5328 mean 0.4914
+mean 0.5884 src 0.6553 val 0.5215  w_mel=0.0  logits/zs/nn2_pool+layer12/zs/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5883 src 0.6391 val 0.5375  w_mel=0.0  logits/zs/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5872 src 0.6390 val 0.5355  w_mel=0.0  logits/zs/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5872 src 0.6457 val 0.5287  w_mel=0.0  logits/zs/nn2_pool+clap_pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5853 src 0.6536 val 0.5170  w_mel=0.0  logits/zs/nn2_pool+layer12/zs/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5840 src 0.6452 val 0.5228  w_mel=0.0  pooled/l2/nn2_pool+clap_pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5835 src 0.6510 val 0.5160  w_mel=0.0  pooled/l2/nn2_pool+layer12/zs/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5832 src 0.6394 val 0.5270  w_mel=0.0  logits/zs/nn2_pool+pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5830 src 0.6417 val 0.5244  w_mel=0.0  logits/zs/nn2_pool+pooled/l2/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5829 src 0.6465 val 0.5193  w_mel=0.0  logits/zs/nn2_pool+layer12/zs/nn2_pool+clap_proj/l2/nn2_pool
+mean 0.5816 src 0.6457 val 0.5174  w_mel=0.0  pooled/l2/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5813 src 0.6519 val 0.5108  w_mel=0.0  pooled/l2/nn2_pool+layer12/zs/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5810 src 0.6387 val 0.5232  w_mel=0.0  pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5801 src 0.6340 val 0.5261  w_mel=0.0  logits/zs/nn2_pool+pooled/l2/nn2_pool+clap_proj/l2/nn2_pool
+mean 0.5795 src 0.6333 val 0.5258  w_mel=0.0  logits/zs/nn2_pool+clap_pooled/l2/nn2_pool+clap_proj/l2/nn2_pool
+mean 0.5794 src 0.6521 val 0.5066  w_mel=0.0  layer12/zs/nn2_pool+clap_pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5783 src 0.6371 val 0.5194  w_mel=1.0  logits/zs/nn2_pool+layer12/zs/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5778 src 0.6341 val 0.5214  w_mel=1.0  logits/zs/nn2_pool+pooled/l2/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5776 src 0.6482 val 0.5069  w_mel=0.0  layer12/zs/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5774 src 0.6304 val 0.5244  w_mel=0.0  logits/zs/nn2_pool+clap_proj/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5772 src 0.6392 val 0.5152  w_mel=1.0  pooled/l2/nn2_pool+layer12/zs/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5766 src 0.6287 val 0.5246  w_mel=1.0  logits/zs/nn2_pool+clap_pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5766 src 0.6317 val 0.5216  w_mel=1.0  logits/zs/nn2_pool+pooled/l2/nn2_pool+clap_pooled/zs/nn2_pool
+mean 0.5766 src 0.6297 val 0.5235  w_mel=1.0  logits/zs/nn2_pool+layer12/zs/nn2_pool+clap_pooled/l2/nn2_pool
+mean 0.5757 src 0.6251 val 0.5263  w_mel=1.0  logits/zs/nn2_pool+clap_pooled/l2/nn2_pool+clap_proj/l2/nn2_pool
+--- fixed a-priori combinations (one pooled AST kNN, one CLAP kNN)
+mean 0.5816 src 0.6457 val 0.5174 w_mel=0.0 ('pooled/l2/nn2_pool', 'clap_pooled/l2/nn2_pool')  vs current ensemble 95% CI of mean diff (+0.0243, +0.3411)
+mean 0.5669 src 0.6186 val 0.5153 w_mel=1.0 ('pooled/l2/nn2_pool', 'clap_pooled/l2/nn2_pool')  vs current ensemble 95% CI of mean diff (+0.0144, +0.3079)
+mean 0.5830 src 0.6417 val 0.5244 w_mel=0.0 ('logits/zs/nn2_pool', 'pooled/l2/nn2_pool', 'clap_pooled/l2/nn2_pool')  vs current ensemble 95% CI of mean diff (+0.0093, +0.3407)
+mean 0.5757 src 0.6398 val 0.5116 w_mel=0.0 ('clap_pooled/l2/nn2_pool',)  vs current ensemble 95% CI of mean diff (-0.0021, +0.3335)
+mean 0.5678 src 0.6257 val 0.5099 w_mel=0.0 ('pooled/l2/nn2_pool',)  vs current ensemble 95% CI of mean diff (+0.0002, +0.3276)

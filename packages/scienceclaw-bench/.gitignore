@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+runs/
+cache/
+*.sqlite
+.pytest_cache/
+logs/
+
+# The gateway repository has a case-insensitive global `Core/` ignore rule;
+# retain the benchmark's lower-case Python package explicitly.
+!scienceclaw/
+!scienceclaw/core/
+!scienceclaw/core/**
+# Re-apply generated-file exclusions after the case-insensitive Core/ rule.
+scienceclaw/**/__pycache__/
+scienceclaw/**/*.pyc

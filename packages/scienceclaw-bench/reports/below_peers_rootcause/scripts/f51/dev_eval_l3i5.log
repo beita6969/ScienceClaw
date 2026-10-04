@@ -1,0 +1,48 @@
+Xa (676, 158) Xpa (110, 158)
+et_deep_raw cv 25.418 predmean 649.13
+et_deep_log cv 25.619 predmean 647.48
+et_deep_sqrt cv 25.476 predmean 648.17
+et_leaf2_raw cv 26.135 predmean 649.99
+et_leaf2_log cv 26.196 predmean 648.15
+et_leaf2_sqrt cv 26.147 predmean 648.58
+et_leaf3_raw cv 26.791 predmean 650.35
+et_leaf3_log cv 27.914 predmean 648.88
+rf_raw cv 29.289 predmean 647.53
+rf_log cv 29.545 predmean 645.41
+gbr_abs_raw cv 35.098 predmean 639.95
+gbr_abs_log cv 35.059 predmean 640.85
+gbr_abs_sqrt cv 35.698 predmean 639.97
+gbr_huber_raw cv 28.655 predmean 651.72
+gbr_huber_log cv 30.108 predmean 649.01
+hgb_abs_raw cv 40.689 predmean 625.21
+hgb_abs_log cv 41.488 predmean 625.28
+hgb_abs_sqrt cv 41.391 predmean 626.08
+hgb_sq_raw cv 40.511 predmean 649.66
+hgb_sq_log cv 37.054 predmean 647.39
+svr_rbf_raw cv 93.023 predmean 567.49
+svr_rbf_log cv 314.847 predmean 510.91
+nusvr_raw cv 105.854 predmean 566.15
+nusvr_log cv 54.334 predmean 591.96
+knn_raw cv 53.49 predmean 625.29
+knn_log cv 55.319 predmean 618.65
+ridge_poly_raw cv 42.455 predmean 656.46
+ridge_poly_log cv 55.63 predmean 659.95
+bayes_raw cv 30.885 predmean 655.08
+bayes_log cv 31.603 predmean 656.97
+lgb_l1_raw cv 33.923 predmean 642.98
+lgb_l1_log cv 35.193 predmean 642.38
+lgb_l1_sqrt cv 32.938 predmean 644.84
+lgb_l2_raw cv 30.53 predmean 650.58
+lgb_l2_log cv 31.022 predmean 647.53
+xgb_raw cv 31.31 predmean 651.92
+xgb_log cv 31.61 predmean 652.13
+best individual et_deep_raw 25.417566398990996
+greedy cv 25.417566398990996 nchosen 1 chosen ['et_deep_raw']
+blend_w 0 cv 25.417566398990996
+blend_w 0.15 cv 25.475170834315826
+blend_w 0.25 cv 25.517569866906236
+blend_w 0.35 cv 25.561058952948056
+blend_w 0.5 cv 25.6357109921362
+final pred range mean 79.64401168893704 3350.944569055654 649.0810295797187 first [205.73665381 223.36375305 208.09229091 112.41251623 205.0173146
+ 193.99842072  79.64401169 126.42277366 204.07958162 180.53905283]
+{"dev_mae": 27.155642588607407, "nan_rows_train": 0, "nan_rows_dev": 1}

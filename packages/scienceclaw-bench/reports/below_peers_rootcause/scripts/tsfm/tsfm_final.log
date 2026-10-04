@@ -1,0 +1,9 @@
+== FoR35 Tourism Monthly (MASE, eval view)
+id   n= 64 snaive 1.6695  fit_predict 1.4347  chronos2 1.5012  pipeline 1.3908  rel -3.064% CI [-7.987%, +1.393%]  pipeline/snaive 0.833
+ood  n=102 snaive 1.4286  fit_predict 1.2296  chronos2 1.2671  pipeline 1.1873  rel -3.440% CI [-7.212%, +0.464%]  pipeline/snaive 0.831
+== FoR33 BuildingsBench (balanced CVRMSE %, eval view; cluster bootstrap over buildings)
+id   n= 88 (11 buildings) ens 54.82  chronos2 52.99  pipeline 51.62  rel -5.825% CI [-13.316%, +0.077%]
+ood  n= 40 (5 buildings) ens 45.21  chronos2 48.72  pipeline 46.06  rel +1.874% CI [-16.336%, +2.436%]
+== FoR41 NEON aquatics (mean of the two per-variable CRPS, eval view; item bootstrap)
+id   n= 64 fit_predict 0.5724  chronos2 0.5530  pipeline 0.5501  rel -3.894% CI [-5.869%, -2.121%]
+ood  n= 64 fit_predict 0.7163  chronos2 0.7355  pipeline 0.6891  rel -3.796% CI [-7.939%, +0.057%]

@@ -1,0 +1,1 @@
+cohorts ['src', 'val', 'id']: new [0.6457 0.5174 0.5592] mean 0.5741 | current [0.45   0.5328 0.5473] mean 0.5100 | diff +0.0641 95% CI (-0.0118, +0.2346); cohorts better 2/3

@@ -1,0 +1,309 @@
+{
+  "schema": 1,
+  "description": "Immutable acceptance manifest for the next ScienceClaw formal tool-ON reruns. This file describes required evidence; it does not change a scorer, split, or acceptance margin.",
+  "result_root_env": "SCIENCECLAW_RUN_ROOT",
+  "batches": [
+    {
+      "tag": "SOTA30",
+      "discipline": "FoR30",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "predict_pretrained"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4
+        },
+        "ood": {
+          "episodes": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA36",
+      "discipline": "FoR36",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "separate_htdemucs"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4
+        },
+        "ood": {
+          "episodes": 0,
+          "status": "unavailable",
+          "reason": "MUSDB18 full_v1 has no independent OOD collection"
+        }
+      }
+    },
+    {
+      "tag": "SOTA36B",
+      "discipline": "FoR36",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "separate_scnet"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 4,
+          "capacity": 9
+        },
+        "ood": {
+          "episodes": 0,
+          "status": "unavailable",
+          "reason": "MUSDB18 full_v1 has no independent OOD collection"
+        }
+      }
+    },
+    {
+      "tag": "SOTA36C",
+      "discipline": "FoR36",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "separate_scnet"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 1,
+          "skip": 8,
+          "capacity": 9
+        },
+        "ood": {
+          "episodes": 0,
+          "status": "unavailable",
+          "reason": "MUSDB18 full_v1 has no independent OOD collection"
+        }
+      }
+    },
+    {
+      "tag": "SOTA47",
+      "discipline": "FoR47",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "pretrained_parse"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4
+        },
+        "ood": {
+          "episodes": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA51",
+      "discipline": "FoR51",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "fit_sevennet_mlip"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4
+        },
+        "ood": {
+          "episodes": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA50",
+      "discipline": "FoR50",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "fit_predict"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4
+        },
+        "ood": {
+          "episodes": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA32",
+      "discipline": "FoR32",
+      "mode": "blocked",
+      "required_tool_refs": [],
+      "splits": {},
+      "blocked_reason": "No fair external pretrained weight is currently available: the official nnU-Net and Task04-specific checkpoints overlap the 260 task labels and are excluded from formal scoring. InnerEye-HS and Hippodeep predict whole left/right hippocampi, while HSF predicts whole/subfield masks without the FoR32 anterior/posterior crop contract. Microsoft BiomedParse lists anterior/posterior prompts but is gated and specified for 2-D inputs; no authorized checkpoint or validated 3-D adapter is installed."
+    },
+    {
+      "tag": "SOTA52",
+      "discipline": "FoR52",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "psych_fixed_predict"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "capacity": 16
+        },
+        "ood": {
+          "episodes": 4,
+          "capacity": 34
+        }
+      }
+    },
+    {
+      "tag": "SOTA47B",
+      "discipline": "FoR47",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "pretrained_parse"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 4
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA51B",
+      "discipline": "FoR51",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "fit_sevennet_mlip"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 2,
+          "skip": 4
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA50B",
+      "discipline": "FoR50",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "fit_predict"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 4
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 4
+        }
+      }
+    },
+    {
+      "tag": "SOTA50C",
+      "discipline": "FoR50",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "fit_predict"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 12
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 12
+        }
+      }
+    },
+    {
+      "tag": "SOTA52B",
+      "discipline": "FoR52",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "psych_fixed_predict"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 4,
+          "capacity": 16
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 4,
+          "capacity": 34
+        }
+      }
+    },
+    {
+      "tag": "SOTA52C",
+      "discipline": "FoR52",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "psych_domain_adaptive_predict"
+      ],
+      "splits": {
+        "ood": {
+          "episodes": 4,
+          "skip": 16,
+          "capacity": 34
+        }
+      }
+    },
+    {
+      "tag": "SOTA52D",
+      "discipline": "FoR52",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "psych_domain_adaptive_predict"
+      ],
+      "splits": {
+        "ood": {
+          "episodes": 4,
+          "skip": 20,
+          "capacity": 34
+        }
+      }
+    },
+    {
+      "tag": "SOTA49B",
+      "discipline": "FoR49",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "z3_check"
+      ],
+      "splits": {
+        "id": {
+          "episodes": 4,
+          "skip": 8
+        },
+        "ood": {
+          "episodes": 4,
+          "skip": 8
+        }
+      }
+    },
+    {
+      "tag": "SOTA49C",
+      "discipline": "FoR49",
+      "mode": "formal_tool_on",
+      "required_tool_refs": [
+        "z3_check"
+      ],
+      "splits": {
+        "ood": {
+          "episodes": 4,
+          "skip": 12
+        }
+      }
+    }
+  ]
+}

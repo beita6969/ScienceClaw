@@ -1,0 +1,4 @@
+dev: SevenNet 27.67 [19.9 38.1]  CHGNet 37.10 [30.5 44.6]  paired diff 9.43 [ 1.5 17.1]  better on 69%  median 15.1/28.7 p90 65.1/82.3 max 400/254
+id: SevenNet 24.80 [19.1 31.5]  CHGNet 37.43 [29.8 46.2]  paired diff 12.62 [ 4.7 21. ]  better on 65%  median 14.4/23.1 p90 64.2/85.0 max 182/238
+ood: SevenNet 17.97 [14.3 23.7]  CHGNet 22.16 [19.7 24.8]  paired diff 4.18 [-1.5  8.7]  better on 67%  median 12.4/19.1 p90 32.0/47.0 max 446/135
+MAE/MAD id 0.07004239054523075 ood 0.1761664582543595

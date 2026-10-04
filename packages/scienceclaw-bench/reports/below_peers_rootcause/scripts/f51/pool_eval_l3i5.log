@@ -1,0 +1,63 @@
+sizes train/dev/id/ood 676 110 99 179
+Xa (676, 158) Xpa (388, 158)
+et_deep_raw cv 25.418 predmean 494.38
+et_deep_log cv 25.619 predmean 493.14
+et_deep_sqrt cv 25.476 predmean 493.8
+et_leaf2_raw cv 26.135 predmean 494.58
+et_leaf2_log cv 26.196 predmean 493.17
+et_leaf2_sqrt cv 26.147 predmean 493.72
+et_leaf3_raw cv 26.791 predmean 494.28
+et_leaf3_log cv 27.914 predmean 492.61
+rf_raw cv 29.289 predmean 492.94
+rf_log cv 29.545 predmean 490.97
+gbr_abs_raw cv 35.098 predmean 486.08
+gbr_abs_log cv 35.059 predmean 486.48
+gbr_abs_sqrt cv 35.698 predmean 485.73
+gbr_huber_raw cv 28.655 predmean 493.67
+gbr_huber_log cv 30.108 predmean 491.94
+hgb_abs_raw cv 40.689 predmean 477.84
+hgb_abs_log cv 41.488 predmean 477.77
+hgb_abs_sqrt cv 41.391 predmean 478.16
+hgb_sq_raw cv 40.511 predmean 492.84
+hgb_sq_log cv 37.054 predmean 490.16
+svr_rbf_raw cv 93.023 predmean 443.07
+svr_rbf_log cv 314.847 predmean 510.91
+nusvr_raw cv 105.854 predmean 444.8
+nusvr_log cv 54.334 predmean 465.09
+knn_raw cv 53.49 predmean 484.9
+knn_log cv 55.319 predmean 479.05
+ridge_poly_raw cv 42.455 predmean 495.82
+ridge_poly_log cv 55.63 predmean 500.34
+bayes_raw cv 30.885 predmean 493.92
+bayes_log cv 31.603 predmean 496.0
+lgb_l1_raw cv 33.923 predmean 488.08
+lgb_l1_log cv 35.193 predmean 486.57
+lgb_l1_sqrt cv 32.938 predmean 488.71
+lgb_l2_raw cv 30.53 predmean 494.52
+lgb_l2_log cv 31.022 predmean 491.32
+xgb_raw cv 31.31 predmean 492.96
+xgb_log cv 31.61 predmean 491.15
+best individual et_deep_raw 25.417566398990996
+greedy cv 25.417566398990996 nchosen 1 chosen ['et_deep_raw']
+blend_w 0 cv 25.417566398990996
+blend_w 0.15 cv 25.475170834315826
+blend_w 0.25 cv 25.517569866906236
+blend_w 0.35 cv 25.561058952948056
+blend_w 0.5 cv 25.6357109921362
+final pred range mean 79.64401168893704 3580.6081020054626 494.24765088694846 first [205.73665381 223.36375305 208.09229091 112.41251623 205.0173146
+ 193.99842072  79.64401169 126.42277366 204.07958162 180.53905283]
+{
+ "dev": 27.67030761709819,
+ "id": 24.801195369406706,
+ "ood": 17.970944878692414,
+ "ref": {
+  "dev": 121.92995677422547,
+  "id": 132.63123852131687,
+  "ood": 51.05137926054847
+ },
+ "n": {
+  "id": 99,
+  "ood": 179
+ },
+ "nan_ph_rows_in_test": 1
+}

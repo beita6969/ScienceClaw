@@ -1,0 +1,69 @@
+# ScienceClaw rebuild — all DESIGN.md defaults made explicit (RunConfig()).
+# Paper-scale protocol: 23 disciplines (empty list = all available adapters), 7 rounds,
+# n_val 2, n_id 4 x 16 items, n_ood 4 x 16 items. Decisions 1-10 of DESIGN.md section 1.
+# The API key is read at request time from llm.credentials_file and is never copied anywhere.
+name: default
+runs_root: runs
+llm:
+  base_url: ''
+  credentials_file: ~/.config/student-api/client.json
+  policy:
+    model: lab-gpt-5.4-mini
+    max_tokens: 6000
+    temperature: 0.0
+    reasoning_effort: low
+    json_mode: true
+  executor:
+    model: lab-gpt-5.4-mini
+    max_tokens: 2000
+    temperature: 0.0
+    reasoning_effort: low
+    json_mode: false
+  patch:
+    model: lab-gpt-5.4-mini
+    max_tokens: 4000
+    temperature: 0.0
+    reasoning_effort: low
+    json_mode: false
+  concurrency: 16
+  timeout_s: 240.0
+  max_retries: 6
+  cache_path: cache/llm_cache.sqlite
+  use_cache: true
+solver:
+  max_steps: 12
+  history_window: 6
+  orchestration: canvas
+  replay_on_new_submit: true
+  show_dev_score: true
+  retrieve_skills_k: 4
+  retrieve_ops_k: 6
+  stop_on_first_pass: false
+evolution:
+  variant: full
+  update_schedule: per_candidate
+  qval: macrosr_then_score
+  qval_eps: 0.02
+  hval_mode: no_regression
+  pass_requires_acceptance: true
+  instances_per_episode: 1
+  breplay_repeats: 1
+  budget_tokens: 0.0                       # >0: absolute cap on D_val logical tokens (overrides the per-episode budget)
+  budget_tokens_per_val_episode: 250000.0  # B_abs = this x |D_val| (logical tokens = spent + cached)
+  budget_beta: 0.5                         # also C_val(cand) <= (1 + beta) x C_val(incumbent); <0 disables
+  budget_wall_s: 0.0                       # >0: absolute cap on summed D_val wall time
+  budget_wall_s_per_val_episode: 1800.0
+  lazy_revalidation: true
+  min_improved_episodes: 2                 # 1 = literal "any Q_val gain" rule
+  max_regressed_episodes: 1                # -1 = unlimited
+  infra_retries: 2                         # bounded retries of a solve cut short by a gateway outage
+  infra_backoff_s: 30.0
+bench:
+  disciplines: []
+  items_per_episode: 16
+  rounds: 7
+  n_val: 2
+  n_id: 4
+  n_ood: 4
+  seed: 20260928
+  data_root: /Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets

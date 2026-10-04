@@ -1,0 +1,26 @@
+# First real-API development run: one discipline per family, 2 rounds, 2 episodes per held-out split.
+name: toolon_evo_f32
+runs_root: runs
+llm:
+  credentials_file: ~/.config/student-api/client.json
+  policy: {model: lab-gpt-5.5, max_tokens: 12000, temperature: 0.0, reasoning_effort: medium, json_mode: true}
+  executor: {model: lab-gpt-5.4-mini, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  patch: {model: lab-gpt-5.4-mini, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  concurrency: 16
+  cache_path: cache/llm_cache_strong.sqlite
+  use_cache: true
+solver:
+  max_steps: 24
+evolution:
+  variant: full
+  qval: macrosr_then_score
+  qval_eps: 0.02
+bench:
+  disciplines: [FoR32]
+  items_per_episode: 16
+  rounds: 3
+  n_val: 2
+  n_id: 2
+  n_ood: 2
+  seed: 20260928
+  data_root: /Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets

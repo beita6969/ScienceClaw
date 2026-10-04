@@ -1,0 +1,37 @@
+# Tool-ON episodes run ON Leonardo: probe + sandbox + local vLLM (ports 21000..) + local GPU-tool broker, data and runs on large scratch.
+# started by scripts/leonardo/run_batch_leo.sh inside a running allocation; no tunnels.
+
+name: toolon_f32_budgeted
+runs_root: /leonardo_scratch/large/userexternal/rqian000/sc-runs
+llm:
+  endpoints: [http://127.0.0.1:21000/v1, http://127.0.0.1:21001/v1]
+  policy: {model: sc-llm, max_tokens: 8000, temperature: 0.0, reasoning_effort: null, json_mode: true,
+           extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  executor: {model: sc-llm, max_tokens: 2000, temperature: 0.0, reasoning_effort: null, json_mode: false,
+             extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  patch: {model: sc-llm, max_tokens: 4000, temperature: 0.0, reasoning_effort: null, json_mode: false,
+          extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  concurrency: 64
+  timeout_s: 600
+  cache_path: /leonardo_scratch/large/userexternal/rqian000/sc-runs/llm_cache_leo.sqlite
+  use_cache: true
+solver:
+  max_steps: 12
+evolution:
+  variant: full
+  qval: macrosr_then_score
+  qval_eps: 0.02
+bench:
+  disciplines: [FoR32]
+  items_per_episode: 16
+  rounds: 2
+  n_val: 2
+  n_id: 4
+  n_ood: 4
+  seed: 20260928
+  data_root: /leonardo_scratch/large/userexternal/rqian000/scienceclaw-data/datasets
+
+# Historical execution profile retained for reproducibility only. It must not
+# be used for a formal run while the no-self-training policy is active: the
+# manifest keeps FoR32 blocked until a frozen, non-overlapping model is audited.
+# This file does not change the scorer, reference, acceptance margin, or labels.

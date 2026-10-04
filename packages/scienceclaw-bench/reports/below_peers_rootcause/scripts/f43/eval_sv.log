@@ -1,0 +1,26 @@
+copy-OCR src: 0.0230 {'icdar2017/en': 0.0304, 'icdar2017/fr': 0.017, 'impresso-snippets/de': 0.0339, 'impresso-snippets/en': 0.0137, 'impresso-snippets/fr': 0.02}
+copy-OCR val: 0.0199 {'icdar2017/en': 0.0312, 'icdar2017/fr': 0.0139, 'impresso-snippets/de': 0.0259, 'impresso-snippets/en': 0.0179, 'impresso-snippets/fr': 0.0104}
+ocronos_c700.jsonl {} src 0.0484 val 0.0543 {'icdar2017/en': 0.0388, 'icdar2017/fr': 0.0192, 'impresso-snippets/de': 0.0552, 'impresso-snippets/en': 0.0849, 'impresso-snippets/fr': 0.0437}
+ocronos_c700.jsonl {'hunk': 4} src 0.0165 val 0.0134 {'icdar2017/en': 0.018, 'icdar2017/fr': 0.0098, 'impresso-snippets/de': 0.0312, 'impresso-snippets/en': 0.0098, 'impresso-snippets/fr': 0.0137}
+ocronos_c700.jsonl {'hunk': 3} src 0.0157 val 0.0131 {'icdar2017/en': 0.0173, 'icdar2017/fr': 0.0094, 'impresso-snippets/de': 0.0291, 'impresso-snippets/en': 0.0092, 'impresso-snippets/fr': 0.0137}
+ocronos_c700.jsonl {'hunk': 2} src 0.0158 val 0.0132 {'icdar2017/en': 0.0188, 'icdar2017/fr': 0.0092, 'impresso-snippets/de': 0.0288, 'impresso-snippets/en': 0.0094, 'impresso-snippets/fr': 0.0129}
+ocronos_c700.jsonl {'hunk': 6} src 0.0187 val 0.0146 {'icdar2017/en': 0.0209, 'icdar2017/fr': 0.0112, 'impresso-snippets/de': 0.0347, 'impresso-snippets/en': 0.0101, 'impresso-snippets/fr': 0.0167}
+ocronos_c700.jsonl {'maxrate': 0.15} src 0.0228 val 0.0184 {'icdar2017/en': 0.0246, 'icdar2017/fr': 0.0153, 'impresso-snippets/de': 0.0416, 'impresso-snippets/en': 0.0127, 'impresso-snippets/fr': 0.0196}
+ocronos_c700.jsonl {'hunk': 4, 'maxrate': 0.15} src 0.0164 val 0.0138 {'icdar2017/en': 0.0182, 'icdar2017/fr': 0.0101, 'impresso-snippets/de': 0.0302, 'impresso-snippets/en': 0.0092, 'impresso-snippets/fr': 0.0141}
+ocronos_c700.jsonl {'hunk': 4, 'join': True} src 0.0164 val 0.0134 {'icdar2017/en': 0.018, 'icdar2017/fr': 0.0098, 'impresso-snippets/de': 0.0308, 'impresso-snippets/en': 0.0098, 'impresso-snippets/fr': 0.0136}
+ocronos_c300.jsonl {} src 0.1196 val 0.1001 {'icdar2017/en': 0.1496, 'icdar2017/fr': 0.0619, 'impresso-snippets/de': 0.0993, 'impresso-snippets/en': 0.1356, 'impresso-snippets/fr': 0.1514}
+ocronos_c300.jsonl {'hunk': 4} src 0.0173 val 0.0137 {'icdar2017/en': 0.0195, 'icdar2017/fr': 0.0102, 'impresso-snippets/de': 0.031, 'impresso-snippets/en': 0.0105, 'impresso-snippets/fr': 0.0152}
+ocronos_c300.jsonl {'hunk': 3} src 0.0163 val 0.0133 {'icdar2017/en': 0.0183, 'icdar2017/fr': 0.0099, 'impresso-snippets/de': 0.0287, 'impresso-snippets/en': 0.0101, 'impresso-snippets/fr': 0.0144}
+ocronos_c300.jsonl {'hunk': 2} src 0.0162 val 0.0133 {'icdar2017/en': 0.0193, 'icdar2017/fr': 0.0096, 'impresso-snippets/de': 0.029, 'impresso-snippets/en': 0.0099, 'impresso-snippets/fr': 0.0134}
+ocronos_c300.jsonl {'hunk': 6} src 0.0201 val 0.0157 {'icdar2017/en': 0.0228, 'icdar2017/fr': 0.012, 'impresso-snippets/de': 0.0357, 'impresso-snippets/en': 0.012, 'impresso-snippets/fr': 0.0179}
+ocronos_c300.jsonl {'maxrate': 0.15} src 0.0266 val 0.0217 {'icdar2017/en': 0.0283, 'icdar2017/fr': 0.017, 'impresso-snippets/de': 0.0421, 'impresso-snippets/en': 0.0231, 'impresso-snippets/fr': 0.0222}
+ocronos_c300.jsonl {'hunk': 4, 'maxrate': 0.15} src 0.0175 val 0.0146 {'icdar2017/en': 0.0202, 'icdar2017/fr': 0.0109, 'impresso-snippets/de': 0.0303, 'impresso-snippets/en': 0.0104, 'impresso-snippets/fr': 0.0157}
+ocronos_c300.jsonl {'hunk': 4, 'join': True} src 0.0172 val 0.0135 {'icdar2017/en': 0.0195, 'icdar2017/fr': 0.0102, 'impresso-snippets/de': 0.0306, 'impresso-snippets/en': 0.0104, 'impresso-snippets/fr': 0.0151}
+ocronos_c1200.jsonl {} src 0.0588 val 0.0452 {'icdar2017/en': 0.0676, 'icdar2017/fr': 0.0254, 'impresso-snippets/de': 0.0483, 'impresso-snippets/en': 0.1092, 'impresso-snippets/fr': 0.0436}
+ocronos_c1200.jsonl {'hunk': 4} src 0.0168 val 0.0130 {'icdar2017/en': 0.0182, 'icdar2017/fr': 0.0106, 'impresso-snippets/de': 0.031, 'impresso-snippets/en': 0.0096, 'impresso-snippets/fr': 0.0145}
+ocronos_c1200.jsonl {'hunk': 3} src 0.0159 val 0.0126 {'icdar2017/en': 0.0173, 'icdar2017/fr': 0.0101, 'impresso-snippets/de': 0.0291, 'impresso-snippets/en': 0.0091, 'impresso-snippets/fr': 0.0141}
+ocronos_c1200.jsonl {'hunk': 2} src 0.0159 val 0.0130 {'icdar2017/en': 0.0184, 'icdar2017/fr': 0.0096, 'impresso-snippets/de': 0.0287, 'impresso-snippets/en': 0.0094, 'impresso-snippets/fr': 0.0132}
+ocronos_c1200.jsonl {'hunk': 6} src 0.0198 val 0.0140 {'icdar2017/en': 0.0245, 'icdar2017/fr': 0.0129, 'impresso-snippets/de': 0.0345, 'impresso-snippets/en': 0.01, 'impresso-snippets/fr': 0.017}
+ocronos_c1200.jsonl {'maxrate': 0.15} src 0.0230 val 0.0181 {'icdar2017/en': 0.0243, 'icdar2017/fr': 0.0157, 'impresso-snippets/de': 0.0417, 'impresso-snippets/en': 0.0125, 'impresso-snippets/fr': 0.0209}
+ocronos_c1200.jsonl {'hunk': 4, 'maxrate': 0.15} src 0.0166 val 0.0135 {'icdar2017/en': 0.0179, 'icdar2017/fr': 0.0105, 'impresso-snippets/de': 0.0304, 'impresso-snippets/en': 0.0094, 'impresso-snippets/fr': 0.0148}
+ocronos_c1200.jsonl {'hunk': 4, 'join': True} src 0.0167 val 0.0129 {'icdar2017/en': 0.0182, 'icdar2017/fr': 0.0106, 'impresso-snippets/de': 0.0306, 'impresso-snippets/en': 0.0096, 'impresso-snippets/fr': 0.0144}

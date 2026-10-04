@@ -1,0 +1,60 @@
+52 assays
+NUD15_HUMAN_Suiter_2020 esm6=0.815 esm6+pc4=0.815 esm6+pc8=0.819 esm6+pc16=0.818
+REV_HV1H2_Fernandes_2016 esm6=0.495 esm6+pc4=0.489 esm6+pc8=0.477 esm6+pc16=0.476
+HEM3_HUMAN_Loggerenberg_2023 esm6=0.450 esm6+pc4=0.443 esm6+pc8=0.450 esm6+pc16=0.439
+ANCSZ_Hobbs_2022 esm6=0.817 esm6+pc4=0.816 esm6+pc8=0.813 esm6+pc16=0.812
+POLG_CXB3N_Mattenberger_2021 esm6=0.565 esm6+pc4=0.552 esm6+pc8=0.567 esm6+pc16=0.559
+NRAM_I33A0_Jiang_2016 esm6=0.634 esm6+pc4=0.626 esm6+pc8=0.636 esm6+pc16=0.624
+MET_HUMAN_Estevam_2023 esm6=0.692 esm6+pc4=0.680 esm6+pc8=0.683 esm6+pc16=0.677
+MK01_HUMAN_Brenan_2016 esm6=0.447 esm6+pc4=0.432 esm6+pc8=0.431 esm6+pc16=0.443
+A0A192B1T2_9HIV1_Haddox_2018 esm6=0.733 esm6+pc4=0.733 esm6+pc8=0.728 esm6+pc16=0.732
+UBC9_HUMAN_Weile_2017 esm6=0.702 esm6+pc4=0.703 esm6+pc8=0.696 esm6+pc16=0.702
+ESTA_BACSU_Nutschel_2020 esm6=0.695 esm6+pc4=0.693 esm6+pc8=0.698 esm6+pc16=0.698
+HIS7_YEAST_Pokusaeva_2019 esm6=0.182 esm6+pc4=0.152 esm6+pc8=0.141 esm6+pc16=0.145
+C6KNH7_9INFA_Lee_2018 esm6=0.731 esm6+pc4=0.736 esm6+pc8=0.732 esm6+pc16=0.733
+CCDB_ECOLI_Adkar_2012 esm6=0.996 esm6+pc4=0.995 esm6+pc8=0.996 esm6+pc16=0.996
+CCDB_ECOLI_Tripathi_2016 esm6=0.707 esm6+pc4=0.709 esm6+pc8=0.710 esm6+pc16=0.708
+PTEN_HUMAN_Matreyek_2021 esm6=0.719 esm6+pc4=0.725 esm6+pc8=0.719 esm6+pc16=0.723
+PTEN_HUMAN_Mighell_2018 esm6=0.639 esm6+pc4=0.635 esm6+pc8=0.636 esm6+pc16=0.635
+SCN5A_HUMAN_Glazer_2019 esm6=0.101 esm6+pc4=0.080 esm6+pc8=0.092 esm6+pc16=0.095
+A4_HUMAN_Seuma_2022 esm6=0.742 esm6+pc4=0.746 esm6+pc8=0.747 esm6+pc16=0.746
+A0A140D2T1_ZIKV_Sourisseau_2019 esm6=0.695 esm6+pc4=0.693 esm6+pc8=0.695 esm6+pc16=0.695
+DYR_ECOLI_Nguyen_2023 esm6=0.799 esm6+pc4=0.799 esm6+pc8=0.806 esm6+pc16=0.804
+DYR_ECOLI_Thompson_2019 esm6=0.690 esm6+pc4=0.684 esm6+pc8=0.684 esm6+pc16=0.694
+PAI1_HUMAN_Huttinger_2021 esm6=0.564 esm6+pc4=0.565 esm6+pc8=0.558 esm6+pc16=0.558
+DLG4_HUMAN_Faure_2021 esm6=0.800 esm6+pc4=0.793 esm6+pc8=0.788 esm6+pc16=0.792
+SHOC2_HUMAN_Kwon_2022 esm6=0.639 esm6+pc4=0.653 esm6+pc8=0.659 esm6+pc16=0.657
+A0A247D711_LISMN_Stadelmann_2021 esm6=0.714 esm6+pc4=0.713 esm6+pc8=0.712 esm6+pc16=0.711
+SERC_HUMAN_Xie_2023 esm6=0.683 esm6+pc4=0.677 esm6+pc8=0.681 esm6+pc16=0.678
+ENVZ_ECOLI_Ghose_2023 esm6=0.631 esm6+pc4=0.628 esm6+pc8=0.627 esm6+pc16=0.624
+PPARG_HUMAN_Majithia_2016 esm6=0.931 esm6+pc4=0.935 esm6+pc8=0.935 esm6+pc16=0.935
+SRC_HUMAN_Ahler_2019 esm6=0.780 esm6+pc4=0.781 esm6+pc8=0.776 esm6+pc16=0.779
+SRC_HUMAN_Chakraborty_2023_binding-DAS esm6=0.759 esm6+pc4=0.759 esm6+pc8=0.757 esm6+pc16=0.763
+SRC_HUMAN_Nguyen_2022 esm6=0.647 esm6+pc4=0.645 esm6+pc8=0.649 esm6+pc16=0.650
+RDRP_I33A0_Li_2023 esm6=0.541 esm6+pc4=0.535 esm6+pc8=0.543 esm6+pc16=0.537
+VKOR1_HUMAN_Chiasson_2020_abundance esm6=0.790 esm6+pc4=0.785 esm6+pc8=0.789 esm6+pc16=0.784
+VKOR1_HUMAN_Chiasson_2020_activity esm6=0.515 esm6+pc4=0.523 esm6+pc8=0.530 esm6+pc16=0.529
+UBE4B_MOUSE_Starita_2013 esm6=0.554 esm6+pc4=0.549 esm6+pc8=0.547 esm6+pc16=0.542
+PABP_YEAST_Melamed_2013 esm6=0.858 esm6+pc4=0.858 esm6+pc8=0.855 esm6+pc16=0.853
+Q59976_STRSQ_Romero_2015 esm6=0.675 esm6+pc4=0.681 esm6+pc8=0.676 esm6+pc16=0.673
+CAS9_STRP1_Spencer_2017_positive esm6=0.115 esm6+pc4=0.138 esm6+pc8=0.144 esm6+pc16=0.167
+RASK_HUMAN_Weng_2022_abundance esm6=0.773 esm6+pc4=0.779 esm6+pc8=0.777 esm6+pc16=0.775
+RASK_HUMAN_Weng_2022_binding-DARPin_K5 esm6=0.788 esm6+pc4=0.789 esm6+pc8=0.789 esm6+pc16=0.793
+CP2C9_HUMAN_Amorosi_2021_abundance esm6=0.757 esm6+pc4=0.754 esm6+pc8=0.750 esm6+pc16=0.751
+CP2C9_HUMAN_Amorosi_2021_activity esm6=0.834 esm6+pc4=0.834 esm6+pc8=0.835 esm6+pc16=0.833
+ENV_HV1BR_Haddox_2016 esm6=0.305 esm6+pc4=0.344 esm6+pc8=0.327 esm6+pc16=0.328
+CBS_HUMAN_Sun_2020 esm6=0.506 esm6+pc4=0.514 esm6+pc8=0.528 esm6+pc16=0.521
+Q8WTC7_9CNID_Somermeyer_2022 esm6=0.706 esm6+pc4=0.709 esm6+pc8=0.708 esm6+pc16=0.705
+P53_HUMAN_Giacomelli_2018_Null_Etoposi esm6=0.678 esm6+pc4=0.680 esm6+pc8=0.677 esm6+pc16=0.681
+P53_HUMAN_Giacomelli_2018_Null_Nutlin esm6=0.684 esm6+pc4=0.683 esm6+pc8=0.681 esm6+pc16=0.681
+P53_HUMAN_Giacomelli_2018_WT_Nutlin esm6=0.897 esm6+pc4=0.900 esm6+pc8=0.902 esm6+pc16=0.901
+P53_HUMAN_Kotler_2018 esm6=0.745 esm6+pc4=0.741 esm6+pc8=0.745 esm6+pc16=0.747
+Q837P4_ENTFA_Meier_2023 esm6=0.865 esm6+pc4=0.869 esm6+pc8=0.863 esm6+pc16=0.853
+RNC_ECOLI_Weeks_2023 esm6=0.711 esm6+pc4=0.715 esm6+pc8=0.718 esm6+pc16=0.713
+esm6         0.6633
+esm6+pc4     0.6627
+esm6+pc8     0.6631
+esm6+pc16    0.6629
+esm6+pc4 - esm6: -0.0006 [-0.0032, +0.0020] better on 42%
+esm6+pc8 - esm6: -0.0002 [-0.0030, +0.0026] better on 52%
+esm6+pc16 - esm6: -0.0004 [-0.0035, +0.0029] better on 48%

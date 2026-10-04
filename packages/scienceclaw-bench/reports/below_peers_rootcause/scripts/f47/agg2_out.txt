@@ -1,0 +1,60 @@
+dev las Linf=0.917 a=0.141 b=0.309  pred 4000: 0.826 8000: 0.843 14554: 0.856
+dev uas Linf=0.932 a=0.112 b=0.319  pred 4000: 0.860 8000: 0.874 14554: 0.884
+test las Linf=1.000 a=0.270 b=0.192  pred 4000: 0.793 8000: 0.819 14554: 0.839
+test uas Linf=1.000 a=0.218 b=0.202  pred 4000: 0.835 8000: 0.857 14554: 0.873
+pud las Linf=0.787 a=0.070 b=0.488  pred 4000: 0.751 8000: 0.762 14554: 0.768
+pud uas Linf=0.858 a=0.067 b=0.459  pred 4000: 0.823 8000: 0.833 14554: 0.839
+dev fixed Linf 0.9 a=0.123 b=0.347 pred 4000 0.824 14554 0.851 resid max 0.0007
+dev fixed Linf 0.95 a=0.174 b=0.257 pred 4000 0.828 14554 0.863 resid max 0.0008
+test fixed Linf 0.9 a=0.169 b=0.293 pred 4000 0.787 14554 0.823 resid max 0.0020
+test fixed Linf 0.95 a=0.220 b=0.232 pred 4000 0.791 14554 0.832 resid max 0.0010
+pud fixed Linf 0.9 a=0.185 b=0.212 pred 4000 0.762 14554 0.795 resid max 0.0035
+pud fixed Linf 0.95 a=0.235 b=0.169 pred 4000 0.764 14554 0.800 resid max 0.0038
+
+== test relations: gold count share, LAS-recall@250 / @1000 / @2000, UAS-recall@2000, lost words@2000 (share of all errors)
+punct      share 12.2% rec250 0.51 rec1000 0.59 rec2000 0.64 uas-rec2000 0.64 prec2000 0.64 lost 18.8% of errors
+obl        share  5.6% rec250 0.49 rec1000 0.57 rec2000 0.63 uas-rec2000 0.71 prec2000 0.65 lost  8.7% of errors
+nmod       share  7.3% rec250 0.67 rec1000 0.73 rec2000 0.77 uas-rec2000 0.81 prec2000 0.71 lost  7.1% of errors
+conj       share  3.2% rec250 0.33 rec1000 0.45 rec2000 0.48 uas-rec2000 0.55 prec2000 0.45 lost  7.0% of errors
+advmod     share  4.9% rec250 0.58 rec1000 0.71 rec2000 0.74 uas-rec2000 0.78 prec2000 0.73 lost  5.5% of errors
+nsubj      share  6.7% rec250 0.64 rec1000 0.76 rec2000 0.80 uas-rec2000 0.84 prec2000 0.80 lost  5.5% of errors
+root       share  4.8% rec250 0.63 rec1000 0.74 rec2000 0.78 uas-rec2000 0.78 prec2000 0.78 lost  4.6% of errors
+fixed      share  1.7% rec250 0.22 rec1000 0.35 rec2000 0.40 uas-rec2000 0.42 prec2000 0.80 lost  4.4% of errors
+acl        share  1.8% rec250 0.31 rec1000 0.38 rec2000 0.44 uas-rec2000 0.51 prec2000 0.43 lost  4.4% of errors
+obj        share  3.6% rec250 0.61 rec1000 0.71 rec2000 0.75 uas-rec2000 0.88 prec2000 0.72 lost  3.8% of errors
+amod       share  4.5% rec250 0.64 rec1000 0.76 rec2000 0.81 uas-rec2000 0.89 prec2000 0.84 lost  3.6% of errors
+advcl      share  0.9% rec250 0.15 rec1000 0.29 rec2000 0.33 uas-rec2000 0.53 prec2000 0.30 lost  2.7% of errors
+case       share 12.4% rec250 0.90 rec1000 0.94 rec2000 0.95 uas-rec2000 0.96 prec2000 0.91 lost  2.5% of errors
+mark       share  2.2% rec250 0.55 rec1000 0.70 rec2000 0.74 uas-rec2000 0.82 prec2000 0.78 lost  2.4% of errors
+appos      share  1.1% rec250 0.34 rec1000 0.42 rec2000 0.47 uas-rec2000 0.59 prec2000 0.37 lost  2.4% of errors
+ccomp      share  0.7% rec250 0.13 rec1000 0.27 rec2000 0.32 uas-rec2000 0.59 prec2000 0.49 lost  1.9% of errors
+
+== pud relations: gold count share, LAS-recall@250 / @1000 / @2000, UAS-recall@2000, lost words@2000 (share of all errors)
+punct      share 10.2% rec250 0.48 rec1000 0.52 rec2000 0.53 uas-rec2000 0.53 prec2000 0.53 lost 18.1% of errors
+nmod       share  8.3% rec250 0.60 rec1000 0.65 rec2000 0.67 uas-rec2000 0.83 prec2000 0.70 lost 10.5% of errors
+obl        share  6.0% rec250 0.51 rec1000 0.61 rec2000 0.63 uas-rec2000 0.69 prec2000 0.65 lost  8.4% of errors
+case       share 13.7% rec250 0.84 rec1000 0.88 rec2000 0.88 uas-rec2000 0.93 prec2000 0.90 lost  6.1% of errors
+advmod     share  4.1% rec250 0.58 rec1000 0.66 rec2000 0.69 uas-rec2000 0.79 prec2000 0.72 lost  4.9% of errors
+nsubj      share  6.8% rec250 0.67 rec1000 0.78 rec2000 0.81 uas-rec2000 0.85 prec2000 0.78 lost  4.9% of errors
+obj        share  4.5% rec250 0.62 rec1000 0.71 rec2000 0.73 uas-rec2000 0.92 prec2000 0.80 lost  4.7% of errors
+amod       share  5.7% rec250 0.62 rec1000 0.75 rec2000 0.79 uas-rec2000 0.90 prec2000 0.86 lost  4.7% of errors
+conj       share  2.5% rec250 0.40 rec1000 0.50 rec2000 0.53 uas-rec2000 0.57 prec2000 0.48 lost  4.6% of errors
+fixed      share  1.8% rec250 0.25 rec1000 0.42 rec2000 0.46 uas-rec2000 0.47 prec2000 0.78 lost  3.6% of errors
+ccomp      share  1.2% rec250 0.13 rec1000 0.20 rec2000 0.24 uas-rec2000 0.65 prec2000 0.52 lost  3.6% of errors
+det        share 14.5% rec250 0.91 rec1000 0.93 rec2000 0.94 uas-rec2000 0.96 prec2000 0.87 lost  3.4% of errors
+root       share  4.4% rec250 0.70 rec1000 0.78 rec2000 0.81 uas-rec2000 0.81 prec2000 0.81 lost  3.2% of errors
+xcomp      share  1.7% rec250 0.45 rec1000 0.55 rec2000 0.59 uas-rec2000 0.82 prec2000 0.73 lost  2.6% of errors
+advcl      share  0.9% rec250 0.15 rec1000 0.24 rec2000 0.28 uas-rec2000 0.48 prec2000 0.23 lost  2.4% of errors
+acl        share  1.0% rec250 0.22 rec1000 0.34 rec2000 0.38 uas-rec2000 0.41 prec2000 0.20 lost  2.3% of errors
+
+== POS (gold UPOS) on test
+NOUN   share 18.2% LASrec1000 0.62 LASrec2000 0.67 UASrec2000 0.74 lost 25.3%
+PUNCT  share 12.2% LASrec1000 0.59 LASrec2000 0.64 UASrec2000 0.64 lost 18.8%
+VERB   share  8.6% LASrec1000 0.56 LASrec2000 0.60 UASrec2000 0.68 lost 14.8%
+PRON   share  5.8% LASrec1000 0.71 LASrec2000 0.74 UASrec2000 0.87 lost  6.4%
+PROPN  share  5.2% LASrec1000 0.69 LASrec2000 0.73 UASrec2000 0.81 lost  5.9%
+ADP    share 14.5% LASrec1000 0.89 LASrec2000 0.90 UASrec2000 0.92 lost  5.9%
+ADJ    share  5.6% LASrec1000 0.71 LASrec2000 0.76 UASrec2000 0.84 lost  5.6%
+ADV    share  5.2% LASrec1000 0.71 LASrec2000 0.75 UASrec2000 0.79 lost  5.4%
+NUM    share  2.4% LASrec1000 0.74 LASrec2000 0.75 UASrec2000 0.85 lost  2.5%
+DET    share 14.5% LASrec1000 0.95 LASrec2000 0.96 UASrec2000 0.97 lost  2.4%

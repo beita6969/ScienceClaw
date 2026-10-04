@@ -1,0 +1,9 @@
+models/depparse/gsd_camembert-large.pt	163539110	163.5MB	sha256=1a431dd5bc5a631c07591fcbd9ab4896f9c470b01bbc2a93651bca23853d3faa
+models/pos/gsd_camembert-large.pt	44075422	44.1MB	sha256=95dd6202933231cb97393dc41d2eb874d377ec8eb5b2aebb6182dc55a3b66ffe
+models/lemma/gsd_nocharlm.pt	2710210	2.7MB	sha256=c0d4e252399cf27e46271d4e06e745567900a7857f41be55ab1d451f70adf75d
+models/pretrain/conll17.pt	106908071	106.9MB	sha256=c8c456c1a48fba32d4ab827ae7d3fec40457f58ead7e1977b6267afc37474a3c
+models/forward_charlm/newswiki.pt	20094072	20.1MB	sha256=a6874f7670f84c8bd9e57d5dcbafdfe7d7cbae2457c79975040709f1d69ca119
+models/backward_charlm/newswiki.pt	20094073	20.1MB	sha256=3ae24cade5cdca7d68193196a942a177af81fbc5d3b5ebb4550ff7b89023b09c
+models/mwt/gsd.pt	541688	0.5MB	sha256=f84949d2c0ea2a89ae639c650febf122d38b1169f283aa192cf2935b6c3dfd06
+models/tokenize/gsd.pt	664314	0.7MB	sha256=5d9104752f009246324b77581c605fbeeb861a0b0857562a23f0b291b64a637b
+required total (excl mwt/tokenize) MB 357.4

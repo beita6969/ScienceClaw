@@ -1,0 +1,5 @@
+full config first10: 0.0073
+th1 b300 m1000 0.0073 30.4s/dataset
+th2 b300 m1000 0.0048 34.3s/dataset
+th1 b150 m500 0.0094 15.9s/dataset
+th2 b150 m500 0.0088 17.2s/dataset

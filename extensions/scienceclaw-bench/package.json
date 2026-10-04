@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/scienceclaw-bench",
+  "version": "2026.3.9",
+  "private": true,
+  "description": "Optional ScienceClaw benchmark bridge",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

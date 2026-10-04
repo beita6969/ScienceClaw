@@ -1,0 +1,17 @@
+src: new 0.6457  current ensemble 0.4500  diff +0.1958  95% CI (+0.1209, +0.6594)
+   ToyCar    new AUCs/pAUC 0.380 0.740 0.509 | current 0.320 0.240 0.474
+   ToyTrain  new AUCs/pAUC 0.760 0.613 0.567 | current 0.517 0.200 0.485
+   bearing   new AUCs/pAUC 0.687 0.667 0.614 | current 0.557 0.600 0.591
+   fan       new AUCs/pAUC 0.687 0.787 0.570 | current 0.690 0.180 0.474
+   gearbox   new AUCs/pAUC 0.847 0.793 0.696 | current 0.720 0.653 0.591
+   slider    new AUCs/pAUC 0.693 0.747 0.649 | current 0.773 0.747 0.649
+   valve     new AUCs/pAUC 0.647 0.800 0.556 | current 0.603 0.547 0.579
+val: new 0.5174  current ensemble 0.5328  diff -0.0155  95% CI (-0.1327, +0.1239)
+   ToyCar    new AUCs/pAUC 0.450 0.507 0.474 | current 0.433 0.627 0.485
+   ToyTrain  new AUCs/pAUC 0.777 0.440 0.544 | current 0.647 0.333 0.474
+   bearing   new AUCs/pAUC 0.507 0.447 0.474 | current 0.587 0.533 0.579
+   fan       new AUCs/pAUC 0.527 0.427 0.485 | current 0.667 0.493 0.485
+   gearbox   new AUCs/pAUC 0.687 0.693 0.661 | current 0.817 0.640 0.579
+   slider    new AUCs/pAUC 0.577 0.387 0.509 | current 0.657 0.580 0.522
+   valve     new AUCs/pAUC 0.480 0.700 0.488 | current 0.530 0.440 0.485
+dev mean: new 0.5816  current 0.4914

@@ -1,0 +1,31 @@
+# All 23 disciplines with a self-hosted OpenAI-compatible vLLM server on Leonardo (thinking off). Fill `endpoints` with the output of
+# scripts/leonardo/tunnel.sh; no gateway credentials are read or sent while endpoints are set.
+name: full_local
+runs_root: runs
+llm:
+  endpoints: [http://127.0.0.1:18001/v1, http://127.0.0.1:18002/v1, http://127.0.0.1:18003/v1, http://127.0.0.1:18004/v1, http://127.0.0.1:18005/v1, http://127.0.0.1:18006/v1, http://127.0.0.1:18007/v1, http://127.0.0.1:18008/v1, http://127.0.0.1:18009/v1, http://127.0.0.1:18010/v1]
+  policy: {model: sc-llm, max_tokens: 8000, temperature: 0.0, reasoning_effort: null, json_mode: true,
+           extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  executor: {model: sc-llm, max_tokens: 2000, temperature: 0.0, reasoning_effort: null, json_mode: false,
+             extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  patch: {model: sc-llm, max_tokens: 4000, temperature: 0.0, reasoning_effort: null, json_mode: false,
+          extra_body: {chat_template_kwargs: {enable_thinking: false}}}
+  concurrency: 96
+  timeout_s: 600
+  cache_path: cache/llm_cache_local.sqlite
+  use_cache: true
+solver:
+  max_steps: 24
+evolution:
+  variant: full
+  qval: macrosr_then_score
+  qval_eps: 0.02
+bench:
+  disciplines: []
+  items_per_episode: 16
+  rounds: 4
+  n_val: 2
+  n_id: 2
+  n_ood: 2
+  seed: 20260928
+  data_root: /Users/admin/Datasets/ScienceClaw-rebuild-20260928/datasets

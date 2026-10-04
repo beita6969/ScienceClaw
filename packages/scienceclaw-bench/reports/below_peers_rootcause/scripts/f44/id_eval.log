@@ -1,0 +1,5 @@
+regression_adjustment rmse/sd 0.1419  0s
+impute_lgbm        rmse/sd 0.0242  6s
+xlearner_lgbm      rmse/sd 0.0225  27s
+joint_bart         rmse/sd 0.0207  816s
+bcf                rmse/sd 0.0193  2144s

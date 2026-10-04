@@ -1,0 +1,17 @@
+features 16182 74s
+draw 0 94s
+draw 1 115s
+draw 2 135s
+draw 3 157s
+== pool sv: n=2880 actives=57
+  m0_default             mean AUC 0.8195  per-draw [0.8366, 0.8016, 0.8021, 0.8375]
+  lr_C0.01               mean AUC 0.7136  per-draw [0.7596, 0.6076, 0.7424, 0.7446]
+  lr_C0.1                mean AUC 0.6926  per-draw [0.7409, 0.5749, 0.7321, 0.7225]
+  lr_C1.0                mean AUC 0.6787  per-draw [0.7301, 0.5577, 0.7216, 0.7055]
+  et_emb                 mean AUC 0.7910  per-draw [0.8055, 0.7525, 0.7876, 0.8184]
+  concat_emb             mean AUC 0.8066  per-draw [0.8115, 0.7964, 0.8115, 0.8071]
+  avg_m0+lr_C0.01        mean AUC 0.7817  per-draw [0.8197, 0.7193, 0.7842, 0.8036]
+  avg_m0+lr_C0.1         mean AUC 0.7734  per-draw [0.8171, 0.7022, 0.7803, 0.7939]
+  avg_m0+lr_C1.0         mean AUC 0.7680  per-draw [0.8159, 0.6956, 0.775, 0.7853]
+  avg_m0+et_emb          mean AUC 0.8102  per-draw [0.8259, 0.7823, 0.7991, 0.8334]
+  avg_m0+concat_emb      mean AUC 0.8157  per-draw [0.8269, 0.8014, 0.8087, 0.8255]

@@ -1,11 +1,11 @@
-# dev5 with the frozen model lab-gpt-5.5 (reasoning low) for policy, executor and patch roles.
+# dev5 with one frozen model (reasoning low) for the policy, executor and patch roles; set SCIENCECLAW_POLICY_MODEL and SCIENCECLAW_MODEL.
 name: dev5_g55
 runs_root: runs
 llm:
   credentials_file: ~/.config/scienceclaw/credentials.json
-  policy: {model: lab-gpt-5.5, max_tokens: 10000, temperature: 0.0, reasoning_effort: low, json_mode: true}
-  executor: {model: lab-gpt-5.5, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
-  patch: {model: lab-gpt-5.5, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  policy: {model: "${SCIENCECLAW_POLICY_MODEL}", max_tokens: 10000, temperature: 0.0, reasoning_effort: low, json_mode: true}
+  executor: {model: "${SCIENCECLAW_POLICY_MODEL}", max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  patch: {model: "${SCIENCECLAW_POLICY_MODEL}", max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
   concurrency: 16
   cache_path: cache/llm_cache_g55.sqlite
   use_cache: true

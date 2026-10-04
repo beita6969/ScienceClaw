@@ -7,7 +7,7 @@
 set -u
 F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}
 L=${SCIENCECLAW_STORE_ROOT:-$F}
-MODEL=${MODEL:-Qwen3.8-27B-FP8}; NAME=${NAME:-sc-llm}; TP=${TP:-${SLURM_GPUS_ON_NODE:-1}}
+MODEL=${MODEL:?set MODEL to a model directory under $L/models}; NAME=${NAME:-sc-llm}; TP=${TP:-${SLURM_GPUS_ON_NODE:-1}}
 MAXLEN=${MAXLEN:-65536}; MAXSEQS=${MAXSEQS:-48}; PORT=${PORT:-$((20000 + SLURM_JOB_ID % 20000))}; UTIL=${UTIL:-0.90}
 mkdir -p $L/sc-serve/endpoints $L/sc-serve/logs
 export HF_HOME=$L/cache/hf HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_CACHE_ROOT=$L/sc-serve/vllm-cache

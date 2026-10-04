@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run CPU-visible tool-ON probes inside an already running one-card Qwen job.
+# Run CPU-visible tool-ON probes inside an already running one-card LLM job.
 # usage: run_existing_singlecard_probe.sh <tag> <discipline> <port> [splits] [n] [skip] [workers]
 set -euo pipefail
 F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}
@@ -53,7 +53,7 @@ fi
 if [[ -n "${REQUIRED_TOOL:-}" ]]; then
   required_tool_args+=(--required-tool "$REQUIRED_TOOL")
 fi
-# Multiple CPU-visible probes may share one long-lived Qwen allocation.  Keep
+# Multiple CPU-visible probes may share one long-lived LLM allocation.  Keep
 # their configs and SQLite caches disjoint by including the validated tag;
 # otherwise concurrent runs can block each other while opening the same cache.
 CFG=$R/config_existing_${TAG}_${SLURM_JOB_ID}_${PORT}.yaml

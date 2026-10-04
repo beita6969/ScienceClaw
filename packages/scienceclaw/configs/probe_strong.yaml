@@ -3,9 +3,9 @@ name: probe_strong
 runs_root: runs
 llm:
   credentials_file: ~/.config/scienceclaw/credentials.json
-  policy: {model: lab-gpt-5.5, max_tokens: 12000, temperature: 0.0, reasoning_effort: medium, json_mode: true}
-  executor: {model: lab-gpt-5.4-mini, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
-  patch: {model: lab-gpt-5.4-mini, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  policy: {model: "${SCIENCECLAW_POLICY_MODEL}", max_tokens: 12000, temperature: 0.0, reasoning_effort: medium, json_mode: true}
+  executor: {model: "${SCIENCECLAW_MODEL}", max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  patch: {model: "${SCIENCECLAW_MODEL}", max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
   concurrency: 16
   cache_path: cache/llm_cache_strong.sqlite
   use_cache: true

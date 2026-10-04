@@ -6,7 +6,7 @@ JOB=${1:?jobid}; N=${2:-4}; PB=${3:-21000}
 F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}; L=${SCIENCECLAW_STORE_ROOT:-$F}
 mkdir -p $L/sc-serve/logs
 for g in $(seq 0 $((N-1))); do
-  G=$g EPID=$JOB-g$g PORT=$((PB+g)) MODEL=${MODEL:-Qwen3.8-27B-FP8} NAME=${NAME:-sc-llm} TP=1 MAXLEN=${MAXLEN:-65536} MAXSEQS=${MAXSEQS:-48} \
+  G=$g EPID=$JOB-g$g PORT=$((PB+g)) MODEL=${MODEL:?set MODEL} NAME=${NAME:-sc-llm} TP=1 MAXLEN=${MAXLEN:-65536} MAXSEQS=${MAXSEQS:-48} \
   nohup srun --jobid=$JOB --overlap -N1 -n1 -c8 --gres=gpu:a100:4 --export=ALL \
     bash -c 'export CUDA_VISIBLE_DEVICES=$G; exec bash '$F'/sc-serve/serve_vllm.sbatch' > $L/sc-serve/logs/$JOB-g$g.out 2>&1 < /dev/null &
   sleep 25

@@ -18,7 +18,8 @@ def _default_data_root() -> str:
 
 @dataclass
 class ModelRole:
-    model: str = "lab-gpt-5.4-mini"
+    # Empty -> $SCIENCECLAW_<ROLE>_MODEL, then $SCIENCECLAW_MODEL (resolved when the first request is built).
+    model: str = ""
     max_tokens: int = 6000                 # sent as max_completion_tokens for reasoning models
     temperature: float | None = 0.0
     reasoning_effort: str | None = "low"   # None for non-reasoning models
@@ -28,13 +29,17 @@ class ModelRole:
 
 @dataclass
 class LLMConfig:
-    base_url: str = ""                      # empty -> read from credentials file
+    # Chat-model backend: "openai" (OpenAI-compatible HTTP, the default) or "package.module:factory" for a custom
+    # implementation of scienceclaw.llm.interface.ChatModel.
+    backend: str = "openai"
+    base_url: str = ""                      # empty -> $SCIENCECLAW_API_BASE_URL, then the credentials file
     # Self-hosted OpenAI-compatible servers (vLLM). When non-empty they REPLACE the gateway: requests are spread over
     # these base URLs (least in-flight, failing ones cooled down) and the credentials file is never read or sent.
     endpoints: list[str] = field(default_factory=list)
-    credentials_file: str = "~/.config/scienceclaw/credentials.json"   # {"base_url","api_key"}; never copied anywhere
+    # {"base_url","api_key"}; never copied anywhere. $SCIENCECLAW_API_BASE_URL / $SCIENCECLAW_API_KEY take precedence.
+    credentials_file: str = "~/.config/scienceclaw/credentials.json"
     policy: ModelRole = field(default_factory=lambda: ModelRole(json_mode=True))
-    executor: ModelRole = field(default_factory=lambda: ModelRole(model="lab-gpt-5.4-mini", max_tokens=2000))
+    executor: ModelRole = field(default_factory=lambda: ModelRole(max_tokens=2000))
     patch: ModelRole = field(default_factory=lambda: ModelRole(max_tokens=4000))
     concurrency: int = 16
     timeout_s: float = 240.0
@@ -150,17 +155,21 @@ def _build(cls, data: dict | None, base=None):
     return replace(base, **kwargs)
 
 
-_PATH_FIELDS = (("runs_root",), ("llm", "cache_path"), ("bench", "data_root"))
+_ENV_FIELDS = (("runs_root",), ("llm", "cache_path"), ("bench", "data_root"), ("llm", "base_url"),
+               ("llm", "policy", "model"), ("llm", "executor", "model"), ("llm", "patch", "model"))
 
 
-def _expand_paths(data: dict) -> None:
-    """Expand ``$VAR`` / ``${VAR}`` in the path-valued fields so a config can stay machine independent."""
-    for keys in _PATH_FIELDS:
+def _expand_env(data: dict) -> None:
+    """Expand ``$VAR`` / ``${VAR}`` in paths, endpoints and model names so a config stays machine independent."""
+    for keys in _ENV_FIELDS:
         cur: Any = data
         for k in keys[:-1]:
             cur = cur.get(k) if isinstance(cur, dict) else None
         if isinstance(cur, dict) and isinstance(cur.get(keys[-1]), str):
             cur[keys[-1]] = os.path.expandvars(cur[keys[-1]])
+    llm = data.get("llm")
+    if isinstance(llm, dict) and isinstance(llm.get("endpoints"), list):
+        llm["endpoints"] = [os.path.expandvars(e) if isinstance(e, str) else e for e in llm["endpoints"]]
 
 
 def load_config(path: str | Path | None = None, overrides: dict | None = None) -> RunConfig:
@@ -173,5 +182,5 @@ def load_config(path: str | Path | None = None, overrides: dict | None = None) -
         for p in parts[:-1]:
             cur = cur.setdefault(p, {})
         cur[parts[-1]] = value
-    _expand_paths(data)
+    _expand_env(data)
     return _build(RunConfig, data)

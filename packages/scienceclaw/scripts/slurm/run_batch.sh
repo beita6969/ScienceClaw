@@ -78,7 +78,7 @@ ENDPOINT_PORTS=${SCIENCECLAW_ENDPOINT_PORTS:-21000,21001}
 IFS=',' read -r -a endpoint_ports <<< "$ENDPOINT_PORTS"
 for port in "${endpoint_ports[@]}"; do
   curl -fsS --max-time "${SCIENCECLAW_HEALTH_TIMEOUT_S:-10}" "http://127.0.0.1:${port}/health" >/dev/null || {
-    echo "Qwen endpoint 127.0.0.1:${port} is not healthy; refusing to consume the shared spool" >&2
+    echo "LLM endpoint 127.0.0.1:${port} is not healthy; refusing to consume the shared spool" >&2
     exit 2
   }
 done

@@ -43,6 +43,7 @@ import hashlib
 import http.client
 import json
 import logging
+import os
 import random
 import re
 import socket
@@ -53,7 +54,7 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Callable, Iterator
 from urllib.parse import urlparse
@@ -250,10 +251,9 @@ def build_request_body(role_cfg: ModelRole, messages: list[dict], *, json_mode: 
     if is_reasoning_model(role_cfg.model):
         body["max_completion_tokens"] = limit
         if role_cfg.reasoning_effort is not None:
-            # The flowsteer gateway ignores the chat-completions "reasoning_effort" field (it silently
-            # uses its default, ~medium) but honours the Responses-style "reasoning": {"effort": ...}
-            # object (verified 2026-09-28: low -> ~90-220 reasoning tokens, "reasoning_effort": "low"
-            # -> 500-2800). "none"/"minimal" are rejected upstream (HTTP 400), so they map to "low".
+            # Some OpenAI-compatible gateways ignore the chat-completions "reasoning_effort" field but honour the
+            # Responses-style "reasoning": {"effort": ...} object, so that form is sent. "none"/"minimal" are
+            # rejected upstream (HTTP 400), so they map to "low".
             effort = role_cfg.reasoning_effort
             if effort in ("none", "minimal"):
                 effort = "low"
@@ -415,9 +415,16 @@ class LLMClient:
         return self._cache.path if self._cache is not None else None
 
     def role_config(self, role: str) -> ModelRole:
+        """Role settings with the model name resolved (config value, then the environment)."""
         if role not in ROLES:
             raise ValueError(f"unknown LLM role {role!r}; expected one of {ROLES}")
-        return getattr(self.cfg, role)
+        rc: ModelRole = getattr(self.cfg, role)
+        model = (rc.model or "").strip()
+        if not model or "${" in model:
+            model = (os.environ.get(f"SCIENCECLAW_{role.upper()}_MODEL") or os.environ.get("SCIENCECLAW_MODEL") or "").strip()
+        if not model:
+            raise LLMError(f"no model configured for role {role!r}: set llm.{role}.model or SCIENCECLAW_MODEL")
+        return rc if rc.model == model else replace(rc, model=model)
 
     def chat(self, role: str, messages: list[dict], *, json_mode: bool | None = None,
              max_tokens: int | None = None, temperature: float | None = None,
@@ -612,18 +619,24 @@ class LLMClient:
     def _credentials(self) -> tuple[str, str]:
         """(base_url, api_key) read fresh from the credentials file; never cached on self."""
         path = Path(self.cfg.credentials_file).expanduser()
-        try:
-            creds = json.loads(path.read_text())
-        except FileNotFoundError:
-            raise LLMError(f"credentials file not found: {path}") from None
-        except (OSError, json.JSONDecodeError) as e:
-            raise LLMError(f"cannot read credentials file {path}: {type(e).__name__}") from None
-        base_url = (self.cfg.base_url or creds.get("base_url") or "").strip().rstrip("/")
-        api_key = creds.get("api_key") or ""
+        env_url = os.environ.get("SCIENCECLAW_API_BASE_URL", "").strip()
+        env_key = os.environ.get("SCIENCECLAW_API_KEY", "").strip()
+        creds: dict = {}
+        if not (env_url and env_key):
+            try:
+                creds = json.loads(path.read_text())
+            except FileNotFoundError:
+                if not (self.cfg.base_url or env_url) or not env_key:
+                    raise LLMError(f"no credentials: set SCIENCECLAW_API_BASE_URL and SCIENCECLAW_API_KEY, "
+                                   f"or create {path}") from None
+            except (OSError, json.JSONDecodeError) as e:
+                raise LLMError(f"cannot read credentials file {path}: {type(e).__name__}") from None
+        base_url = (self.cfg.base_url or env_url or creds.get("base_url") or "").strip().rstrip("/")
+        api_key = env_key or creds.get("api_key") or ""
         if not base_url:
-            raise LLMError(f"no base_url in cfg.base_url or {path}")
+            raise LLMError(f"no base_url in cfg.base_url, SCIENCECLAW_API_BASE_URL or {path}")
         if not api_key:
-            raise LLMError(f"no api_key in {path}")
+            raise LLMError(f"no api_key in SCIENCECLAW_API_KEY or {path}")
         return base_url, api_key
 
     def _acquire_endpoint(self) -> str:

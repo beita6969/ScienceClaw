@@ -1,4 +1,4 @@
-# Tool-ON episodes with self-hosted Qwen3.8-27B-FP8 (vLLM on a Slurm cluster, thinking off) for policy, executor and patch.
+# Tool-ON episodes with a self-hosted model (vLLM on a Slurm cluster, thinking off) for policy, executor and patch.
 # endpoints = output of scripts/slurm/tunnel.sh (4 single-GPU servers started by scripts/slurm/launch_in_allocation.sh).
 # GPU tools (scilib.tsfm / audioenc / textenc ...) need SCIENCECLAW_REMOTE_SPOOL=$PWD/cache/remote_spool and scripts/remote/broker.py running.
 name: toolon_local

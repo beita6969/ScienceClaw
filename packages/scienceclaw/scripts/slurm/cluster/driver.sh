@@ -1,5 +1,5 @@
 #!/bin/bash
-# Relay driver (login node, light): wait for a job to run + its Qwen endpoints to answer, then start the node-local broker and the batches.
+# Relay driver (login node, light): wait for a job to run + its LLM endpoints to answer, then start the node-local broker and the batches.
 # usage: driver.sh <jobid> "<disciplines>" [workers=8] [tag=H1] [tool_slots=2,3,2,3] [splits=id,ood] [n=4]
 set -euo pipefail
 J=${1:-}; DISC=${2:-}; W=${3:-8}; TAG=${4:-H1}; SLOTS=${5:-2,3,2,3}; SPLITS=${6:-id,ood}; N=${7:-4}
@@ -60,7 +60,7 @@ while :; do
   ready=$(ls "$L/sc-serve/endpoints" 2>/dev/null | grep "^$J-g" | grep -vc starting || true)
   [ "$ready" -ge 2 ] && break
   [ "$(date +%s)" -lt "$deadline" ] || {
-    echo "timed out waiting for two ready Qwen endpoints for job $J" >&2
+    echo "timed out waiting for two ready LLM endpoints for job $J" >&2
     exit 1
   }
   [ "$(job_state)" = RUNNING ] || { echo "job $J stopped while endpoints were loading" >&2; exit 1; }

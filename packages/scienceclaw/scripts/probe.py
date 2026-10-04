@@ -15,7 +15,7 @@ from scienceclaw.agent.solver import Solver
 from scienceclaw.bench.splits import SplitPlan, load_adapters
 from scienceclaw.config import load_config
 from scienceclaw.core.program import AgentProgram
-from scienceclaw.llm.client import LLMClient
+from scienceclaw.llm.interface import build_chat_model
 
 
 def main() -> None:
@@ -51,7 +51,7 @@ def main() -> None:
     plan = SplitPlan.build(cfg.bench, adapters)
     for w in plan.warnings:
         print("WARN", w)
-    llm = LLMClient(cfg.llm)
+    llm = build_chat_model(cfg.llm)
     program = AgentProgram()
     out = Path(a.out).resolve()
     jobs = []

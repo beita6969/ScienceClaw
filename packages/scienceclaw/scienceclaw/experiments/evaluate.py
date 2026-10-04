@@ -351,8 +351,8 @@ def evaluate_snapshots(run_dir: str | Path, snapshots: str | Iterable[str] = "al
     programs = {n: AgentProgram.load(avail[n]) for n in names}
     if solver_factory is None:
         if llm is None:
-            from ..llm.client import LLMClient
-            llm = LLMClient(cfg.llm)
+            from ..llm.interface import build_chat_model
+            llm = build_chat_model(cfg.llm)
         solver_factory = _default_solver_factory(cfg, llm)
     jobs: list[dict] = []
     for n in names:
@@ -495,8 +495,8 @@ def evaluate_family_transfer(run_dir: str | Path, split: str = "ood", final: str
     (pdir / "info.json").write_text(json.dumps({"final": f"A_{final_r}", **info}, indent=1))
     if solver_factory is None:
         if llm is None:
-            from ..llm.client import LLMClient
-            llm = LLMClient(cfg.llm)
+            from ..llm.interface import build_chat_model
+            llm = build_chat_model(cfg.llm)
         solver_factory = _default_solver_factory(cfg, llm)
     jobs = [{"snapshot": family_slug(fam), "split": split, "episode": ep, "family_source": fam}
             for fam in progs for ep in plan.split_episodes(split)]

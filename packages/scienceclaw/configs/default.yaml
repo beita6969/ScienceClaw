@@ -8,19 +8,19 @@ llm:
   base_url: ''
   credentials_file: ~/.config/scienceclaw/credentials.json
   policy:
-    model: lab-gpt-5.4-mini
+    model: "${SCIENCECLAW_MODEL}"
     max_tokens: 6000
     temperature: 0.0
     reasoning_effort: low
     json_mode: true
   executor:
-    model: lab-gpt-5.4-mini
+    model: "${SCIENCECLAW_MODEL}"
     max_tokens: 2000
     temperature: 0.0
     reasoning_effort: low
     json_mode: false
   patch:
-    model: lab-gpt-5.4-mini
+    model: "${SCIENCECLAW_MODEL}"
     max_tokens: 4000
     temperature: 0.0
     reasoning_effort: low

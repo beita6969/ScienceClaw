@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run one ScienceClaw tool-on shard from a standalone 1-GPU allocation.
-# Two independent 1-GPU Qwen jobs publish endpoint markers in SERVICE_DIR;
+# Two independent 1-GPU LLM jobs publish endpoint markers in SERVICE_DIR;
 # this job waits for them, starts one GPU broker on GPU 0, and runs one shard.
 set -euo pipefail
 F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}
@@ -20,7 +20,7 @@ elif [[ "$TAG" == SOTA* ]]; then
 else
   OUT_ROOT="$L/sc-runs/$SPOOL_ID/toolon_${TAG}_${SPLIT}"
 fi
-SERVICE_DIR=${SERVICE_DIR:-single-gpu-qwen-l4-20261003}
+SERVICE_DIR=${SERVICE_DIR:-single-gpu-llm}
 # Keep IDs in separate variables: Slurm --export uses commas as separators.
 SERVICE_ID_A=${SERVICE_ID_A:-59264793}
 SERVICE_ID_B=${SERVICE_ID_B:-59264794}
@@ -80,7 +80,7 @@ while :; do
     endpoint_urls+=("http://$host:$port/v1")
   done
   if [ "$ready" -eq 1 ]; then break; fi
-  [ "$(date +%s)" -lt "$deadline" ] || { echo "timed out waiting for Qwen markers/health in $SERVICE_DIR" >&2; exit 1; }
+  [ "$(date +%s)" -lt "$deadline" ] || { echo "timed out waiting for LLM markers/health in $SERVICE_DIR" >&2; exit 1; }
   sleep 30
 done
 endpoints=$(IFS=,; echo "${endpoint_urls[*]}")

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Single-A100 tool-ON runner for CPU-visible tools (for example FoR38 macro).
-# The same card hosts one Qwen endpoint and the probe; no GPU broker is started.
+# The same card hosts one LLM endpoint and the probe; no GPU broker is started.
 # Submit with: sbatch --export=ALL,DISC=FoR38,TAG=H38,PORT=37400,N=4,W=8 \
 #   --time=4-00:00:00 scripts/slurm/run_singlecard_toolon.sbatch
 # A split is selected by SPLITS=id,ood; each split is launched once with SKIP.
@@ -19,7 +19,7 @@ N=${N:-4}
 W=${W:-8}
 SKIP=${SKIP:-0}
 SPLITS=${SPLITS:-id,ood}
-MODEL=${MODEL:-Qwen3.8-27B-FP8}
+MODEL=${MODEL:?set MODEL to a model directory under $L/models}
 NAME=${NAME:-sc-llm}
 
 [[ "$DISC" =~ ^[A-Za-z0-9_,]+$ ]] || { echo "invalid DISC=$DISC" >&2; exit 2; }

@@ -115,8 +115,8 @@ def run_stream(cfg: RunConfig | None, adapters: dict | None = None, llm: Any = N
                   split_warnings=plan.warnings)
     _write_json(run_dir / "run.json", status)
     if llm is None:
-        from ..llm.client import LLMClient
-        llm = LLMClient(cfg.llm)
+        from ..llm.interface import build_chat_model
+        llm = build_chat_model(cfg.llm)
     from ..evolution.evolver import Evolver
 
     # provenance receipt of THIS segment: first segment -> status["provenance"], resume -> resumes[-1]

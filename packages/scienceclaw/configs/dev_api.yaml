@@ -5,9 +5,9 @@ name: dev_api
 runs_root: runs
 llm:
   credentials_file: ~/.config/scienceclaw/credentials.json
-  policy: {model: lab-gpt-5.4-mini, max_tokens: 6000, temperature: 0.0, reasoning_effort: low, json_mode: true}
-  executor: {model: lab-gpt-5.4-mini, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
-  patch: {model: lab-gpt-5.4-mini, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  policy: {model: "${SCIENCECLAW_MODEL}", max_tokens: 6000, temperature: 0.0, reasoning_effort: low, json_mode: true}
+  executor: {model: "${SCIENCECLAW_MODEL}", max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
+  patch: {model: "${SCIENCECLAW_MODEL}", max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}
   concurrency: 8
   cache_path: cache/llm_cache.sqlite
   use_cache: true

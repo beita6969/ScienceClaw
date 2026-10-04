@@ -25,7 +25,8 @@ from scienceclaw.core.schema import PORT_TYPES, PortSchema
 _NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,39}$")
 _FORMAT_TYPE = {"csv": "table", "tsv": "table", "parquet": "table", "json": "any", "npy": "array", "npz": "dict",
                 "txt": "text", "text": "text"}
-_CHECKS = ("finite", "shape", "type", "range", "nonempty", "len_eq_input")
+_CHECKS = ("finite", "shape", "type", "range", "nonempty", "len_eq_input", "metric")
+_METRICS = ("mae", "mse", "rmse", "smape", "r2", "accuracy", "f1_macro", "auc")
 MAX_INPUT_BYTES = 512 * 1024 * 1024
 
 
@@ -73,6 +74,72 @@ def _loader(path: Path, fmt: str):
                 return {"data": {k: z[k] for k in z.files}}
         return {"data": path.read_text(encoding="utf-8")}
     return load
+
+
+def _holdout(path: Path, column: str | None) -> np.ndarray:
+    fmt = path.suffix.lstrip(".").lower()
+    if fmt in ("csv", "tsv", "parquet"):
+        import pandas as pd
+        df = pd.read_parquet(path) if fmt == "parquet" else pd.read_csv(path, sep="\t" if fmt == "tsv" else ",")
+        return df[column].to_numpy() if column else df.iloc[:, -1].to_numpy()
+    if fmt == "npy":
+        return np.load(path, allow_pickle=False)
+    if fmt == "json":
+        return np.asarray(json.loads(path.read_text(encoding="utf-8")))
+    raise SpecError(f"holdout {path.name!r}: unsupported format {fmt!r}")
+
+
+def _score(metric: str, truth: np.ndarray, y: np.ndarray) -> float:
+    from sklearn import metrics as skm
+    if metric == "mae":
+        return float(np.mean(np.abs(truth - y)))
+    if metric == "mse":
+        return float(np.mean((truth - y) ** 2))
+    if metric == "rmse":
+        return float(np.sqrt(np.mean((truth - y) ** 2)))
+    if metric == "smape":
+        return float(100.0 * np.mean(2.0 * np.abs(truth - y) / np.maximum(np.abs(truth) + np.abs(y), 1e-12)))
+    if metric == "r2":
+        return float(skm.r2_score(truth, y))
+    if metric == "accuracy":
+        return float(skm.accuracy_score(truth, y))
+    if metric == "f1_macro":
+        return float(skm.f1_score(truth, y, average="macro"))
+    return float(skm.roc_auc_score(truth, y))
+
+
+def _metric_constraint(entry: dict, input_roots: list[Path]) -> ConstraintSpec:
+    """A quality criterion against a held-out file the workflow never sees: it is evaluator-only (not a visible constraint)."""
+    name = str(entry.get("name") or "metric")
+    metric, direction = str(entry.get("metric", "")), str(entry.get("direction", "min"))
+    if metric not in _METRICS or direction not in ("min", "max") or not isinstance(entry.get("value"), (int, float)):
+        raise SpecError(f"constraint {name!r}: metric needs 'metric' in {_METRICS}, 'direction' min|max and a numeric 'value'")
+    truth = np.asarray(_holdout(resolve_input(str(entry.get("target", "")), input_roots), entry.get("column"))).reshape(-1)
+    threshold, op = float(entry["value"]), ("<=" if direction == "min" else ">=")
+
+    def measure(y: Any) -> float:
+        return _score(metric, truth, np.asarray(y).reshape(-1))
+
+    def check(y: Any, trace: Any) -> tuple[bool, str]:
+        try:
+            value = measure(y)
+        except Exception as ex:
+            return False, f"cannot score the deliverable: {type(ex).__name__}: {ex}"
+        if not np.isfinite(value):
+            return False, f"{metric} is not finite"
+        return (value <= threshold if direction == "min" else value >= threshold), f"{metric}={value:.6g} ({op} {threshold:g} required)"
+
+    def grade(y: Any) -> float:
+        try:
+            value = measure(y)
+        except Exception:
+            return 0.0
+        if direction == "min":
+            return 1.0 if value <= threshold else (threshold / value if value > 0 else 0.0)
+        return 1.0 if value >= threshold else (max(0.0, value) / threshold if threshold > 0 else 0.0)
+
+    desc = str(entry.get("description") or f"{metric} against held-out data must be {op} {threshold:g}")
+    return ConstraintSpec(name, desc, check, False, grade)
 
 
 def _constraint(entry: dict, loaders: dict[str, Any]) -> ConstraintSpec:
@@ -130,7 +197,8 @@ def build_live_episode(spec: dict[str, Any], *, task_id: str, input_roots: list[
         cache[name] = path
 
     loaders = {t.name[len("load_"):]: t.fn for t in tools}
-    constraints = [_constraint(c, loaders) for c in spec.get("constraints", []) or []]
+    constraints = [_metric_constraint(c, input_roots) if c.get("check") == "metric" else _constraint(c, loaders)
+                   for c in spec.get("constraints", []) or []]
     out = _schema(spec.get("required_output"), "any")
 
     def evaluate(y: Any, trace: Any) -> EvalResult:
@@ -140,7 +208,8 @@ def build_live_episode(spec: dict[str, Any], *, task_id: str, input_roots: list[
             ok, msg = cs.check(y, trace)
             h[cs.name], msgs[cs.name] = bool(ok), msg
         ok_all = all(h.values())
-        share = sum(h.values()) / len(h) if h else 1.0
+        grades = [float(cs.grade(y)) if cs.grade else float(h[cs.name]) for cs in constraints]
+        share = sum(grades) / len(grades) if grades else 1.0
         return EvalResult(metrics={"constraints_passed": float(sum(h.values())), "constraints_total": float(len(h))},
                           primary=1.0 if ok_all else 0.0, direction="max", h=h, h_msgs=msgs, accepted=ok_all, completed=True,
                           details={"norm_score": share})

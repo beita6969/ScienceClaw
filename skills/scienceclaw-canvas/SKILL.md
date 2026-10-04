@@ -20,7 +20,9 @@ returns real feedback.
      `load_<name>` tool. Paths must lie under the configured input roots.
    - `required_output`: `{type, shape?, unit?}` of the deliverable.
    - `constraints`: hard, checkable conditions, each `{check, value?}` with
-     `check` one of `finite`, `shape`, `type`, `range`, `nonempty`, `len_eq_input`.
+     `check` one of `finite`, `shape`, `type`, `range`, `nonempty`, `len_eq_input`, or `metric`
+   (`{target, column?, metric, direction, value}`: an evaluator-only quality bar against a
+   held-out file that the workflow never loads; the metric is `mae|mse|rmse|smape|r2|accuracy|f1_macro|auc`).
    Declare only constraints that the user actually requires; they are the
    acceptance test.
 2. **Read the returned context.** It lists the protocol, the actions, the task's

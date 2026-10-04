@@ -49,4 +49,7 @@ given under `llm`, or any backend registered through `scienceclaw.llm.interface`
 }
 ```
 
+Keep `home` (session receipts, program store) outside the directories the agent can read freely; a session opened
+from a benchmark episode keeps its verdict sealed, but its receipts on disk are not.
+
 Formal hidden-split evaluation is not reachable through these tools.

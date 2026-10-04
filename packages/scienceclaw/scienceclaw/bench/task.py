@@ -50,6 +50,7 @@ class ConstraintSpec:
     description: str
     check: Callable[[Any, Trace | None], tuple[bool, str]]
     visible: bool = True
+    grade: Callable[[Any], float] | None = None      # optional graded share in [0, 1] of the criterion (live tasks)
 
 
 @dataclass

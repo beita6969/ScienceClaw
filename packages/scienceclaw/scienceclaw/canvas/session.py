@@ -243,15 +243,24 @@ class CanvasSession:
         idx = self.run._add_evidence(self.graph, self._last_y, max(self.k - 1, 0), sub_fp)
         ev = self.run.evidence[idx]
         e = ev.eval
+        h, msgs = self._visible_constraints(e)
         out: dict[str, Any] = {"ok": True, "replayed": True, "evidence_index": idx, "reproducible": e.reproducible,
-                               "hard_constraints": dict(e.h), "constraint_messages": dict(e.h_msgs)}
+                               "hard_constraints": h, "constraint_messages": msgs}
         if self.reveal_verdict:
             out.update(verdict="PASS" if ev.passed else "FAIL", passed=bool(ev.passed), z=int(e.z), completed=bool(e.completed))
             out["text"] = (f"Replay from a reset state: {'PASS' if ev.passed else 'FAIL'}; reproducible={e.reproducible}; "
-                           f"constraints={dict(e.h)}")
+                           f"constraints={h}")
         else:
             out["text"] = f"Replay recorded from a reset state; reproducible={e.reproducible}. The evaluator verdict is not shown."
         return out
+
+    def _visible_constraints(self, e: Any) -> tuple[dict[str, bool], dict[str, str]]:
+        """Hard-constraint results as the acting agent may see them: all of them once the verdict is revealed, otherwise
+        only the constraints the task declares visible (evaluator-only checks stay sealed)."""
+        if self.reveal_verdict:
+            return dict(e.h), dict(e.h_msgs)
+        shown = {c.name for c in self.episode.constraints if c.visible}
+        return ({k: v for k, v in e.h.items() if k in shown}, {k: v for k, v in e.h_msgs.items() if k in shown})
 
     # ----------------------------------------------------------------------------------------- finish
     def finish(self) -> dict[str, Any]:
@@ -271,7 +280,7 @@ class CanvasSession:
                                "uses": sorted(res.uses) if res else [], "run_dir": str(self.run_dir),
                                "deliverable": _jsonable(res.y) if res else None,
                                "reproducible": getattr(res.eval, "reproducible", None) if res else None,
-                               "hard_constraints": dict(res.eval.h) if res else {}}
+                               "hard_constraints": self._visible_constraints(res.eval)[0] if res else {}}
         if self.reveal_verdict and res:
             out.update(verdict="PASS" if res.passed else "FAIL", passed=bool(res.passed), z=res.z)
         out["text"] = ("Session finished. " + (f"Verdict: {out['verdict']}. " if "verdict" in out else "")

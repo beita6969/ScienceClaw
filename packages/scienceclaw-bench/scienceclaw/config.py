@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 import os
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -31,7 +32,7 @@ class LLMConfig:
     # Self-hosted OpenAI-compatible servers (vLLM). When non-empty they REPLACE the gateway: requests are spread over
     # these base URLs (least in-flight, failing ones cooled down) and the credentials file is never read or sent.
     endpoints: list[str] = field(default_factory=list)
-    credentials_file: str = "~/.config/student-api/client.json"   # {"base_url","api_key"}; never copied anywhere
+    credentials_file: str = "~/.config/scienceclaw/credentials.json"   # {"base_url","api_key"}; never copied anywhere
     policy: ModelRole = field(default_factory=lambda: ModelRole(json_mode=True))
     executor: ModelRole = field(default_factory=lambda: ModelRole(model="lab-gpt-5.4-mini", max_tokens=2000))
     patch: ModelRole = field(default_factory=lambda: ModelRole(max_tokens=4000))
@@ -149,6 +150,19 @@ def _build(cls, data: dict | None, base=None):
     return replace(base, **kwargs)
 
 
+_PATH_FIELDS = (("runs_root",), ("llm", "cache_path"), ("bench", "data_root"))
+
+
+def _expand_paths(data: dict) -> None:
+    """Expand ``$VAR`` / ``${VAR}`` in the path-valued fields so a config can stay machine independent."""
+    for keys in _PATH_FIELDS:
+        cur: Any = data
+        for k in keys[:-1]:
+            cur = cur.get(k) if isinstance(cur, dict) else None
+        if isinstance(cur, dict) and isinstance(cur.get(keys[-1]), str):
+            cur[keys[-1]] = os.path.expandvars(cur[keys[-1]])
+
+
 def load_config(path: str | Path | None = None, overrides: dict | None = None) -> RunConfig:
     data: dict = {}
     if path:
@@ -159,4 +173,5 @@ def load_config(path: str | Path | None = None, overrides: dict | None = None) -
         for p in parts[:-1]:
             cur = cur.setdefault(p, {})
         cur[parts[-1]] = value
+    _expand_paths(data)
     return _build(RunConfig, data)

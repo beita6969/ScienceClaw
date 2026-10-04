@@ -1,10 +1,12 @@
 """Server-side: multi-round selection with the IRT toolkit on the same pseudo-validation as exp_nn.py (visible training students only)."""
+import os
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, "/home/bedicloud/sharestore2/zxc/scienceclaw/code")
+sys.path.insert(0, os.environ.get("SCIENCECLAW_CODE_DIR", str(Path(__file__).resolve().parents[2])))
 from scilib import adaptive  # noqa: E402
 
 Z = np.load(sys.argv[1])

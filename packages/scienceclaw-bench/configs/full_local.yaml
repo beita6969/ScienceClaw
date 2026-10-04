@@ -1,5 +1,5 @@
-# All 23 disciplines with a self-hosted OpenAI-compatible vLLM server on Leonardo (thinking off). Fill `endpoints` with the output of
-# scripts/leonardo/tunnel.sh; no gateway credentials are read or sent while endpoints are set.
+# All 23 disciplines with a self-hosted OpenAI-compatible vLLM server on a Slurm cluster (thinking off). Fill `endpoints` with the output of
+# scripts/slurm/tunnel.sh; no gateway credentials are read or sent while endpoints are set.
 name: full_local
 runs_root: runs
 llm:

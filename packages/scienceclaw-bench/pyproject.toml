@@ -33,6 +33,3 @@ all = [
 [tool.setuptools.packages.find]
 include = ["scienceclaw*", "scilib*"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"

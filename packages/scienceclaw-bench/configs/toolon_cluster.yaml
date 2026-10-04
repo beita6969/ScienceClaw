@@ -1,18 +1,19 @@
-# dev5 with a self-hosted OpenAI-compatible vLLM server on a Slurm cluster (thinking off). Fill `endpoints` with the output of
-# scripts/slurm/tunnel.sh; no gateway credentials are read or sent while endpoints are set.
-name: dev5_local
-runs_root: runs
+# Tool-ON episodes run on a Slurm cluster: probe + sandbox + local vLLM (ports 21000..) + local GPU-tool broker, data and runs on large scratch.
+# started by scripts/slurm/run_batch.sh inside a running allocation; no tunnels.
+
+name: toolon_cluster
+runs_root: ${SCIENCECLAW_RUN_ROOT}
 llm:
-  endpoints: [http://127.0.0.1:18001/v1, http://127.0.0.1:18002/v1, http://127.0.0.1:18003/v1, http://127.0.0.1:18004/v1]
+  endpoints: [http://127.0.0.1:21000/v1, http://127.0.0.1:21001/v1]
   policy: {model: sc-llm, max_tokens: 8000, temperature: 0.0, reasoning_effort: null, json_mode: true,
            extra_body: {chat_template_kwargs: {enable_thinking: false}}}
   executor: {model: sc-llm, max_tokens: 2000, temperature: 0.0, reasoning_effort: null, json_mode: false,
              extra_body: {chat_template_kwargs: {enable_thinking: false}}}
   patch: {model: sc-llm, max_tokens: 4000, temperature: 0.0, reasoning_effort: null, json_mode: false,
           extra_body: {chat_template_kwargs: {enable_thinking: false}}}
-  concurrency: 32
+  concurrency: 64
   timeout_s: 600
-  cache_path: cache/llm_cache_local.sqlite
+  cache_path: ${SCIENCECLAW_RUN_ROOT}/llm_cache.sqlite
   use_cache: true
 solver:
   max_steps: 24
@@ -21,11 +22,11 @@ evolution:
   qval: macrosr_then_score
   qval_eps: 0.02
 bench:
-  disciplines: [FoR31, FoR34, FoR46, FoR35, FoR48]
+  disciplines: []
   items_per_episode: 16
   rounds: 2
   n_val: 2
-  n_id: 2
-  n_ood: 2
+  n_id: 4
+  n_ood: 4
   seed: 20260928
   data_root: ""

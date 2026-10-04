@@ -1,9 +1,9 @@
 """Serve the scilib remote spool: run each request on the GPU host over ssh and write the response next to it.
 
-python scripts/remote/broker.py --spool cache/remote_spool --host Node0015-ZXC \
-    --root /home/bedicloud/sharestore2/zxc/scienceclaw --gpu 2
+python scripts/remote/broker.py --spool cache/remote_spool --host gpu-host \
+    --root /srv/scienceclaw --gpu 2
 
-On a SLURM cluster the worker runs inside a running allocation (``--srun-job <jobid>``, ``--host leonardo``, ``--code-dir``, ``--python`` ...).
+On a SLURM cluster the worker runs inside a running allocation (``--srun-job <jobid>``, ``--host <login-alias>``, ``--code-dir``, ``--python`` ...).
 The ssh route is the user's own alias (key and jump host live in ~/.ssh/config); nothing but the gzip-JSON request goes over it.
 One request runs per GPU at a time (shared GPU host): ``--gpu 2`` serves requests one by one, ``--gpu 2,3,4`` runs up to three requests
 at once, each on its own GPU. Answers are kept in the spool, so an identical request is not run twice.
@@ -16,6 +16,7 @@ import base64
 import concurrent.futures as cf
 import gzip
 import json
+import os
 import queue
 import shlex
 import subprocess
@@ -174,8 +175,8 @@ def serve(a) -> None:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--spool", default=str(REPO / "cache" / "remote_spool"))
-    ap.add_argument("--host", default="Node0015-ZXC")
-    ap.add_argument("--root", default="/home/bedicloud/sharestore2/zxc/scienceclaw")
+    ap.add_argument("--host", default=os.environ.get("SCIENCECLAW_SSH_HOST"), help="ssh alias of the GPU host (default: $SCIENCECLAW_SSH_HOST)")
+    ap.add_argument("--root", default=os.environ.get("SCIENCECLAW_REMOTE_ROOT"), help="working directory on the GPU host (default: $SCIENCECLAW_REMOTE_ROOT)")
     ap.add_argument("--gpu", default="2", help="one GPU index, or a comma list: one request per GPU runs concurrently")
     ap.add_argument("--timeout", type=float, default=1500.0)
     ap.add_argument("--retries", type=int, default=3)
@@ -185,4 +186,9 @@ if __name__ == "__main__":
     ap.add_argument("--ssh-socket", default=None, help="existing ssh ControlMaster socket to reuse")
     for name in ("code-dir", "python", "models", "hf-home", "mlip-cache", "out-dir", "blobs"):
         ap.add_argument("--" + name, default=None)
-    serve(ap.parse_args())
+    args = ap.parse_args()
+    if not args.root:
+        ap.error("--root or SCIENCECLAW_REMOTE_ROOT is required")
+    if not args.local and not args.host:
+        ap.error("--host or SCIENCECLAW_SSH_HOST is required unless --local is given")
+    serve(args)

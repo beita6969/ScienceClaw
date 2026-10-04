@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Precompute the frozen SevenNet phonon-feature cache for FoR51.
 
-Run this inside a Leonardo GPU allocation, for example with ``PYTHONPATH`` containing both the
+Run this inside a Slurm GPU allocation, for example with ``PYTHONPATH`` containing both the
 ScienceClaw checkout and its ``sv_pkgs`` directory.  The script never fits a model and never writes
 targets: it only reads crystal structures from the FoR51 adapter and lets ``matphonon_mlip`` write
 content-addressed feature rows to ``SCIENCECLAW_MLIP_CACHE``.  Existing rows are skipped by the

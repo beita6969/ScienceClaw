@@ -88,7 +88,7 @@ class Policy:
     """π_Θ0(· | D_t, G_{t,k}, H_{t,k}, R_{t,r}) — one proposal per step.
 
     Args:
-        llm: an ``LLMClient`` or ``FakeLLM`` (anything with ``chat(role, messages, *, json_mode=..., tag=...)``).
+        llm: an ``LLMClient`` (anything with ``chat(role, messages, *, json_mode=..., tag=...)``).
         cfg: the :class:`~scienceclaw.config.SolverConfig`. JSON mode follows the LLM role config
             (``LLMConfig.policy.json_mode``) unless ``cfg`` has an explicit ``policy_json_mode`` attribute.
         parser: optional ``text -> (Action | None, error | None)``; defaults to ``core.actions.parse_action``.

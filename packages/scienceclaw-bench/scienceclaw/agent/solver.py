@@ -491,7 +491,7 @@ class Solver:
 
     Args:
         cfg: :class:`~scienceclaw.config.SolverConfig`.
-        llm: shared ``LLMClient`` / ``FakeLLM`` (policy and executor roles).
+        llm: shared ``LLMClient`` (policy and executor roles).
         evo_cfg: :class:`~scienceclaw.config.EvolutionConfig` (``pass_requires_acceptance``); default: acceptance required.
         executor_factory, replay_fn, outputs_match_fn, parser: dependency injection for tests; default to
             ``runtime.executor.Executor``, ``runtime.replay.replay``, ``runtime.values.outputs_match`` and

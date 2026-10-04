@@ -49,7 +49,7 @@ The stems are AAC (`.stem.mp4`, stream 0 mixture, 1 drums, 2 bass, 3 other, 4 vo
 and scipy (no soundfile / av / librosa / torch), so the adapter runs an **ffmpeg subprocess**:
 * binary: `$SCIENCECLAW_FFMPEG`, else the data team's pinned binary from `full_v1/loader-config.json`
   (`ffmpeg-macos-aarch64-v7.1` under `<DATA_ROOT>/../environments/data/...`, sha256 `6d175a47...`), else `ffmpeg` on
-  PATH, else `imageio_ffmpeg`. **On a machine without that binary (e.g. Leonardo, Linux) set `SCIENCECLAW_FFMPEG`
+  PATH, else `imageio_ffmpeg`. **On a machine without that binary (e.g. a Linux cluster node) set `SCIENCECLAW_FFMPEG`
   or copy the excerpt cache**; with any other build decoding still works but is not bit-exact-verified
   (`lineage.decode_verified = false`, separate cache tag).
 * each stream: `ffmpeg -map 0:a:<i> -c:a pcm_f32le -f f32le -` (native 44.1 kHz float32; the five streams of a track

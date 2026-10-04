@@ -14,7 +14,7 @@
   segments; ``unclosed`` lists segments of killed processes whose spend is not recorded = lower bound)
 * whatever the Evolver writes (``episodes/``, ``candidates.jsonl``, ``metrics.jsonl`` ...)
 
-The LLM client is created from ``cfg.llm`` unless one is injected (tests use ``llm.fake.FakeLLM``).
+The LLM client is created from ``cfg.llm`` unless one is injected.
 """
 from __future__ import annotations
 

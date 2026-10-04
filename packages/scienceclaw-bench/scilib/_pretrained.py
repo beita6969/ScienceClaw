@@ -1,8 +1,8 @@
 """Locate pretrained weights that were staged on local disk beforehand (nothing here downloads or opens a connection).
 
 The ``*_pretrained`` / ``*_deep`` modules of ``scilib`` read weight files from ``<model root>/<subdirectory>``. The model
-root is the first existing directory among ``$SCIENCECLAW_MODELS`` and the ``MODEL_ROOTS`` below (the sandbox forwards only
-that variable, not the rest of the environment).
+root is the first existing directory among ``$SCIENCECLAW_MODELS`` and ``~/.cache/scienceclaw/models`` (the sandbox forwards
+only that variable, not the rest of the environment).
 """
 from __future__ import annotations
 
@@ -10,11 +10,7 @@ import importlib.util
 import os
 from pathlib import Path
 
-MODEL_ROOTS = (
-    "/leonardo_scratch/large/userexternal/rqian000/models",
-    "/home/bedicloud/sharestore2/zxc/scienceclaw/models",
-    "/Users/admin/Datasets/ScienceClaw-rebuild-20260928/models",
-)
+MODEL_ROOTS = (str(Path.home() / ".cache" / "scienceclaw" / "models"),)
 
 
 def _roots() -> list[Path]:

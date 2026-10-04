@@ -91,7 +91,7 @@ MACRO_TOOL_CONFIG = {
     "n_jobs": 1,
 }
 
-# Optional pretrained route.  Chronos-2 weights are staged on Leonardo and are
+# Optional pretrained route.  Chronos-2 weights are staged on the cluster and are
 # called through the existing scilib remote broker when the torch-free runner
 # cannot load them locally.  Keeping the model/context fixed makes comparisons
 # reproducible and prevents policy-supplied model choices.

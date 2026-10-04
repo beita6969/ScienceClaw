@@ -47,7 +47,7 @@ export SCIENCECLAW_MODELS=/srv/scienceclaw/models
 snapshot in the directory layout expected by the selected FoR adapter. If it
 is omitted, the package falls back to `~/.cache/scienceclaw/datasets`; the
 checked-in YAML files do not contain a machine-specific path. `SCIENCECLAW_MODELS`
-is consumed by the pretrained wrappers and Leonardo launchers.
+is consumed by the pretrained wrappers and the Slurm launchers.
 
 ## Quick orientation
 

@@ -3,7 +3,7 @@
 Usage: python scripts/dev/scan_visible_text.py [--config configs/full_local.yaml] [--split val] [--disciplines FoR30,...]
 Reads one episode per discipline and prints, per discipline, the sentences of the objective, tool / port descriptions
 and visible constraints that match TERMS (DESIGN section 7 F5: these texts must not state the reference method or the
-acceptance rule). Output is for review; the strict FoR33/35/37/38/41 test is tests/test_adapter_visible_text.py.
+acceptance rule). Output is for review.
 """
 from __future__ import annotations
 

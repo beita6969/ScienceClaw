@@ -67,13 +67,13 @@ FORBIDDEN_GETATTR_NAMES = OS_PROCESS | OS_ENV | OS_ESCAPE | {"eval", "exec", "co
 
 KNOWN_ROOTS = frozenset({   # single-component absolute paths flagged on their own ("/tmp", "/Users")
     "Users", "home", "root", "etc", "tmp", "var", "private", "usr", "opt", "proc", "sys", "dev", "mnt", "Volumes",
-    "leonardo_scratch", "leonardo_work",
+    "scratch", "gpfs", "lustre",
 })
 _URL_PREFIXES = ("http://", "https://", "ftp://", "ftps://", "s3://", "gs://", "gcs://", "hf://", "file://", "ssh://")
 _PATH_COMPONENT = re.compile(r"[A-Za-z0-9_.@+~-]+")
 _WINDOWS_ABS = re.compile(r"^[A-Za-z]:[\\/]")
-_DATASET_MARKERS = ("scienceclaw-rebuild", "/users/admin/datasets", "datasets/scienceclaw")
-_CREDENTIAL_MARKERS = ("student-api", "client.json", "/.ssh", ".ssh/", "id_rsa", "id_ed25519", ".netrc", ".aws/",
+_DATASET_MARKERS = ("datasets/scienceclaw",)
+_CREDENTIAL_MARKERS = (".config/scienceclaw", "client.json", "/.ssh", ".ssh/", "id_rsa", "id_ed25519", ".netrc", ".aws/",
                        "api_key", "api-key", "apikey", "secret_key", "access_token", "credentials.json",
                        "openai_api_key", "anthropic_api_key", ".pgpass", ".git-credentials")
 

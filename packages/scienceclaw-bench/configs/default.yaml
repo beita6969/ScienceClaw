@@ -6,7 +6,7 @@ name: default
 runs_root: runs
 llm:
   base_url: ''
-  credentials_file: ~/.config/student-api/client.json
+  credentials_file: ~/.config/scienceclaw/credentials.json
   policy:
     model: lab-gpt-5.4-mini
     max_tokens: 6000

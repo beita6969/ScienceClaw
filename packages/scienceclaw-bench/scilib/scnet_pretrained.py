@@ -26,8 +26,7 @@ __all__ = ["MODELS", "available", "separate_pretrained"]
 
 MODELS = ("mimo_scnet_small",)
 MODEL_DIR_NAME = "scnet_mimo_small"
-DEFAULT_CODE_ROOT = "/leonardo_scratch/fast/AIFAC_F02_774/rqian000/p3/scnet/mimo-audio-separation"
-DEFAULT_CHECKPOINT = "/leonardo_scratch/large/userexternal/rqian000/models/scnet_mimo_small"
+DEFAULT_CODE_ROOT = str(Path.home() / ".cache" / "scienceclaw" / "scnet" / "mimo-audio-separation")
 _cache: dict[tuple[str, str], object] = {}
 
 
@@ -39,7 +38,7 @@ def _weights_dir() -> Path | None:
     explicit = os.environ.get("SCIENCECLAW_SCNET_MODEL_DIR")
     p = Path(explicit) if explicit else model_path(MODEL_DIR_NAME)
     if p is None:
-        p = Path(DEFAULT_CHECKPOINT)
+        return None
     return p if (p / "config.yaml").is_file() and (p / "backbone_model.pth").is_file() else None
 
 

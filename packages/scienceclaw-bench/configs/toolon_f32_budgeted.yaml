@@ -1,8 +1,8 @@
-# Tool-ON episodes run ON Leonardo: probe + sandbox + local vLLM (ports 21000..) + local GPU-tool broker, data and runs on large scratch.
-# started by scripts/leonardo/run_batch_leo.sh inside a running allocation; no tunnels.
+# Tool-ON episodes run on a Slurm cluster: probe + sandbox + local vLLM (ports 21000..) + local GPU-tool broker, data and runs on large scratch.
+# started by scripts/slurm/run_batch.sh inside a running allocation; no tunnels.
 
 name: toolon_f32_budgeted
-runs_root: /leonardo_scratch/large/userexternal/rqian000/sc-runs
+runs_root: ${SCIENCECLAW_RUN_ROOT}
 llm:
   endpoints: [http://127.0.0.1:21000/v1, http://127.0.0.1:21001/v1]
   policy: {model: sc-llm, max_tokens: 8000, temperature: 0.0, reasoning_effort: null, json_mode: true,
@@ -13,7 +13,7 @@ llm:
           extra_body: {chat_template_kwargs: {enable_thinking: false}}}
   concurrency: 64
   timeout_s: 600
-  cache_path: /leonardo_scratch/large/userexternal/rqian000/sc-runs/llm_cache_leo.sqlite
+  cache_path: ${SCIENCECLAW_RUN_ROOT}/llm_cache.sqlite
   use_cache: true
 solver:
   max_steps: 12

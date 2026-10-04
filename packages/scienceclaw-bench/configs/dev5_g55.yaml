@@ -2,7 +2,7 @@
 name: dev5_g55
 runs_root: runs
 llm:
-  credentials_file: ~/.config/student-api/client.json
+  credentials_file: ~/.config/scienceclaw/credentials.json
   policy: {model: lab-gpt-5.5, max_tokens: 10000, temperature: 0.0, reasoning_effort: low, json_mode: true}
   executor: {model: lab-gpt-5.5, max_tokens: 2000, temperature: 0.0, reasoning_effort: low, json_mode: false}
   patch: {model: lab-gpt-5.5, max_tokens: 4000, temperature: 0.0, reasoning_effort: low, json_mode: false}

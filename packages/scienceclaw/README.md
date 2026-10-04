@@ -5,10 +5,9 @@ package inside the TypeScript ScienceClaw gateway.  The package keeps its own
 `scienceclaw/`, `scilib/`, `configs/`, `scripts/`, `tests/`, and `reports/`
 boundaries so the gateway can evolve without changing the benchmark contracts.
 
-The native gateway bridge invokes `benchctl.py` through a small JSON protocol.
-Only the catalog, task availability, and report generation for existing runs are
-exposed to the agent tool.  Formal ID/OOD evaluation remains an explicit
-server-side operation and is not exposed through the gateway bridge.
+The gateway plugin talks to the engine through `python -m scienceclaw.rpc`, a line-delimited
+JSON-RPC service (canvas sessions, tool library, program store, benchmark inspection).
+Formal ID/OOD evaluation remains an explicit server-side operation and is not exposed through it.
 
 Datasets, model weights, caches, logs, run outputs, and virtual environments
 stay outside Git. Set `SCIENCECLAW_DATA_ROOT` to the mounted or Hugging Face

@@ -24,8 +24,10 @@ the engine supplies typed programs, replay, receipts, and promotion decisions.
   `Evolver`; do not hand-edit a promoted `AgentProgram` or treat a successful
   live solve as promotion evidence.
 
-The bridge exposes only `catalog`, `list_tasks`, and `report`. It does
-not expose arbitrary shell commands or formal ID/OOD evaluation. Use the
+`scienceclaw_program` shows the active program version, its promotion receipts and
+rolls back to an earlier version; `scienceclaw_eval` exposes only `catalog`,
+`list_tasks`, and `report`. Neither exposes arbitrary shell commands or formal
+ID/OOD evaluation. Use the
 checked-in launcher for an explicitly approved server-side batch and retain its
 manifest and receipts.
 

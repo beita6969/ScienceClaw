@@ -14,8 +14,8 @@ login node for `tunnel.sh` and `start_broker.sh`.
 
 * `setup_tool_env.sh` / `setup_run_env.sh`: venvs `sc-harness` (torch + tools; used by the broker/worker) and `sc-run`
   (torch-free; probe + sandbox, so tools go through the spool). Unpinned requirement lists `req_*_u.txt` (python3.11).
-* `stage_models.sh`: tool weights from HF / fbaipublicfiles into `$L/models/...` (repeat `--exclude`, one pattern per flag;
-  CLAP only ships `pytorch_model.bin`; stanza needs `resources.json`).
+* `stage_models.sh [asset ...]`: stages pretrained tool weights into `$SCIENCECLAW_MODELS` from the registry
+  (`scienceclaw/tools/weights.json`; `python -m scienceclaw.cli weights status|plan`).
 * `broker_step.sh`: long-lived srun step with the node-local GPU-tool broker (`broker.py --local`, several slots per GPU).
 * `driver.sh <jobid> <disciplines> [workers] [tag] [slots] [splits] [n]`: waits for a job and its vLLM endpoints, then
   starts the broker and `scripts/slurm/run_batch.sh` batches. The holding job is `hold_and_serve.sbatch`. A vanished or

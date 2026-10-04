@@ -1,0 +1,301 @@
+"""Line-delimited JSON-RPC service: the single entry point of the gateway plugin into the ScienceClaw engine.
+
+``python -m scienceclaw.rpc`` reads one JSON request per line on stdin and writes one JSON response per line on stdout::
+
+    {"id": 7, "method": "canvas.act", "params": {"session_id": "ab12", "action": {...}}}
+    {"id": 7, "ok": true,  "result": {...}}
+    {"id": 7, "ok": false, "error": {"type": "ValueError", "message": "..."}}
+
+The process is long-lived so that canvas sessions keep their graphs, checkpoints and evidence between calls. Methods:
+
+* ``canvas.open|act|render|replay|finish|status|list``: typed workflow orchestration (live tasks or benchmark episodes);
+* ``tools.search|show|status`` and ``weights.status|plan``: the scientific tool library and its pretrained weights;
+* ``program.summary|skills|operators|show|history|rollback``: the versioned agent program (Skills and Operators);
+* ``eval.catalog|list_tasks|report``: the ScienceClaw-Eval benchmark (formal hidden-split evaluation is not exposed).
+
+Environment: ``SCIENCECLAW_HOME`` (state, default ``~/.scienceclaw``), ``SCIENCECLAW_INPUT_ROOTS`` (directories live tasks may
+read, ``os.pathsep``-separated, default: the working directory), ``SCIENCECLAW_CONFIG`` (optional run config with the ``llm``
+section), ``SCIENCECLAW_RUN_ROOT`` (evaluation runs), ``SCIENCECLAW_DATA_ROOT`` and ``SCIENCECLAW_MODELS``.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import math
+import os
+import re
+import sys
+import traceback
+import uuid
+from pathlib import Path
+from typing import Any, Callable
+
+log = logging.getLogger("scienceclaw.rpc")
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+_SESSION_ID = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_json_safe(v) for v in value]
+    return value
+
+
+class Service:
+    """All engine state of one worker process."""
+
+    def __init__(self) -> None:
+        self.home = Path(os.environ.get("SCIENCECLAW_HOME") or Path.home() / ".scienceclaw").expanduser()
+        self.sessions: dict[str, Any] = {}
+        self._store = None
+        self._llm = None
+        roots = os.environ.get("SCIENCECLAW_INPUT_ROOTS")
+        self.input_roots = [Path(p).expanduser() for p in roots.split(os.pathsep) if p] if roots else [Path.cwd()]
+        self.methods: dict[str, Callable[[dict], Any]] = {
+            "ping": self.ping,
+            "canvas.open": self.canvas_open, "canvas.act": self.canvas_act, "canvas.render": self.canvas_render,
+            "canvas.replay": self.canvas_replay, "canvas.finish": self.canvas_finish, "canvas.status": self.canvas_status,
+            "canvas.list": self.canvas_list,
+            "tools.search": self.tools_search, "tools.show": self.tools_show, "tools.status": self.tools_status,
+            "weights.status": self.weights_status, "weights.plan": self.weights_plan,
+            "program.summary": self.program_summary, "program.skills": self.program_skills,
+            "program.operators": self.program_operators, "program.show": self.program_show,
+            "program.history": self.program_history, "program.rollback": self.program_rollback,
+            "eval.catalog": self.eval_catalog, "eval.list_tasks": self.eval_list_tasks, "eval.report": self.eval_report,
+        }
+
+    # ------------------------------------------------------------------------------------------ shared
+    @property
+    def store(self):
+        if self._store is None:
+            from scienceclaw.program import ProgramStore
+            self._store = ProgramStore(self.home / "program")
+        return self._store
+
+    def program(self):
+        return self.store.open()
+
+    def llm(self):
+        if self._llm is None:
+            from scienceclaw.config import LLMConfig, load_config
+            from scienceclaw.llm import build_chat_model
+            cfg_path = os.environ.get("SCIENCECLAW_CONFIG")
+            cfg = load_config(cfg_path).llm if cfg_path else LLMConfig(cache_path=str(self.home / "llm_cache.sqlite"))
+            self._llm = build_chat_model(cfg)
+        return self._llm
+
+    def _session(self, params: dict):
+        sid = str(params.get("session_id", ""))
+        if sid not in self.sessions:
+            raise KeyError(f"unknown session {sid!r}; open one with canvas.open")
+        return self.sessions[sid]
+
+    @staticmethod
+    def _need(params: dict, *names: str) -> None:
+        missing = [n for n in names if params.get(n) in (None, "")]
+        if missing:
+            raise ValueError(f"missing parameter(s): {', '.join(missing)}")
+
+    def ping(self, p: dict) -> dict:
+        return {"pong": True, "pid": os.getpid(), "sessions": len(self.sessions), "home": str(self.home)}
+
+    # ------------------------------------------------------------------------------------------ canvas
+    def canvas_open(self, p: dict) -> dict:
+        from scienceclaw.canvas import CanvasSession, build_live_episode
+        sid = uuid.uuid4().hex[:12]
+        run_dir = self.home / "sessions" / sid
+        program = self.program()
+        if p.get("episode"):
+            ep = self._benchmark_episode(p["episode"])
+            session = CanvasSession(ep, program, run_dir, llm=self.llm(), session_id=sid, reveal_verdict=False, kind="benchmark",
+                                    spec={"episode": p["episode"]})
+        else:
+            task = p.get("task")
+            if not isinstance(task, dict):
+                raise ValueError("canvas.open needs a 'task' object (live task) or an 'episode' reference (benchmark task)")
+            ep = build_live_episode(task, task_id=f"live-{sid}", input_roots=self.input_roots)
+            session = CanvasSession(ep, program, run_dir, llm=self.llm(), session_id=sid, kind="live", spec=task)
+        self.sessions[sid] = session
+        return {"session_id": sid, "kind": session.kind, "program": program.version, "steps": session.run.max_steps,
+                "retrieved": session.retrieved, "context": session.context()}
+
+    def _benchmark_episode(self, ref: dict):
+        from scienceclaw.bench.splits import adapter_status, load_adapters
+        from scienceclaw.config import BenchConfig
+        code = str(ref.get("discipline", ""))
+        if not code:
+            raise ValueError("episode.discipline is required, e.g. 'FoR37'")
+        cfg = BenchConfig(disciplines=[code])
+        if os.environ.get("SCIENCECLAW_DATA_ROOT"):
+            cfg.data_root = os.environ["SCIENCECLAW_DATA_ROOT"]
+        try:
+            adapter = load_adapters(cfg)[code]
+        except RuntimeError as ex:
+            row = next((r for r in adapter_status(cfg) if r["code"] == code), None)
+            raise RuntimeError(f"{ex}" + (f" ({row['reason']})" if row and row.get("reason") else "")) from None
+        split, index = str(ref.get("split", "src")), int(ref.get("index", 0))
+        episodes = adapter.build_episodes(split, index + 1, int(ref.get("seed", 0)), int(ref.get("items", 16)))
+        return episodes[index]
+
+    def canvas_act(self, p: dict) -> dict:
+        self._need(p, "session_id", "action")
+        return self._session(p).act(p["action"])
+
+    def canvas_render(self, p: dict) -> dict:
+        s = self._session(p)
+        return {"graph": s.render(), "status": s.status()}
+
+    def canvas_replay(self, p: dict) -> dict:
+        return self._session(p).replay()
+
+    def canvas_finish(self, p: dict) -> dict:
+        return self._session(p).finish()
+
+    def canvas_status(self, p: dict) -> dict:
+        return self._session(p).status()
+
+    def canvas_list(self, p: dict) -> dict:
+        return {"sessions": [s.status() for s in self.sessions.values()]}
+
+    # ------------------------------------------------------------------------------------------ tools
+    def tools_search(self, p: dict) -> dict:
+        from scienceclaw import tools
+        self._need(p, "query")
+        hits = tools.search(str(p["query"]), int(p.get("k", 8)), kind=p.get("kind"), task=p.get("task"),
+                            available_only=bool(p.get("available_only", False)))
+        return {"tools": [dict(e.to_dict(), card=e.card()) for e in hits]}
+
+    def tools_show(self, p: dict) -> dict:
+        from scienceclaw import tools
+        self._need(p, "target")
+        target = str(p["target"])
+        try:
+            e = tools.get(target)
+            return {"tool": e.to_dict(), "card": e.card(full=True), "probe": tools.probe(e.module)}
+        except KeyError:
+            return {"module": target, "doc": tools.module_doc(target), "probe": tools.probe(target),
+                    "functions": [e.name for e in tools.catalog() if e.module == target]}
+
+    def tools_status(self, p: dict) -> dict:
+        from scienceclaw import tools
+        return {"modules": tools.status_table(p.get("modules") or None)}
+
+    def weights_status(self, p: dict) -> dict:
+        from scienceclaw.tools import weights as W
+        return {"model_root": str(W.model_root()), "assets": W.status_all()}
+
+    def weights_plan(self, p: dict) -> dict:
+        from scienceclaw.tools import weights as W
+        return {"commands": W.plan(p.get("ids") or None, p.get("root"))}
+
+    # ----------------------------------------------------------------------------------------- program
+    def program_summary(self, p: dict) -> dict:
+        prog = self.program()
+        return {**prog.summary(), "head": self.store.head(), "versions": self.store.versions()}
+
+    def program_skills(self, p: dict) -> dict:
+        return {"skills": [{"id": s.id, "version": s.version, "title": s.title, "tags": s.tags, "source": s.provenance.get("source")}
+                           for s in self.program().skills.values()]}
+
+    def program_operators(self, p: dict) -> dict:
+        return {"operators": [{"id": o.id, "version": o.version, "signature": o.signature(), "tags": o.tags,
+                               "source": o.provenance.get("source")} for o in self.program().operators.values()]}
+
+    def program_show(self, p: dict) -> dict:
+        self._need(p, "ref")
+        prog, ref = self.program(), str(p["ref"])
+        kind, _, cid = ref.partition(":")
+        comp = prog.skills.get(cid) if kind == "skill" else prog.operators.get(cid) if kind in ("op", "operator") else None
+        if comp is None:
+            raise KeyError(f"unknown component {ref!r}; use skill:<id> or op:<id>")
+        return {"ref": ref, "version": comp.version_id, "text": comp.render()}
+
+    def program_history(self, p: dict) -> dict:
+        return {"head": self.store.head(), "versions": self.store.versions(), "receipts": self.store.history()}
+
+    def program_rollback(self, p: dict) -> dict:
+        self._need(p, "version")
+        return {"head": self.store.rollback(str(p["version"]))}
+
+    # ---------------------------------------------------------------------------------------------- eval
+    def eval_catalog(self, p: dict) -> dict:
+        from scienceclaw.bench.registry import DISCIPLINES
+        task_dir = PACKAGE_ROOT / "scienceclaw" / "bench" / "tasks"
+        refs: set[str] = set()
+        for d in DISCIPLINES:
+            src = task_dir / f"{d.module}.py"
+            if src.is_file():
+                refs.update(re.findall(r'ToolSpec\s*\(\s*"([A-Za-z0-9_]+)"', src.read_text(encoding="utf-8")))
+        return {"disciplines": [d.__dict__ for d in DISCIPLINES], "tool_refs": sorted(refs),
+                "configs": sorted(f.name for f in (PACKAGE_ROOT / "configs").iterdir() if f.is_file()),
+                "scripts": sorted(str(f.relative_to(PACKAGE_ROOT)) for f in (PACKAGE_ROOT / "scripts").rglob("*")
+                                  if f.is_file() and f.suffix in {".py", ".sh", ".sbatch"})}
+
+    def eval_list_tasks(self, p: dict) -> dict:
+        from scienceclaw.bench.splits import adapter_status
+        from scienceclaw.config import BenchConfig
+        cfg = BenchConfig()
+        if p.get("data_root") or os.environ.get("SCIENCECLAW_DATA_ROOT"):
+            cfg.data_root = str(Path(p.get("data_root") or os.environ["SCIENCECLAW_DATA_ROOT"]).expanduser().resolve())
+        return {"tasks": adapter_status(cfg)}
+
+    def eval_report(self, p: dict) -> dict:
+        from scienceclaw.experiments.report import build_report
+        self._need(p, "run_id")
+        run_id = str(p["run_id"])
+        run_root = Path(os.environ.get("SCIENCECLAW_RUN_ROOT") or PACKAGE_ROOT / "runs").expanduser().resolve()
+        if Path(run_id).name != run_id:
+            raise ValueError("run_id must be a single directory name")
+        run_dir = (run_root / run_id).resolve()
+        if run_dir.parent != run_root or not run_dir.is_dir():
+            raise ValueError("run_id is outside the configured run root or does not exist")
+        return {"run_id": run_id, "report": str(build_report(run_dir))}
+
+    # ---------------------------------------------------------------------------------------- dispatch
+    def handle(self, line: str) -> dict:
+        rid: Any = None
+        try:
+            req = json.loads(line)
+            if not isinstance(req, dict):
+                raise ValueError("a request must be a JSON object")
+            rid = req.get("id")
+            method = str(req.get("method", ""))
+            fn = self.methods.get(method)
+            if fn is None:
+                raise ValueError(f"unknown method {method!r}; known: {sorted(self.methods)}")
+            params = req.get("params") or {}
+            if not isinstance(params, dict):
+                raise ValueError("params must be a JSON object")
+            return {"id": rid, "ok": True, "result": _json_safe(fn(params))}
+        except Exception as ex:                          # every failure becomes a structured answer
+            if not isinstance(ex, (ValueError, KeyError, RuntimeError)) or os.environ.get("SCIENCECLAW_RPC_DEBUG"):
+                log.error("request failed:\n%s", traceback.format_exc())
+            msg = ex.args[0] if isinstance(ex, KeyError) and ex.args else str(ex)
+            return {"id": rid, "ok": False, "error": {"type": type(ex).__name__, "message": str(msg)}}
+
+
+def serve(stdin=None, stdout=None) -> int:
+    """Answer requests until stdin closes. Library output on stdout is redirected to stderr so the protocol stays clean."""
+    stdin, out = stdin or sys.stdin, stdout or sys.stdout
+    sys.stdout = sys.stderr
+    svc = Service()
+    for line in stdin:
+        if not line.strip():
+            continue
+        resp = svc.handle(line)
+        out.write(json.dumps(resp, ensure_ascii=False, default=str, allow_nan=False) + "\n")
+        out.flush()
+    return 0
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(name)s %(levelname)s %(message)s")
+    return serve()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

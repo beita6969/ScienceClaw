@@ -1,18 +1,25 @@
-# ScienceClaw benchmark bridge
+# ScienceClaw gateway plugin
 
-This optional plugin exposes the isolated Python benchmark package through one
-native agent tool, `scienceclaw_eval`. It supports `catalog`, `list_tasks`, and
-`report` (for a run directory under `runRoot`). Formal hidden ID/OOD evaluation
-stays server-side and is deliberately not reachable through the agent tool.
+Registers the ScienceClaw engine (`packages/scienceclaw`) as optional agent tools. The
+gateway agent acts as the policy of the engine: it edits a typed workflow graph step by step
+(`scienceclaw_canvas`), finds scientific tools and pretrained-model wrappers
+(`scienceclaw_tools`), and inspects or rolls back the versioned Skill/Operator program
+(`scienceclaw_program`). `scienceclaw_eval` inspects the ScienceClaw-Eval catalog, the installed
+task data and finished-run reports.
 
-Configure the plugin with an explicit `repoRoot` pointing at
-`packages/scienceclaw`. `dataRoot`, `modelRoot`, `runRoot`, and
-`pythonBin` are deployment settings; they are never accepted as agent
-parameters. Keep datasets, weights, caches, and credentials outside Git.
+| Tool | Operations |
+| --- | --- |
+| `scienceclaw_canvas` | `open`, `act`, `render`, `replay`, `finish`, `status`, `list` |
+| `scienceclaw_tools` | `search`, `show`, `status`, `weights` |
+| `scienceclaw_program` | `summary`, `skills`, `operators`, `show`, `history`, `rollback` |
+| `scienceclaw_eval` | `catalog`, `list_tasks`, `report` |
 
-Because the tool is optional, enable both the plugin entry and the tool in the
-agent allowlist. The following JSON5 fragment is a template; replace the
-checkout and Python paths for the host that runs the gateway:
+The plugin keeps one long-lived Python process (`python -m scienceclaw.rpc`, line-delimited
+JSON) so canvas sessions survive between tool calls. Deployment settings (`packageRoot`,
+`pythonBin`, `home`, `inputRoots`, `runRoot`, `dataRoot`, `modelRoot`, `configPath`, `llm`) are
+plugin configuration and are never accepted as tool parameters. Gateway and provider credentials
+are not forwarded to the engine; the model used by `llm` nodes is the OpenAI-compatible endpoint
+given under `llm`, or any backend registered through `scienceclaw.llm.interface`.
 
 ```json5
 {
@@ -21,14 +28,22 @@ checkout and Python paths for the host that runs the gateway:
       "scienceclaw": {
         enabled: true,
         config: {
-          repoRoot: "<checkout>/packages/scienceclaw",
+          packageRoot: "<checkout>/packages/scienceclaw",
           pythonBin: "<venv>/bin/python",
+          home: "<state-dir>",
+          inputRoots: ["<workspace>"],
+          llm: { baseUrl: "<endpoint>", model: "<model>" },
         },
       },
     },
   },
   agents: {
-    list: [{ id: "main", tools: { allow: ["scienceclaw_eval"] } }],
+    list: [{
+      id: "main",
+      tools: { allow: ["scienceclaw_canvas", "scienceclaw_tools", "scienceclaw_program", "scienceclaw_eval"] },
+    }],
   },
 }
 ```
+
+Formal hidden-split evaluation is not reachable through these tools.

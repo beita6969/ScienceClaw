@@ -24,7 +24,10 @@ loop that produces and validates skills/operators.
    tool/checkpoint/preprocessing provenance in the run receipt.
 4. Use `scienceclaw_eval(operation=report)` with the `runId` of an existing
    server-side run to inspect its report.
-5. Keep the benchmark engine and gateway separate: the gateway routes and
+5. To solve one benchmark episode interactively, open it on the canvas with
+   `scienceclaw_canvas(operation=open, episode={discipline, split, index})` (see
+   `scienceclaw-canvas`); its verdict stays sealed until the run is evaluated server-side.
+6. Keep the benchmark engine and gateway separate: the gateway routes and
    records; the Python package owns typed graphs, adapters, replay, scoring,
    self-evolution, and receipts. Read only the relevant reference below.
 

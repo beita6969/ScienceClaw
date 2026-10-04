@@ -2,7 +2,7 @@
   "name": "@openclaw/scienceclaw",
   "version": "2026.3.9",
   "private": true,
-  "description": "Optional ScienceClaw benchmark bridge",
+  "description": "ScienceClaw canvas orchestration, tool library and program tools",
   "type": "module",
   "dependencies": {
     "@sinclair/typebox": "0.34.48"

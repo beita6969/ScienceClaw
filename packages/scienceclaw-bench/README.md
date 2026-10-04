@@ -15,4 +15,3 @@ stay outside Git and are selected through deployment configuration.
 
 See [docs/INTEGRATION.md](docs/INTEGRATION.md) for the complete gateway,
 benchmark, operator, skill, and self-evolution map.
-The external model and checkpoint policy is in [docs/ASSETS.md](docs/ASSETS.md).

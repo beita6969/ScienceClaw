@@ -28,10 +28,6 @@ and are excluded by `.gitignore`. Before adding a new operator or skill, keep
 its source and routing metadata in the package or root skill directory, then
 record its provenance in the episode receipt.
 
-The complete model/checkpoint and external-tool policy is in
-[`docs/ASSETS.md`](ASSETS.md). It keeps wrappers and immutable manifests in the
-repository while placing large or licensed binaries under the server asset root.
-
 ## Quick orientation
 
 1. Load `skills/scienceclaw-benchmark/SKILL.md` for routing policy.

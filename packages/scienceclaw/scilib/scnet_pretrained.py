@@ -31,7 +31,16 @@ _cache: dict[tuple[str, str], object] = {}
 
 
 def _code_root() -> Path:
-    return Path(os.environ.get("SCIENCECLAW_SCNET_ROOT", DEFAULT_CODE_ROOT))
+    """Source tree of the upstream repository: ``$SCIENCECLAW_SCNET_ROOT``, else the default cache location, else a ``source``
+    directory next to the staged checkpoint (the only place a sandboxed worker, whose home is its work directory, can find)."""
+    explicit = os.environ.get("SCIENCECLAW_SCNET_ROOT")
+    if explicit:
+        return Path(explicit)
+    default = Path(DEFAULT_CODE_ROOT)
+    if (default / "src").is_dir():
+        return default
+    staged = model_path(MODEL_DIR_NAME, "source")
+    return staged if staged is not None else default
 
 
 def _weights_dir() -> Path | None:
@@ -44,7 +53,7 @@ def _weights_dir() -> Path | None:
 
 def _local_ok() -> bool:
     """Check only lightweight imports/files; do not initialize the network."""
-    if switched_off() or _weights_dir() is None:
+    if switched_off() or _weights_dir() is None or not (_code_root() / "src" / "model").is_dir():
         return False
     return all(importlib.util.find_spec(x) is not None for x in ("torch", "torchaudio", "hydra", "omegaconf"))
 
@@ -54,6 +63,26 @@ def available(model: str = MODELS[0]) -> bool:
     if model not in MODELS:
         return False
     return _local_ok() or _remote.enabled()
+
+
+def _expose_scnet_backbone() -> None:
+    """Import ``model.backbone``; when its package ``__init__`` fails (it also imports the RoFormer backbones, whose modules assert
+    a CUDA device at import time, so a CPU host cannot import it), register a package holding the SCNet classes alone."""
+    import importlib
+    import types
+
+    try:
+        importlib.import_module("model.backbone")
+        return
+    except (AssertionError, ImportError):
+        pass
+    model_pkg = importlib.import_module("model")
+    pkg = types.ModuleType("model.backbone")
+    pkg.__path__ = [str(Path(model_pkg.__file__).parent / "backbone")]
+    sys.modules["model.backbone"] = pkg
+    scnet = importlib.import_module("model.backbone.scnet")
+    pkg.SCNet, pkg.MultiSourceSCNet = scnet.SCNet, scnet.MultiSourceSCNet
+    model_pkg.backbone = pkg
 
 
 def _load(device: str):
@@ -72,6 +101,7 @@ def _load(device: str):
     # path local to the worker and avoid mutating the caller's package layout.
     if str(src) not in sys.path:
         sys.path.insert(0, str(src))
+    _expose_scnet_backbone()
     cfg_dir = _weights_dir()
     if cfg_dir is None:
         raise RuntimeError("SCNet checkpoint/config is not staged")

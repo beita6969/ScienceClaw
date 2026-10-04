@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ._pretrained import model_path as staged_path
 from ._pretrained import switched_off
 
 __all__ = ["available", "encode", "MODEL_ENV", "SOURCE_ENV", "SAMPLE_RATE"]
@@ -25,13 +26,16 @@ SAMPLE_RATE = 16_000
 
 
 def _model_path(model_path=None) -> Path | None:
+    """The explicit path, else ``$SCIENCECLAW_BEATS_MODEL``, else ``BEATs_iter3.pt`` under the model root (the only route a
+    sandboxed worker, which inherits no variable but ``SCIENCECLAW_MODELS``, can use)."""
     raw = model_path if model_path is not None else os.environ.get(MODEL_ENV)
-    return Path(raw).expanduser() if raw else None
+    return Path(raw).expanduser() if raw else staged_path("beats", "BEATs_iter3.pt")
 
 
 def _source_path(source_path=None) -> Path | None:
+    """The explicit path, else ``$SCIENCECLAW_BEATS_SOURCE``, else a ``source`` directory next to the staged checkpoint."""
     raw = source_path if source_path is not None else os.environ.get(SOURCE_ENV)
-    return Path(raw).expanduser() if raw else None
+    return Path(raw).expanduser() if raw else staged_path("beats", "source")
 
 
 def _checkpoint_ok(path: Path | None) -> bool:

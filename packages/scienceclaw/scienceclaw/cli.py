@@ -11,6 +11,11 @@ Commands
                                      tables (report/report.md + CSVs) from the run receipts
   compare --runs LABEL=DIR ... [--split ood]
                                      average ranks, Friedman/Nemenyi and sign tests across runs (methods)
+  tools search QUERY [--k N] [--kind pretrained|library] [--task FoR37] [--available]
+  tools show ID|MODULE [--full]      tool library: retrieve, describe and probe the scilib tools
+  tools status [MODULE ...]          which tool modules can run here, and why not
+  weights status | plan [ID ...] [--root DIR] | verify [ID ...]
+                                     pretrained weights: what is staged, how to stage the rest, hash checks
 """
 from __future__ import annotations
 
@@ -115,6 +120,43 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_tools(args: argparse.Namespace) -> int:
+    from . import tools
+
+    if args.action == "search":
+        for e in tools.search(args.query, args.k, kind=args.kind, task=args.task, available_only=args.available):
+            print(e.card() + "\n")
+    elif args.action == "show":
+        try:
+            print(tools.get(args.target).card(full=True))
+        except KeyError:
+            print(f"Library `scilib.{args.target}`:\n{tools.module_doc(args.target)}")
+            print("\nfunctions: " + ", ".join(e.name for e in tools.catalog() if e.module == args.target))
+    else:
+        rows = tools.status_table(args.modules or None)
+        for r in rows:
+            r["available"] = "yes" if r["available"] else "no"
+            r["reason"] = str(r["reason"])[:90]
+        _print_table(rows, ["module", "kind", "available", "reason"])
+    return 0
+
+
+def cmd_weights(args: argparse.Namespace) -> int:
+    from .tools import weights as W
+
+    if args.action == "status":
+        rows = [{"id": s["id"], "staged": "yes" if s["present"] else "no", "ready": "yes" if s["ready"] else "no",
+                 "missing packages": ",".join(s["missing_packages"]), "used by": ",".join(s["used_by"])} for s in W.status_all()]
+        _print_table(rows, ["id", "staged", "ready", "missing packages", "used by"])
+        print(f"\nmodel root: {W.model_root()}")
+    elif args.action == "plan":
+        print("\n".join(W.plan(args.ids or None, args.root)))
+    else:
+        for a in (args.ids or [x.id for x in W.load()]):
+            print(json.dumps(W.verify(a)))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m scienceclaw.cli", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -151,6 +193,31 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--runs", nargs="+", required=True, metavar="LABEL=DIR")
     s.add_argument("--split", default="ood")
     s.set_defaults(fn=cmd_compare)
+
+    s = sub.add_parser("tools", help="search, describe and probe the scientific tool library")
+    ts = s.add_subparsers(dest="action", required=True)
+    a = ts.add_parser("search")
+    a.add_argument("query")
+    a.add_argument("--k", type=int, default=8)
+    a.add_argument("--kind", choices=("pretrained", "library"), default=None)
+    a.add_argument("--task", default=None, help="limit to the tools used by a discipline, e.g. FoR37")
+    a.add_argument("--available", action="store_true", help="only tools that can run here")
+    a = ts.add_parser("show")
+    a.add_argument("target", help="tool id (tsfm.forecast) or module (tsfm)")
+    a.add_argument("--full", action="store_true")
+    a = ts.add_parser("status")
+    a.add_argument("modules", nargs="*")
+    s.set_defaults(fn=cmd_tools)
+
+    s = sub.add_parser("weights", help="pretrained weights: status, staging plan, hash verification")
+    ws = s.add_subparsers(dest="action", required=True)
+    ws.add_parser("status")
+    a = ws.add_parser("plan")
+    a.add_argument("ids", nargs="*")
+    a.add_argument("--root", default=None)
+    a = ws.add_parser("verify")
+    a.add_argument("ids", nargs="*")
+    s.set_defaults(fn=cmd_weights)
     return p
 
 

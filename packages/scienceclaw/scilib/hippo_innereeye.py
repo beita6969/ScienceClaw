@@ -10,7 +10,7 @@ training, target reads, or an invented class mapping.
 The small network definition below mirrors the released InnerEye UNet3D state
 layout.  It is kept here so inference does not need the archived AzureML runtime.
 Microsoft's source and model are MIT licensed; see the v0.5 release and the
-record in ``configs/p3_asset_manifest.json``/the FoR32 report for provenance.
+record in ``scienceclaw/tools/weights.json`` (asset ``innereye_hippocampus``) for provenance.
 """
 from __future__ import annotations
 

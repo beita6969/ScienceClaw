@@ -1,0 +1,568 @@
+{
+  "schema": 1,
+  "model_root": "$SCIENCECLAW_MODELS (default ~/.cache/scienceclaw/models)",
+  "note": "Weights are never downloaded implicitly. Stage them with `python -m scienceclaw.cli weights plan` and verify with `weights status`. Licenses must be checked upstream before redistribution.",
+  "assets": [
+    {
+      "id": "chronos_2",
+      "title": "Chronos-2 time-series foundation model",
+      "kind": "huggingface",
+      "source": "amazon/chronos-2",
+      "subdir": "tsfm/chronos_2",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "tsfm"
+      ],
+      "requires": [
+        "torch",
+        "chronos"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "chronos_bolt_base",
+      "title": "Chronos-Bolt (base) time-series model",
+      "kind": "huggingface",
+      "source": "amazon/chronos-bolt-base",
+      "subdir": "tsfm/chronos_bolt_base",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "tsfm"
+      ],
+      "requires": [
+        "torch",
+        "chronos"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "ast_audioset",
+      "title": "Audio Spectrogram Transformer fine-tuned on AudioSet",
+      "kind": "huggingface",
+      "source": "MIT/ast-finetuned-audioset-10-10-0.4593",
+      "subdir": "audioenc/ast_audioset",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "audioenc"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "BSD-3-Clause"
+    },
+    {
+      "id": "clap_htsat_unfused",
+      "title": "CLAP audio-text encoder (HTSAT, unfused)",
+      "kind": "huggingface",
+      "source": "laion/clap-htsat-unfused",
+      "subdir": "audioenc/clap_htsat_unfused",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "audioenc"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "Apache-2.0",
+      "allow_bin": true
+    },
+    {
+      "id": "bge_large_en",
+      "title": "BGE-large English sentence encoder",
+      "kind": "huggingface",
+      "source": "BAAI/bge-large-en-v1.5",
+      "subdir": "textenc/bge_large_en",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "textenc"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "bge_reranker_large",
+      "title": "BGE reranker (relevance of passage/query pairs)",
+      "kind": "huggingface",
+      "source": "BAAI/bge-reranker-large",
+      "subdir": "textenc/bge_reranker_large",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "textenc"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "nli_deberta_v3_large",
+      "title": "DeBERTa-v3-large natural-language inference",
+      "kind": "huggingface",
+      "source": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+      "subdir": "textenc/nli_deberta_v3_large",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "textenc"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "esm2_650m",
+      "title": "ESM-2 650M protein language model",
+      "kind": "huggingface",
+      "source": "facebook/esm2_t33_650M_UR50D",
+      "subdir": "esm2_650m",
+      "check": [
+        "model.safetensors"
+      ],
+      "used_by": [
+        "proteinplm",
+        "proteinfit"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "sam2_hf",
+      "title": "SAM 2.1 Hiera-large (Hugging Face format)",
+      "kind": "huggingface",
+      "source": "facebook/sam2.1-hiera-large",
+      "subdir": "sam2hf",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "phenoseg_sam"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "sam2_pt",
+      "title": "SAM 2.1 Hiera-large checkpoint",
+      "kind": "url",
+      "source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt",
+      "subdir": "sam2",
+      "check": [
+        "sam2.1_hiera_large.pt"
+      ],
+      "used_by": [
+        "phenoseg_sam"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "dinov2_large",
+      "title": "DINOv2 ViT-L/14 features",
+      "kind": "huggingface",
+      "source": "facebook/dinov2-large",
+      "subdir": "dinov2-large",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "phenoseg_deep"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "dinov2_base",
+      "title": "DINOv2 ViT-B/14 features",
+      "kind": "huggingface",
+      "source": "facebook/dinov2-base",
+      "subdir": "dinov2-base",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "phenoseg_deep"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "camembert_large",
+      "title": "CamemBERT-large (French encoder for the Stanza parser)",
+      "kind": "huggingface",
+      "source": "almanach/camembert-large",
+      "subdir": "camembert-large",
+      "check": [
+        "config.json",
+        "*.safetensors|*.bin"
+      ],
+      "used_by": [
+        "udparse_pretrained"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "stanza_fr",
+      "title": "Stanza French GSD pipeline (CamemBERT-large parser, tagger, lemmatiser)",
+      "kind": "url",
+      "source": "https://huggingface.co/stanfordnlp/stanza-fr/resolve/v1.14.0/models/",
+      "files": [
+        "depparse/gsd_camembert-large.pt",
+        "pos/gsd_camembert-large.pt",
+        "lemma/gsd_nocharlm.pt",
+        "pretrain/conll17.pt",
+        "forward_charlm/newswiki.pt",
+        "backward_charlm/newswiki.pt"
+      ],
+      "subdir": "stanza_fr/fr",
+      "check": [
+        "depparse/gsd_camembert-large.pt"
+      ],
+      "used_by": [
+        "udparse_pretrained"
+      ],
+      "requires": [
+        "torch",
+        "transformers",
+        "stanza"
+      ],
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "phenobench_weyler",
+      "title": "PhenoBench hierarchical instance model (Weyler et al.)",
+      "kind": "url",
+      "source": "https://www.ipb.uni-bonn.de/html/projects/phenobench/hierarchical/weyler/weyler_checkpoint_0381.pth",
+      "subdir": "phenobench_weyler",
+      "check": [
+        "weyler_checkpoint_0381.pth"
+      ],
+      "used_by": [
+        "phenobench_weyler",
+        "phenoseg_hapt"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": null
+    },
+    {
+      "id": "demucs",
+      "title": "Demucs / Hybrid Transformer Demucs separation models (htdemucs, htdemucs_ft, mdx_extra)",
+      "kind": "url",
+      "source": "https://dl.fbaipublicfiles.com/demucs",
+      "subdir": "demucs",
+      "files": [
+        "hybrid_transformer/955717e8-8726e21a.th",
+        "hybrid_transformer/f7e0c4bc-ba3fe64a.th",
+        "hybrid_transformer/d12395a8-e57c48e6.th",
+        "hybrid_transformer/92cfc3b6-ef3bcb9c.th",
+        "hybrid_transformer/04573f0d-f3cf25b2.th",
+        "mdx_final/e51eebcc-c1b80bdd.th",
+        "mdx_final/a1d90b5c-ae9d2452.th",
+        "mdx_final/5d2d6c55-db83574e.th",
+        "mdx_final/cfa93e08-61801ae1.th"
+      ],
+      "check": [
+        "955717e8-8726e21a.th",
+        "htdemucs.yaml"
+      ],
+      "used_by": [
+        "audiosep_pretrained",
+        "audiosep"
+      ],
+      "requires": [
+        "torch",
+        "demucs"
+      ],
+      "license": "MIT",
+      "flatten": true,
+      "post": [
+        "printf \"models: ['955717e8']\\n\" > {dir}/htdemucs.yaml",
+        "printf \"models: ['f7e0c4bc', 'd12395a8', '92cfc3b6', '04573f0d']\\nweights: [\\n  [1., 0., 0., 0.],\\n  [0., 1., 0., 0.],\\n  [0., 0., 1., 0.],\\n  [0., 0., 0., 1.],\\n]\\n\" > {dir}/htdemucs_ft.yaml",
+        "printf \"models: ['e51eebcc', 'a1d90b5c', '5d2d6c55', 'cfa93e08']\\nsegment: 44\\n\" > {dir}/mdx_extra.yaml"
+      ]
+    },
+    {
+      "id": "scnet_mimo_small",
+      "title": "SCNet MIMO small separation model",
+      "kind": "manual",
+      "source": null,
+      "subdir": "scnet_mimo_small",
+      "check": [
+        "config.yaml",
+        "backbone_model.pth"
+      ],
+      "used_by": [
+        "scnet_pretrained"
+      ],
+      "requires": [
+        "torch",
+        "torchaudio",
+        "hydra",
+        "omegaconf"
+      ],
+      "license": null,
+      "env": "SCIENCECLAW_SCNET_MODEL_DIR",
+      "note": "Also needs the SCNet source tree; point SCIENCECLAW_SCNET_ROOT at it."
+    },
+    {
+      "id": "hapt",
+      "title": "HAPT hierarchical panoptic segmentation checkpoint",
+      "kind": "manual",
+      "source": null,
+      "subdir": "hapt",
+      "check": [
+        "hapt_model.ckpt"
+      ],
+      "used_by": [
+        "phenoseg_hapt"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": null
+    },
+    {
+      "id": "phenobench_m2f",
+      "title": "Mask2Former plant and leaf models for PhenoBench",
+      "kind": "manual",
+      "source": null,
+      "subdir": "phenobench_m2f",
+      "check": [
+        "hf_plants",
+        "hf_leaves"
+      ],
+      "used_by": [
+        "phenoseg_m2f"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": null
+    },
+    {
+      "id": "open_clip_vit_b32",
+      "title": "OpenAI CLIP ViT-B/32 (open_clip format)",
+      "kind": "url",
+      "source": "https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af/ViT-B-32.pt",
+      "subdir": "clip/open_clip_vit_b32",
+      "check": [
+        "ViT-B-32.pt"
+      ],
+      "used_by": [
+        "clip_retrieval"
+      ],
+      "requires": [
+        "torch",
+        "open_clip"
+      ],
+      "sha256": "40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af",
+      "license": "OpenAI CLIP weights; verify before deployment"
+    },
+    {
+      "id": "buildingsbench_gaussian_l",
+      "title": "BuildingsBench Transformer-Gaussian-L",
+      "kind": "url",
+      "source": "https://oedi-data-lake.s3.amazonaws.com/buildings-bench/v1.1.0/checkpoints/Transformer_Gaussian_L.pt",
+      "used_by": [
+        "buildingsbench"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": "BSD-3-Clause / BuildingsBench data terms",
+      "subdir": "buildingsbench",
+      "check": [
+        "Transformer_Gaussian_L.pt"
+      ],
+      "bytes": 1930570777,
+      "sha256": "fdb4ecf45568d0c2467cd67dd00e53c29e48a4b4ae7d39c814af4dc4f907e30f",
+      "source_commit": "c60e25f37dbae8f3664df0879aaa13a7fe25952d",
+      "env": "SCIENCECLAW_BUILDINGS_MODEL",
+      "note": "Also needs the upstream BuildingsBench source (SCIENCECLAW_BUILDINGS_SOURCE)."
+    },
+    {
+      "id": "beats_iter3",
+      "title": "BEATs iter3 audio encoder",
+      "kind": "huggingface",
+      "source": "https://huggingface.co/lpepino/beats_ckpts",
+      "used_by": [
+        "beats"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": "MIT",
+      "subdir": "beats",
+      "check": [
+        "BEATs_iter3.pt"
+      ],
+      "bytes": 361499833,
+      "sha256": "8d1b234032a9ccff353612dc6c20982346dc2968b205b79d97303eb5e77bfb34",
+      "revision": "5b53b0404df452a3a607d7e67687227730e5bad1",
+      "source_commit": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
+      "env": "SCIENCECLAW_BEATS_MODEL",
+      "note": "Also needs the upstream BEATs.py source (SCIENCECLAW_BEATS_SOURCE)."
+    },
+    {
+      "id": "granite_ttm_r2",
+      "title": "IBM Granite TinyTimeMixer r2",
+      "kind": "huggingface",
+      "source": "https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2",
+      "used_by": [
+        "granite"
+      ],
+      "requires": [
+        "torch",
+        "transformers"
+      ],
+      "license": "Apache-2.0",
+      "subdir": "granite",
+      "check": [
+        "model.safetensors"
+      ],
+      "bytes": 3240592,
+      "sha256": "a706726a7eb01bbcb42994b7dcb3c06ea9557898dbae8d480eb04fe8ccb89710",
+      "env": "SCIENCECLAW_GRANITE_MODEL",
+      "note": "Validate a 6-hour resampling policy on src/val before formal use."
+    },
+    {
+      "id": "innereye_hippocampus",
+      "title": "InnerEye-DeepLearning hippocampus segmentation v0.5",
+      "kind": "url",
+      "source": "https://github.com/microsoft/InnerEye-DeepLearning/releases/download/v0.5/hippocampus_segmentation_model.zip",
+      "used_by": [
+        "hippo_innereeye"
+      ],
+      "requires": [
+        "torch"
+      ],
+      "license": "MIT",
+      "subdir": "innereye/extracted/nested/Hippocampus_123/MODEL/final_ensemble_model/checkpoints",
+      "check": [
+        "last.ckpt"
+      ],
+      "note": "Checkpoint predicts whole left/right hippocampi; FoR32 requires anterior/posterior labels in one crop. No class remapping is permitted."
+    },
+    {
+      "id": "mass_base",
+      "title": "MASS base (in-context segmentation)",
+      "kind": "huggingface",
+      "source": "StanfordAIMI/MASS",
+      "subdir": "mass",
+      "check": [
+        "mass_base.pth"
+      ],
+      "used_by": [],
+      "requires": [
+        "torch"
+      ],
+      "license": "MIT",
+      "sha256": "8f27f19e5bd6013f792a2319207d6ec8652229cf4f89d1f29233ff12e9342b32",
+      "note": "zero-shot transfer on FoR32 crops is below visible location atlas; no formal ToolSpec or scorer submission."
+    },
+    {
+      "id": "tabpfn_25",
+      "title": "TabPFN 2.5",
+      "kind": "manual",
+      "source": "https://huggingface.co/Prior-Labs/tabpfn_2_5",
+      "subdir": "tabpfn",
+      "check": [],
+      "used_by": [],
+      "requires": [
+        "torch"
+      ],
+      "license": "restricted_non_commercial",
+      "restricted": true,
+      "note": "Prior Labs token and confirmation of permitted non-commercial use are required before downloading weights."
+    },
+    {
+      "id": "chgnet",
+      "title": "CHGNet universal interatomic potential",
+      "kind": "pip",
+      "source": "chgnet",
+      "subdir": null,
+      "check": [],
+      "used_by": [
+        "matphonon_mlip"
+      ],
+      "requires": [
+        "chgnet",
+        "phonopy",
+        "pymatgen",
+        "torch"
+      ],
+      "license": null,
+      "note": "Weights ship with the pip package."
+    },
+    {
+      "id": "sevennet",
+      "title": "SevenNet universal interatomic potentials",
+      "kind": "pip",
+      "source": "sevenn",
+      "subdir": null,
+      "check": [],
+      "used_by": [
+        "matphonon_mlip"
+      ],
+      "requires": [
+        "sevenn",
+        "ase",
+        "phonopy",
+        "torch"
+      ],
+      "license": null,
+      "note": "Pretrained potentials are resolved by the sevenn package."
+    }
+  ]
+}

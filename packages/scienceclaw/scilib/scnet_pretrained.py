@@ -6,6 +6,9 @@ mixture-only boundary as the Demucs wrapper: the sandbox sees only mixtures,
 while the GPU worker owns the model code and checkpoint.  No task fitting or
 target access happens here.
 
+The upstream source tree (``src`` of SonyResearch/mimo-audio-separation) is read from ``$SCIENCECLAW_SCNET_ROOT``, else from
+the default cache directory, else from ``<model root>/scnet_mimo_small/source``.
+
 The model was trained at 44.1 kHz with source order ``vocals, bass, drums,
 other``.  ScienceClaw's FoR36 contract is 22.05 kHz and orders the middle two
 sources as ``drums, bass``; the wrapper performs both conversions explicitly.

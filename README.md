@@ -9,9 +9,10 @@ ScienceClaw lets a scientific agent get better at doing science *without trainin
 ![Disciplines](https://img.shields.io/badge/disciplines-23-2a9d8f?style=flat-square)
 ![Python](https://img.shields.io/badge/python-%E2%89%A53.11-3776ab?style=flat-square)
 
-> *ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents Across the Natural and Social Sciences* — Mingda Zhang, Wenjin Liu, Tiesunlong Shen, Zikai Xiao, Zhenghong Lin, Qing Xu, Erik Cambria, Xiaoying Tang, Haoran Luo. KDD 2027 manuscript.
-
 This repository is the **agent system**. The companion benchmark, **ScienceClaw-Eval**, is released separately and its evaluation data lives on [Hugging Face](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples) (see [ScienceClaw-Eval](#scienceclaw-eval-the-companion-benchmark)). The system is built on the [OpenClaw](https://github.com/openclaw/openclaw) gateway.
+
+<p align="center"><img src="assets/paper/overview.png" alt="Overview of ScienceClaw"></p>
+<p align="center"><sub><i>Overview of ScienceClaw. ScienceClaw-Eval spans 23 disciplines across the natural and social sciences, while ScienceClaw turns verified execution evidence into persistent Skill–Operator program updates.</i></sub></p>
 
 ---
 
@@ -20,6 +21,9 @@ This repository is the **agent system**. The companion benchmark, **ScienceClaw-
 LLM agents increasingly solve scientific tasks by connecting reasoning to data, domain tools and executable code. But a repair that works once rarely survives: it lives in a transient context, or in a single tool or prompt. Existing work evolves individual tools or Skills, and existing benchmarks treat tasks as independent episodes, so it has been hard to tell whether verified scientific executions turn into *persistent, transferable* improvements.
 
 > **How can verified scientific executions drive persistent and transferable program-level self-evolution without updating foundation-model parameters?**
+
+<p align="center"><img src="assets/paper/task_formulation.png" alt="Task formulation" width="85%"></p>
+<p align="center"><sub><i>Task formulation of verifiable program-level self-evolution for AI-for-Science agents.</i></sub></p>
 
 ## What is new
 
@@ -41,25 +45,8 @@ Otherwise the incumbent program is kept. Updates are versioned, can be rolled ba
 
 **6. A benchmark built for accumulation.** ScienceClaw-Eval measures scientific correctness, evolutionary gain, retention, cross-dataset transfer and evolution cost over sequential task streams in 23 disciplines, with independent reset evaluation.
 
-```mermaid
-flowchart TD
-    T["Task: objective, inputs, constraints"] --> R["Retrieve Skills and Operators from program A_r"]
-    R --> P["Fixed model proposes one atomic edit"]
-    P --> X["Execute incrementally: only affected nodes rerun"]
-    X --> F["Typed feedback: status, shapes, units, constraint checks"]
-    F --> P
-    X --> V["Reset replay: reproducible? hard constraints hold?"]
-    V --> E["Evidence: replay-verified failure e- then success e+"]
-    E --> A["Attribute the repair: control edits vs executable edits"]
-    A --> S["Skill patch"]
-    A --> O["Operator abstraction + boundary replay"]
-    S --> B["Linked bundle B_i"]
-    O --> B
-    B --> RS["Source replay: solves the task again AND uses the new components"]
-    RS --> G["Gate on independent validation tasks: hard constraints, budget, strict improvement"]
-    G -->|admitted| U["Promote: new versioned program A_r+1"]
-    G -->|rejected| K["Keep the incumbent A_r"]
-```
+<p align="center"><img src="assets/paper/method_overview.png" alt="Definition and overview of the ScienceClaw task"></p>
+<p align="center"><sub><i>Definition and overview of the ScienceClaw task. Given task specification D_t and agent program A_r, ScienceClaw produces scientific solution Z_t and retains a candidate update only after source-task replay and independent program validation.</i></sub></p>
 
 ## Results at a glance
 
@@ -82,6 +69,92 @@ All numbers are from the paper's protocol: seven evolution rounds over the commo
 - **Execution structure is the base.** The full system runs 4.84 planner rounds and 4.24 distinct Operators per task, repairs 71 % of failures from feedback, recovers 89 % after interruption and replays 96 % cleanly (a single-turn agent: 0 %, 31 %, 78 %).
 
 Reported trajectories are final snapshots, not uncertainty estimates over source orders or model configurations, and cost comparisons are relative to the protocol, not absolute. See the paper for the full tables, ablations and the limitations discussion.
+
+### Cross-dataset (OOD) results in 23 disciplines
+
+Task-native scores, compared only within a discipline (metrics differ in units and direction). ScienceClaw is best in every discipline; arrows give the direction of "better".
+
+| Discipline (metric) | Frozen | SkillOpt | TTE | AHE | EvoMaster | EvoScientist | **ScienceClaw** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Agricultural sci. (PQ+) ↑ | 64.6829 | 66.7649 | 72.0626 | 72.0490 | 73.1862 | 73.2184 | **75.7629** |
+| Biological sci. (Spearman) ↑ | 0.3745 | 0.3659 | 0.3975 | 0.3968 | 0.4103 | 0.4089 | **0.4234** |
+| Biomedical sci. (DSC) ↑ | 0.7088 | 0.7521 | 0.7784 | 0.7811 | 0.7877 | 0.7798 | **0.8226** |
+| Chemical sci. (ROC-AUC) ↑ | 0.6205 | 0.6518 | 0.7054 | 0.7143 | 0.7165 | 0.7188 | **0.7478** |
+| Creative arts (SDR (dB)) ↑ | 8.0993 | 8.3085 | 9.0812 | 9.0046 | 9.1835 | 9.2653 | **9.5619** |
+| Education (10-mask acc.) ↑ | 0.6202 | 0.6626 | 0.6467 | 0.6567 | 0.6731 | 0.6594 | **0.7087** |
+| Engineering (DCASE score) ↑ | 0.4663 | 0.4659 | 0.4943 | 0.4902 | 0.4992 | 0.5018 | **0.5269** |
+| Health sci. (Clin. utility) ↑ | 0.6834 | 0.7132 | 0.7380 | 0.7182 | 0.7417 | 0.7428 | **0.7796** |
+| Indigenous (chrF++) ↑ | 13.7205 | 14.8441 | 14.1870 | 14.8969 | 15.0442 | 14.7130 | **15.9778** |
+| Computing sci. (pass@1) ↑ | 0.3750 | 0.4063 | 0.4219 | 0.4219 | 0.4375 | 0.4375 | **0.4531** |
+| Language & culture (LAS) ↑ | 0.5599 | 0.5713 | 0.6042 | 0.6004 | 0.6267 | 0.5879 | **0.6497** |
+| Law (mAP) ↑ | 0.6918 | 0.7652 | 0.7706 | 0.7720 | 0.7863 | 0.7642 | **0.8289** |
+| Mathematics (Oracle acc.) ↑ | 0.7344 | 0.7969 | 0.7656 | 0.8125 | 0.8438 | 0.8125 | **0.8750** |
+| Philosophy (F1) ↑ | 0.4166 | 0.4428 | 0.4846 | 0.4868 | 0.4943 | 0.4925 | **0.5138** |
+| Psychology (Micro acc.) ↑ | 0.5615 | 0.6064 | 0.6084 | 0.6149 | 0.6343 | 0.6284 | **0.6586** |
+| Built env. (NRMSE %) ↓ | 53.5009 | 49.6083 | 49.5570 | 49.0341 | 46.7640 | 49.4801 | **45.0970** |
+| Commerce (MASE) ↓ | 1.8740 | 1.6867 | 1.7502 | 1.7066 | 1.6930 | 1.6846 | **1.5986** |
+| Earth sci. (RMSE (K)) ↓ | 1.1364 | 1.0379 | 1.0005 | 1.0114 | 1.0042 | 1.0079 | **0.9580** |
+| Economics (sMAPE (%)) ↓ | 18.1343 | 16.8216 | 16.9410 | 16.2028 | 16.1758 | 16.7195 | **15.5025** |
+| Environmental sci. (CRPS) ↓ | 0.6504 | 0.6456 | 0.6325 | 0.6118 | 0.5944 | 0.5979 | **0.5751** |
+| History (cMER-micro) ↓ | 0.0296 | 0.0271 | 0.0268 | 0.0264 | 0.0261 | 0.0268 | **0.0251** |
+| Human society (nRMSE) ↓ | 0.0213 | 0.0201 | 0.0192 | 0.0191 | 0.0192 | 0.0191 | **0.0181** |
+| Physical sci. (MAE) ↓ | 44.6757 | 41.9077 | 39.0907 | 39.7923 | 38.2995 | 39.0137 | **37.1306** |
+
+<details>
+<summary>Same-dataset (IID) results</summary>
+
+| Discipline (metric) | Frozen | SkillOpt | TTE | AHE | EvoMaster | EvoScientist | **ScienceClaw** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Agricultural sci. (PQ+) ↑ | 69.4761 | 69.9837 | 73.5549 | 73.1602 | 75.1756 | 74.7019 | **76.9612** |
+| Biological sci. (Spearman) ↑ | 0.5057 | 0.5358 | 0.5599 | 0.5642 | 0.5674 | 0.5683 | **0.5816** |
+| Biomedical sci. (DSC) ↑ | 0.7816 | 0.7794 | 0.8169 | 0.8214 | 0.8348 | 0.8387 | **0.8556** |
+| Chemical sci. (ROC-AUC) ↑ | 0.6518 | 0.6830 | 0.7232 | 0.7299 | 0.7344 | 0.7299 | **0.7545** |
+| Creative arts (SDR (dB)) ↑ | 8.9208 | 9.4971 | 9.8649 | 9.7900 | 9.9453 | 9.9112 | **10.1867** |
+| Education (10-mask acc.) ↑ | 0.5965 | 0.6603 | 0.6561 | 0.6616 | 0.6720 | 0.6579 | **0.6878** |
+| Engineering (DCASE score) ↑ | 0.5709 | 0.6138 | 0.6243 | 0.6317 | 0.6380 | 0.6310 | **0.6535** |
+| Health sci. (Clin. utility) ↑ | 0.4971 | 0.5170 | 0.5278 | 0.5234 | 0.5383 | 0.5367 | **0.5514** |
+| Indigenous (chrF++) ↑ | 15.4451 | 16.5641 | 16.3493 | 16.7301 | 16.9074 | 16.6453 | **17.4351** |
+| Computing sci. (pass@1) ↑ | 0.7656 | 0.7969 | 0.8438 | 0.8438 | 0.8594 | 0.8438 | **0.8750** |
+| Language & culture (LAS) ↑ | 0.7288 | 0.7623 | 0.7786 | 0.7761 | 0.7845 | 0.7759 | **0.8138** |
+| Law (mAP) ↑ | 0.7513 | 0.8158 | 0.8074 | 0.8211 | 0.8292 | 0.8170 | **0.8554** |
+| Mathematics (Oracle acc.) ↑ | 0.8438 | 0.9063 | 0.9063 | 0.9063 | 0.9219 | 0.9063 | **0.9531** |
+| Philosophy (F1) ↑ | 0.4178 | 0.4599 | 0.4699 | 0.4636 | 0.4717 | 0.4737 | **0.4866** |
+| Psychology (Micro acc.) ↑ | 0.6088 | 0.6364 | 0.6269 | 0.6355 | 0.6467 | 0.6476 | **0.6618** |
+| Built env. (NRMSE %) ↓ | 51.0997 | 47.7143 | 46.7210 | 46.7362 | 46.2726 | 47.2762 | **45.0065** |
+| Commerce (MASE) ↓ | 1.6009 | 1.5268 | 1.5672 | 1.5227 | 1.4984 | 1.5281 | **1.4653** |
+| Earth sci. (RMSE (K)) ↓ | 1.0562 | 1.0476 | 1.0157 | 1.0095 | 1.0010 | 1.0008 | **0.9721** |
+| Economics (sMAPE (%)) ↓ | 12.7394 | 11.8721 | 12.1577 | 11.7390 | 11.6350 | 11.7621 | **11.3320** |
+| Environmental sci. (CRPS) ↓ | 0.8104 | 0.7786 | 0.7517 | 0.7565 | 0.7304 | 0.7326 | **0.7164** |
+| History (cMER-micro) ↓ | 0.0185 | 0.0173 | 0.0177 | 0.0172 | 0.0172 | 0.0172 | **0.0166** |
+| Human society (nRMSE) ↓ | 0.0113 | 0.0107 | 0.0104 | 0.0103 | 0.0103 | 0.0104 | **0.0100** |
+| Physical sci. (MAE) ↓ | 36.6271 | 35.1699 | 33.4027 | 33.5864 | 33.0932 | 32.8654 | **32.1581** |
+
+</details>
+
+### Continual evolution
+
+OOD macro success rate (%) of each snapshot after round *r*, with the gain over the initial program and the candidates promoted / rejected out of 161. Selected systems are shown.
+
+| Method | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | Gain (pp) | Promoted | Rejected | Rate (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Frozen | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 0.00 | 0 | 0 | – |
+| RuleEvo | 77.83 | 78.42 | 79.18 | 78.89 | 79.59 | 80.28 | 79.99 | 81.22 | 3.39 | 37 | 124 | 22.98 |
+| EvoScientist | 77.83 | 79.71 | 81.18 | 82.31 | 82.04 | 83.99 | 85.12 | 86.28 | 8.45 | 56 | 105 | 34.78 |
+| EvoMaster | 77.83 | 80.05 | 81.64 | 82.86 | 82.56 | 84.79 | 86.02 | 87.47 | 9.64 | 63 | 98 | 39.13 |
+| **ScienceClaw** | **77.83** | **80.47** | **82.74** | **82.51** | **86.15** | **87.58** | **89.76** | **91.30** | **13.47** | **70** | **91** | **43.48** |
+
+*RuleEvo is a ScienceClaw variant whose evolution uses deterministic trace projection alone, with no generative evolution roles.*
+
+<p align="center"><img src="assets/paper/per_round_lead.png" alt="Lead over the best baseline per round" width="55%"></p>
+<p align="center"><sub><i>Lead of ScienceClaw over the best other system after each evolution round (pp). Round 3 is the only round in which another system leads, by 0.36 pp.</i></sub></p>
+
+### What produces the gain
+
+<p align="center"><img src="assets/paper/ablation_heatmap.png" alt="Ablation heatmap across 23 disciplines"></p>
+<p align="center"><sub><i>Mean of IID and OOD task-native scores of the single-component and execution-structure ablation variants across 23 disciplines. Colours are normalised within each discipline (darker is better); the two groups follow higher-is-better and lower-is-better metrics.</i></sub></p>
+
+<p align="center"><img src="assets/paper/linked_mechanism.png" alt="Linked mechanism and workflow mechanics" width="85%"></p>
+<p align="center"><sub><i>(f) Gain over the frozen agent (%) of the linked-mechanism variants on Commerce (MASE) and Law (mAP). (g) Workflow mechanics: planner rounds, distinct Operators, Operator diversity, feedback repair, checkpoint recovery and clean replay.</i></sub></p>
 
 ## From the paper to this repository
 
@@ -184,6 +257,9 @@ ScienceClaw should support, not replace, experts. High-stakes use needs provenan
 
 ScienceClaw-Eval benchmarks continual self-evolution rather than single-shot ability. Systems share the foundation model, the initial program, the source order, the tools and the budget, and are compared on:
 
+<p align="center"><img src="assets/paper/benchmark_construction.png" alt="Construction of ScienceClaw-Eval"></p>
+<p align="center"><sub><i>Construction of ScienceClaw-Eval: scientific-task collection, executable instantiation, validation and reproduction, and lineage-aware evaluation splits.</i></sub></p>
+
 - a **source stream** that supplies the only evolution evidence,
 - an independent **validation set** used for candidate selection,
 - held-out **ID** and same-discipline cross-dataset **OOD** sets,
@@ -232,21 +308,11 @@ ScienceClaw/
 ├── extensions/scienceclaw/  # gateway plugin: canvas, tools, program, evolve
 ├── skills/                  # 300+ skills, including the seed program and the 23 discipline skills
 ├── mcp-servers/             # arXiv-LaTeX and ChEMBL MCP servers
+├── assets/paper/            # figures from the paper used in this README
 ├── SCIENCE.md               # research protocol for the gateway agent
 ├── setup.sh                 # one-click setup
 ├── src/, ui/, apps/, ...    # the OpenClaw gateway, web UI and apps
 └── docs/                    # gateway documentation
-```
-
-## Citation
-
-```bibtex
-@misc{zhang2027scienceclaw,
-  title  = {ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents Across the Natural and Social Sciences},
-  author = {Zhang, Mingda and Liu, Wenjin and Shen, Tiesunlong and Xiao, Zikai and Lin, Zhenghong and Xu, Qing and Cambria, Erik and Tang, Xiaoying and Luo, Haoran},
-  year   = {2027},
-  note   = {KDD 2027 manuscript}
-}
 ```
 
 ## Contact

@@ -6,6 +6,35 @@ from typing import Any
 
 from scienceclaw.program.specs._common import p
 
+# Box-Cox / standardisation and latitude-longitude normalisation constants of the Buildings-900K pretraining set (BuildingsBench metadata)
+_BUILDINGS_TRANSFORMER_CODE = """import numpy as np
+import pandas as pd
+from scilib import buildingsbench
+from scilib._pretrained import model_path
+lam, mean, scale = -0.07064358516149455, 0.1483089899143884, 1.9011249329440785
+ctx = np.asarray(inputs['context'], dtype=float)
+n = ctx.shape[0]
+t0 = pd.to_datetime([str(t) for t in inputs['target_start']], format='ISO8601')
+cat = np.asarray(inputs['category']).astype(str)
+if not np.isin(cat, ['residential', 'commercial']).all():
+    raise ValueError("category must be 'residential' or 'commercial'")
+hours = t0.values[:, None].astype('datetime64[h]') + np.arange(-168, 24).astype('timedelta64[h]')
+ts = pd.DatetimeIndex(hours.ravel())
+denom = np.where(ts.is_leap_year, 365.0, 364.0)
+cal = {'day_of_year': np.asarray(ts.dayofyear) / denom, 'day_of_week': np.asarray(ts.dayofweek) / 6.0, 'hour_of_day': np.asarray(ts.hour) / 23.0}
+feats = {k: (v.reshape(n, 192, 1) * 2 - 1).astype(np.float32) for k, v in cal.items()}
+lat = (np.asarray(inputs['latitude'], dtype=float) - 38.45693432756524) / 3.210432810857673
+lon = (np.asarray(inputs['longitude'], dtype=float) + 91.82287942687819) / 5.742624233803012
+feats['latitude'] = np.repeat(lat[:, None, None], 192, axis=1).astype(np.float32)
+feats['longitude'] = np.repeat(lon[:, None, None], 192, axis=1).astype(np.float32)
+feats['building_type'] = np.repeat((cat == 'commercial').astype(np.int64)[:, None, None], 192, axis=1)
+z = (((np.clip(ctx, 0.0, None) + 1e-6) ** lam - 1.0) / lam - mean) / scale
+feats['load'] = np.concatenate([z, np.zeros((n, 24))], axis=1)[:, :, None].astype(np.float32)
+params = buildingsbench.forecast(feats, model_path=model_path('buildingsbench', 'Transformer_Gaussian_L.pt'), source_path=model_path('buildingsbench', 'source'), device='cpu')
+raw = (params[:, :, 0].astype(float) * scale + mean) * lam + 1.0
+kwh = np.maximum(np.maximum(raw, 1e-12) ** (1.0 / lam) - 1e-6, 0.0)
+return {'forecast': kwh, 'gaussian_params': params}"""
+
 # id, tool, description, inputs, outputs, body of run(), pre, post, applicability tags
 SPECS: list[dict[str, Any]] = [
     # ---------------------------------------------------------------------------------------------- classical panel forecasting
@@ -112,6 +141,20 @@ SPECS: list[dict[str, Any]] = [
          pre=[{"port": "load", "check": "finite"}, {"port": "context", "check": "finite"}],
          post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
          tags=["forecasting", "energy", "building", "electricity", "load", "day-ahead", "lightgbm", "ridge", "smart meter", "cvrmse"]),
+    dict(id="building_load_day_ahead_pretrained_transformer", tool="buildingsbench.forecast",
+         description="Day-ahead hourly building electricity load forecast (24 h) from the last 168 hours with the pretrained BuildingsBench Transformer-Gaussian-L (161 M parameters, "
+                     "trained on 900 K simulated US buildings), zero-shot: Box-Cox normalised loads, calendar, location and building type in; mean forecast in kWh and "
+                     "Gaussian parameters (mean, std) in the normalised load space out.",
+         inputs={"context": p("array", "hourly loads of the 168 hours before the first target hour, oldest first", shape=("n", 168), unit="kWh", dtype="float"),
+                 "target_start": p("list", "ISO timestamp (no time zone) of the first forecast hour of each row, e.g. '2013-05-14 00:00:00'"),
+                 "latitude": p("array", "building latitude", shape=("n",), unit="deg", dtype="float"),
+                 "longitude": p("array", "building longitude (negative west)", shape=("n",), unit="deg", dtype="float"),
+                 "category": p("list", "'residential' or 'commercial' for each row")},
+         outputs={"forecast": p("array", "predicted mean load of the 24 hours from target_start, >= 0", shape=("n", 24), unit="kWh", dtype="float"),
+                  "gaussian_params": p("array", "predictive mean and standard deviation of each hour in the model's Box-Cox standardised load space", shape=("n", 24, 2), dtype="float")},
+         code=_BUILDINGS_TRANSFORMER_CODE,
+         pre=[{"port": "context", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
+         tags=["forecasting", "energy", "building", "electricity", "load", "day-ahead", "pretrained", "transformer", "buildingsbench", "zero-shot", "smart meter"]),
     dict(id="building_load_balanced_cvrmse", tool="loadforecast.balanced_cvrmse",
          description="Balanced CVRMSE (percent, lower is better) of day-ahead building load forecasts: CVRMSE per building, median within residential and commercial, "
                      "mean of the two medians.",

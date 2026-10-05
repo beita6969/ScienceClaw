@@ -441,7 +441,10 @@
       "sha256": "fdb4ecf45568d0c2467cd67dd00e53c29e48a4b4ae7d39c814af4dc4f907e30f",
       "source_commit": "c60e25f37dbae8f3664df0879aaa13a7fe25952d",
       "env": "SCIENCECLAW_BUILDINGS_MODEL",
-      "note": "Also needs the upstream BuildingsBench source (SCIENCECLAW_BUILDINGS_SOURCE)."
+      "note": "The checkpoint also holds optimizer state (1.9 GB); only its 'model' entry is read. The pinned upstream source (NREL/BuildingsBench) is staged into <dir>/source; SCIENCECLAW_BUILDINGS_SOURCE overrides that location.",
+      "post": [
+        "d=$(mktemp -d) && git clone -q https://github.com/NREL/BuildingsBench $d && git -C $d checkout -q c60e25f37dbae8f3664df0879aaa13a7fe25952d && mkdir -p {dir}/source && cp -r $d/buildings_bench {dir}/source/buildings_bench && rm -rf $d"
+      ]
     },
     {
       "id": "beats_iter3",

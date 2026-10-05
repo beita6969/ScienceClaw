@@ -5,6 +5,14 @@ model's Gaussian parameters. It does not load BuildingsBench targets, fit a
 model, or provide a formal FoR33 scorer. The caller must supply the pinned
 upstream source and checkpoint explicitly; task-specific preprocessing remains
 outside this component.
+
+Each feature array holds the 168 context hours followed by the 24 hours to
+forecast. The forecast is decoded autoregressively (greedy, as in the upstream
+``predict``): the ``load`` entries of the 24 target hours are never read, only
+their calendar, location and building-type features are. The first output
+channel is the predicted mean and the second the standard deviation, both in the
+normalised load space of the inputs (the model was trained on Box-Cox
+transformed, standardised loads).
 """
 from __future__ import annotations
 
@@ -15,6 +23,7 @@ from typing import Mapping
 
 import numpy as np
 
+from ._pretrained import model_path as staged_path
 from ._pretrained import switched_off
 
 __all__ = ["available", "forecast", "MODEL_ENV", "SOURCE_ENV", "CONTEXT_LENGTH", "PREDICTION_LENGTH"]
@@ -29,7 +38,10 @@ FEATURES = ("latitude", "longitude", "building_type", "day_of_year", "day_of_wee
 
 def _path(value, env):
     raw = value if value is not None else os.environ.get(env)
-    return Path(raw).expanduser() if raw else None
+    if raw:
+        return Path(raw).expanduser()
+    # a sandboxed worker inherits only SCIENCECLAW_MODELS: look next to the other staged weights
+    return staged_path("buildingsbench", "Transformer_Gaussian_L.pt" if env == MODEL_ENV else "source")
 
 
 def _ok(model_path=None, source_path=None):
@@ -85,7 +97,7 @@ def _load(model_path: Path, source_path: Path, device: str):
 
 
 def forecast(features: Mapping[str, object], model_path=None, source_path=None, device: str = "auto") -> np.ndarray:
-    """Return frozen Gaussian parameters with shape ``(n, 24, 2)``."""
+    """Return frozen Gaussian parameters ``(mean, std)`` with shape ``(n, 24, 2)``; the ``load`` of the 24 target hours is ignored."""
     arrays = _validate(features)
     model_path = _path(model_path, MODEL_ENV)
     source_path = _path(source_path, SOURCE_ENV)
@@ -105,7 +117,8 @@ def forecast(features: Mapping[str, object], model_path=None, source_path=None, 
         "load": torch.as_tensor(arrays["load"], dtype=torch.float32, device=str(device)),
     }
     with torch.inference_mode():
-        out = model(x).detach().float().cpu().numpy()
+        _, params = model.generate_sample(x, greedy=True)
+        out = params.detach().float().cpu().numpy()
     if out.ndim != 3 or out.shape[1:] != (PREDICTION_LENGTH, 2):
         raise RuntimeError(f"buildingsbench: unexpected output shape {tuple(out.shape)}")
     return np.asarray(out, dtype=np.float32)

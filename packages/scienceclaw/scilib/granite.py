@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ._pretrained import model_path as staged_path
 from ._pretrained import switched_off
 
 __all__ = ["available", "forecast", "MODEL_ENV", "CONTEXT_LENGTH", "PREDICTION_LENGTH"]
@@ -29,7 +30,7 @@ PREDICTION_LENGTH = 96
 def _path(model_dir=None) -> Path | None:
     raw = model_dir if model_dir is not None else os.environ.get(MODEL_ENV)
     if not raw:
-        return None
+        return staged_path("granite")        # a sandboxed worker inherits only SCIENCECLAW_MODELS
     return Path(raw).expanduser()
 
 

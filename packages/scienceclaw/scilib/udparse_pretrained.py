@@ -27,7 +27,12 @@ threads) roughly 5-10 sentences per second. Predictions are deterministic on CPU
 """
 from __future__ import annotations
 
+import atexit
 import os
+import shutil
+import sys
+import tempfile
+from pathlib import Path
 
 from . import _remote
 from ._pretrained import have_module, model_path, set_cpu_threads, switched_off, torch_device
@@ -35,6 +40,8 @@ from ._pretrained import have_module, model_path, set_cpu_threads, switched_off,
 __all__ = ["available", "parse_gold_tokens"]
 
 _DIR = "stanza_fr"
+_TRANSFORMER = "camembert-large"
+_TRANSFORMER_ID = "camembert/camembert-large"      # the name under which the stored Stanza models ask for their encoder
 _PIPE: dict = {}
 
 
@@ -43,9 +50,49 @@ def _stanza_dir():
     return d if d is not None and (d / "fr" / "depparse" / "gsd_camembert-large.pt").is_file() else None
 
 
+def _hub_entry() -> str:
+    return "models--" + _TRANSFORMER_ID.replace("/", "--")
+
+
+def _transformer_dir():
+    """The staged CamemBERT-large directory (``<model root>/camembert-large``), None when it is missing."""
+    d = model_path(_TRANSFORMER)
+    return d if d is not None and (d / "config.json").is_file() and any(d.glob("*.safetensors")) else None
+
+
+def _encoder_ok() -> bool:
+    """The CamemBERT-large encoder the stored models need: staged under the model root, or in a Hugging Face cache."""
+    hub = Path(os.environ.get("HF_HOME") or Path.home() / ".cache" / "huggingface") / "hub" / _hub_entry()
+    return _transformer_dir() is not None or model_path("hf") is not None or hub.is_dir()
+
+
 def _local_ok() -> bool:
     return (not switched_off() and have_module("torch") and have_module("transformers") and have_module("stanza")
-            and _stanza_dir() is not None)
+            and _stanza_dir() is not None and _encoder_ok())
+
+
+def _scratch() -> Path:
+    d = Path(tempfile.mkdtemp(prefix="scienceclaw-udparse-"))
+    atexit.register(shutil.rmtree, d, ignore_errors=True)
+    return d
+
+
+def _expose_transformer(src: Path) -> None:
+    """Present the staged CamemBERT-large files as the Hugging Face hub cache entry of ``camembert/camembert-large`` (symbolic links,
+    nothing is copied or downloaded), which is where the stored Stanza models look for their encoder."""
+    root = _scratch() / "hub"
+    entry = root / _hub_entry()
+    snap = entry / "snapshots" / "staged"
+    snap.mkdir(parents=True)
+    (entry / "refs").mkdir()
+    (entry / "refs" / "main").write_text("staged")
+    for f in src.iterdir():
+        if f.is_file():
+            (snap / f.name).symlink_to(f)
+    os.environ["HF_HUB_CACHE"] = str(root)
+    hub = sys.modules.get("huggingface_hub")
+    if hub is not None:                                    # the cache location is fixed when the library is first imported
+        hub.constants.HF_HUB_CACHE = str(root)
 
 
 def available() -> bool:
@@ -59,6 +106,8 @@ def _pipeline(device: str, model: str | None = None):
     hf = model_path("hf")
     if hf is not None:
         os.environ.setdefault("HF_HOME", str(hf))
+    elif _transformer_dir() is not None:
+        _expose_transformer(_transformer_dir())
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
     import stanza
@@ -75,6 +124,10 @@ def _pipeline(device: str, model: str | None = None):
     for proc in ("pos", "depparse"):
         for k, v in charlm.items():
             kw[f"{proc}_{k}"] = v
+    if not (d / "resources.json").is_file():               # the models are given by path; Stanza only needs a resources file to exist
+        empty = _scratch() / "resources.json"
+        empty.write_text("{}")
+        kw.update(resources_filepath=str(empty), allow_unknown_language=True)
     _PIPE[key] = stanza.Pipeline(**kw)
     return _PIPE[key]
 

@@ -173,7 +173,12 @@
         "torch",
         "transformers"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "exclude": [
+        "*.pt",
+        "*.yaml"
+      ],
+      "note": "Only config.json, model.safetensors and the processor files are read; the repository's 898 MB .pt is skipped."
     },
     {
       "id": "sam2_pt",
@@ -286,13 +291,13 @@
         "weyler_checkpoint_0381.pth"
       ],
       "used_by": [
-        "phenobench_weyler",
-        "phenoseg_hapt"
+        "phenobench_weyler"
       ],
       "requires": [
         "torch"
       ],
-      "license": null
+      "license": null,
+      "sha256": "ef78b9b9c1a9ac56e4359ac847038e3901dfd2ddff093bfcdf5cd3e44a116e67"
     },
     {
       "id": "demucs",
@@ -369,8 +374,8 @@
     {
       "id": "hapt",
       "title": "HAPT hierarchical panoptic segmentation checkpoint",
-      "kind": "manual",
-      "source": null,
+      "kind": "url",
+      "source": "https://drive.usercontent.google.com/download?id=1s0hU0dz2yyUDnmqU4RC1KpvftpHIloJQ&export=download&confirm=t",
       "subdir": "hapt",
       "check": [
         "hapt_model.ckpt"
@@ -381,17 +386,19 @@
       "requires": [
         "torch"
       ],
-      "license": null
+      "license": null,
+      "sha256": "27a470149c6dc5ead0a7dca4d0626ae4f0a2a0acfb9b6ad6dd6348bb8e566b3e",
+      "bytes": 29064938
     },
     {
       "id": "phenobench_m2f",
       "title": "Mask2Former plant and leaf models for PhenoBench",
-      "kind": "manual",
-      "source": null,
+      "kind": "url",
+      "source": "https://www.ipb.uni-bonn.de/html/projects/phenobench",
       "subdir": "phenobench_m2f",
       "check": [
-        "hf_plants",
-        "hf_leaves"
+        "hf_plants/model.safetensors",
+        "hf_leaves/model.safetensors"
       ],
       "used_by": [
         "phenoseg_m2f"
@@ -400,7 +407,17 @@
         "torch",
         "transformers"
       ],
-      "license": null
+      "license": null,
+      "files": [
+        "panoptic_segmentation/Mask2former/model.pth",
+        "leaf_instance_segmentation/Mask2former/model.pth"
+      ],
+      "note": "PRBonn detectron2 checkpoints, converted to Hugging Face format by scripts/convert_phenobench_m2f.py (needs transformers and network access for the converter).",
+      "post": [
+        "python $(python -c \"import pathlib, scienceclaw; print(pathlib.Path(scienceclaw.__file__).parents[1] / 'scripts')\")/convert_phenobench_m2f.py {dir}/panoptic_segmentation/Mask2former/model.pth {dir}/hf_plants",
+        "python $(python -c \"import pathlib, scienceclaw; print(pathlib.Path(scienceclaw.__file__).parents[1] / 'scripts')\")/convert_phenobench_m2f.py {dir}/leaf_instance_segmentation/Mask2former/model.pth {dir}/hf_leaves",
+        "rm -rf {dir}/panoptic_segmentation {dir}/leaf_instance_segmentation"
+      ]
     },
     {
       "id": "open_clip_vit_b32",
@@ -501,7 +518,7 @@
       "id": "innereye_hippocampus",
       "title": "InnerEye-DeepLearning hippocampus segmentation v0.5",
       "kind": "url",
-      "source": "https://github.com/microsoft/InnerEye-DeepLearning/releases/download/v0.5/hippocampus_segmentation_model.zip",
+      "source": "https://github.com/microsoft/InnerEye-DeepLearning/releases/download/v0.5",
       "used_by": [
         "hippo_innereeye"
       ],
@@ -509,11 +526,19 @@
         "torch"
       ],
       "license": "MIT",
-      "subdir": "innereye/extracted/nested/Hippocampus_123/MODEL/final_ensemble_model/checkpoints",
       "check": [
-        "last.ckpt"
+        "extracted/nested/Hippocampus_123/MODEL/final_ensemble_model/checkpoints/last.ckpt"
       ],
-      "note": "Checkpoint predicts whole left/right hippocampi; FoR32 requires anterior/posterior labels in one crop. No class remapping is permitted."
+      "note": "Checkpoint predicts whole left/right hippocampi; FoR32 requires anterior/posterior labels in one crop. No class remapping is permitted.",
+      "files": [
+        "hippocampus_segmentation_model.zip"
+      ],
+      "flatten": true,
+      "subdir": "innereye",
+      "post": [
+        "mkdir -p {dir}/extracted && unzip -oq {dir}/hippocampus_segmentation_model.zip -d {dir}/extracted && rm {dir}/hippocampus_segmentation_model.zip",
+        "mkdir -p {dir}/extracted/nested && unzip -oq {dir}/extracted/Hippocampus_123.zip -d {dir}/extracted/nested && rm {dir}/extracted/Hippocampus_123.zip"
+      ]
     },
     {
       "id": "mass_base",

@@ -39,6 +39,7 @@ class WeightAsset:
     flatten: bool = False          # multi-file url assets: store every file directly in `subdir`
     post: tuple[str, ...] = ()     # shell commands run after the download; "{dir}" is the asset directory
     allow_bin: bool = False        # huggingface assets: keep *.bin files (the repo ships no safetensors)
+    exclude: tuple[str, ...] = ()  # huggingface assets: further patterns to skip
     include: tuple[str, ...] = ()  # huggingface assets: download only these files (patterns) of a multi-checkpoint repo
     extra: dict[str, Any] = field(default_factory=dict, compare=False)
 
@@ -63,13 +64,13 @@ def load() -> list[WeightAsset]:
     out = []
     for a in doc["assets"]:
         known = {"id", "title", "kind", "source", "subdir", "check", "used_by", "requires", "license", "files", "sha256",
-                 "bytes", "env", "restricted", "note", "flatten", "post", "allow_bin", "include"}
+                 "bytes", "env", "restricted", "note", "flatten", "post", "allow_bin", "include", "exclude"}
         out.append(WeightAsset(
             id=a["id"], title=a["title"], kind=a["kind"], source=a.get("source"), subdir=a.get("subdir"),
             check=tuple(a.get("check", ())), used_by=tuple(a.get("used_by", ())), requires=tuple(a.get("requires", ())),
             license=a.get("license"), files=tuple(a.get("files", ())), sha256=a.get("sha256"), bytes=a.get("bytes"),
             env=a.get("env"), restricted=bool(a.get("restricted", False)), note=a.get("note"),
-            flatten=bool(a.get("flatten", False)), post=tuple(a.get("post", ())), allow_bin=bool(a.get("allow_bin", False)), include=tuple(a.get("include", ())),
+            flatten=bool(a.get("flatten", False)), post=tuple(a.get("post", ())), allow_bin=bool(a.get("allow_bin", False)), include=tuple(a.get("include", ())), exclude=tuple(a.get("exclude", ())),
             extra={k: v for k, v in a.items() if k not in known}))
     return out
 
@@ -146,7 +147,7 @@ def plan(ids: list[str] | None = None, root: str | Path | None = None) -> list[s
         cmds.append(f"# {a.id}: {a.title}" + (f" ({a.license})" if a.license else ""))
         target = dest / a.subdir if a.subdir else None
         if a.kind == "huggingface":
-            skip = _HF_SKIP + ([] if a.allow_bin else ["*.bin"])
+            skip = _HF_SKIP + ([] if a.allow_bin else ["*.bin"]) + list(a.exclude)
             cmds.append(f"hf download {q(a.source)} --local-dir {q(str(target))}"
                         + (f" --revision {q(a.extra.get('revision', ''))}" if a.extra.get("revision") else "")
                         + "".join(f" --include {q(x)}" for x in a.include)

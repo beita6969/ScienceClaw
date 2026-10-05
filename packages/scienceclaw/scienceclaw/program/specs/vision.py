@@ -211,4 +211,25 @@ SPECS: list[dict[str, Any]] = [
               "return {'panoptic': out}",
          pre=[{"port": "images", "check": "nonempty"}], post=[],
          tags=_FIELD_TAGS + ["pretrained", "weyler", "instance embedding", "erfnet", "phenobench"]),
+    dict(id="field_panoptic_segmentation_sam2_selector", tool="phenoseg_sam.fit_sam_selector",
+         description="Hierarchical panoptic segmentation of top-down field images by instance proposals from the frozen SAM 2.1 (Hiera-large) mask decoder, prompted by points, "
+                     "boxes and k-means centres on predicted vegetation, scored by LightGBM regressors fitted on the labelled images (plant and leaf instances, visibility-aware) "
+                     "on top of a DINOv2 ViT-B/14 + LightGBM soil / crop / weed pixel classifier; a GPU is recommended (a CPU run takes about a minute per image).",
+         inputs={"train_images": p("array", "uint8 RGB labelled field images", shape=("n_train", "H", "W", 3), dtype="int"),
+                 "train_semantics": p("array", _SEMANTICS, shape=("n_train", "H", "W"), dtype="int"),
+                 "train_plant_instances": p("array", "plant instance ids (0 = none)", shape=("n_train", "H", "W"), dtype="int"),
+                 "train_leaf_instances": p("array", "crop-leaf instance ids (0 = none)", shape=("n_train", "H", "W"), dtype="int"),
+                 "train_plant_visibility": p("array", "visible fraction of the plant covering each pixel", shape=("n_train", "H", "W"), dtype="float"),
+                 "train_leaf_visibility": p("array", "visible fraction of the leaf covering each pixel", shape=("n_train", "H", "W"), dtype="float"),
+                 "images": p("array", "uint8 RGB field images to segment", shape=_IMG, dtype="int"),
+                 "grid": p("number", "points per side of the prompt lattice used when fitting the proposal scorers (64 for full quality, 16 on CPU)", unit="1"),
+                 "size": p("number", "longer image side seen by DINOv2 after resizing, a multiple of 14 (728 for full quality, 224 on CPU)", unit="px")},
+         outputs={"panoptic": p("dict", _PANOPTIC)},
+         code="from scilib import phenoseg_sam\n"
+              "model = phenoseg_sam.fit_sam_selector(inputs['train_images'], inputs['train_semantics'], inputs['train_plant_instances'], inputs['train_leaf_instances'], "
+              "plant_visibility=inputs['train_plant_visibility'], leaf_visibility=inputs['train_leaf_visibility'], grid=int(inputs['grid']), "
+              "backbone='dinov2_base', size=int(inputs['size']))\n"
+              "return {'panoptic': phenoseg_sam.predict_sam_panoptic(model, inputs['images'])}",
+         pre=[{"port": "train_images", "check": "nonempty"}, {"port": "images", "check": "nonempty"}], post=[],
+         tags=_FIELD_TAGS + ["sam", "sam2", "segment anything", "pretrained", "dinov2", "lightgbm", "instance proposals"]),
 ]

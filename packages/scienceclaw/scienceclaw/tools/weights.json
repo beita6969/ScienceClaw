@@ -298,7 +298,7 @@
       "id": "demucs",
       "title": "Demucs / Hybrid Transformer Demucs separation models (htdemucs, htdemucs_ft, mdx_extra)",
       "kind": "url",
-      "source": "https://dl.fbaipublicfiles.com/demucs",
+      "source": "https://huggingface.co/niobures/Demucs/resolve/main/models/demucs%20(shethjenil)",
       "subdir": "demucs",
       "files": [
         "hybrid_transformer/955717e8-8726e21a.th",
@@ -326,16 +326,18 @@
       "license": "MIT",
       "flatten": true,
       "post": [
+        "for f in {dir}/*.th; do b=$(basename \"$f\" .th); [ \"$(sha256sum \"$f\" | cut -c1-8)\" = \"${b#*-}\" ] || { echo \"hash mismatch: $f\" >&2; exit 1; }; done",
         "printf \"models: ['955717e8']\\n\" > {dir}/htdemucs.yaml",
         "printf \"models: ['f7e0c4bc', 'd12395a8', '92cfc3b6', '04573f0d']\\nweights: [\\n  [1., 0., 0., 0.],\\n  [0., 1., 0., 0.],\\n  [0., 0., 1., 0.],\\n  [0., 0., 0., 1.],\\n]\\n\" > {dir}/htdemucs_ft.yaml",
         "printf \"models: ['e51eebcc', 'a1d90b5c', '5d2d6c55', 'cfa93e08']\\nsegment: 44\\n\" > {dir}/mdx_extra.yaml"
-      ]
+      ],
+      "note": "Mirror of the official checkpoints (dl.fbaipublicfiles.com may be unreachable); the hash suffix of every file name is checked against its sha256."
     },
     {
       "id": "scnet_mimo_small",
       "title": "SCNet MIMO small separation model",
-      "kind": "manual",
-      "source": null,
+      "kind": "url",
+      "source": "https://github.com/SonyResearch/mimo-audio-separation/releases/download/v1.0.0",
       "subdir": "scnet_mimo_small",
       "check": [
         "config.yaml",
@@ -350,9 +352,19 @@
         "hydra",
         "omegaconf"
       ],
-      "license": null,
+      "license": "MIT (code); no licence is stated for the weights, which were trained on MUSDB18-HQ train",
       "env": "SCIENCECLAW_SCNET_MODEL_DIR",
-      "note": "Also needs the SCNet source tree; point SCIENCECLAW_SCNET_ROOT at it."
+      "note": "The SCNet source tree (SonyResearch/mimo-audio-separation@9169bbb, src/) is staged into <dir>/source; SCIENCECLAW_SCNET_ROOT overrides that location.",
+      "files": [
+        "mimo-scnet_small.zip"
+      ],
+      "flatten": true,
+      "sha256": "f0eaaab7e899ffc548b29d51d76b89727253fb0a529b787b258eabfcf47db6fb",
+      "post": [
+        "echo 'f0eaaab7e899ffc548b29d51d76b89727253fb0a529b787b258eabfcf47db6fb  {dir}/mimo-scnet_small.zip' | sha256sum -c -",
+        "unzip -oq {dir}/mimo-scnet_small.zip -d {dir} && rm {dir}/mimo-scnet_small.zip",
+        "d=$(mktemp -d) && git clone -q https://github.com/SonyResearch/mimo-audio-separation $d && git -C $d checkout -q 9169bbb && mkdir -p {dir}/source && cp -r $d/src {dir}/source/src && rm -rf $d"
+      ]
     },
     {
       "id": "hapt",
@@ -452,7 +464,13 @@
       "revision": "5b53b0404df452a3a607d7e67687227730e5bad1",
       "source_commit": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
       "env": "SCIENCECLAW_BEATS_MODEL",
-      "note": "Also needs the upstream BEATs.py source (SCIENCECLAW_BEATS_SOURCE)."
+      "note": "The upstream BEATs sources (microsoft/unilm, beats/) are staged into <dir>/source; SCIENCECLAW_BEATS_SOURCE overrides that location.",
+      "include": [
+        "BEATs_iter3.pt"
+      ],
+      "post": [
+        "d=$(mktemp -d) && git -C $d init -q && git -C $d remote add origin https://github.com/microsoft/unilm && git -C $d fetch -q --depth 1 origin 31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd && git -C $d checkout -q FETCH_HEAD -- beats && mkdir -p {dir}/source && cp $d/beats/BEATs.py $d/beats/backbone.py $d/beats/modules.py {dir}/source/ && rm -rf $d"
+      ]
     },
     {
       "id": "granite_ttm_r2",

@@ -1,43 +1,24 @@
 ---
 name: scienceclaw-benchmark-for33
-description: "Run and improve the FoR33 BuildingsBench benchmark route with the integrated ScienceClaw agent. Use when working on Built environment and design scores, tools, visible-dev selection, or formal evidence."
+description: "Use when forecasting day-ahead hourly electricity load of individual buildings (residential and commercial smart-meter data, BuildingsBench-style) from the previous 168 hours and optionally the building's own earlier history, delivering a 24-hour forecast in kWh per window scored by balanced CVRMSE. Corresponds to FoR33 of the companion ScienceClaw-Eval benchmark."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR33 — BuildingsBench
+# Day-ahead building load forecasting (BuildingsBench)
 
-Use this skill for the `FoR33` adapter. The task metric is **balanced NRMSE (%)**;
-minimize is better. The adapter module is
-`scienceclaw.bench.tasks.for33_buildingsbench`.
+**Task.** Input per window: 168 hourly loads in kWh (oldest first), building id, category (`residential` / `commercial`), ISO `target_start`; optionally each building's earlier hourly history (n_buildings, T) and latitude/longitude. Deliverable: float array (n, 24), the next 24 hourly loads in kWh, finite, >= 0, in window order.
 
-## Tool surface
+**Quality.** Balanced CVRMSE in percent, lower is better: per building `100 * RMSE / mean(y)` over all its target hours, median within each category, mean of the two medians. Locally: `scilib.loadforecast.balanced_cvrmse(y_true, y_pred, building_id, category)`. Reference: yesterday's load repeated.
 
-The adapter currently declares these tool references:
+**Library** (check `scienceclaw_tools(operation=show|weights)`):
+- `scilib.loadforecast`: context-only `yesterday`, `day_median`, `core_forecast(context, category)`; learned `fit(load, history_start, building_id, category)` then `LoadForecaster.candidates(...)` (keys yesterday, mean7, median7, core, ml, ens); `forecast_candidates`, `backtest_history` (hold-out inside the histories), `pick_lowest`, `history_windows`.
+- Zero-shot pretrained, guard with `available()`: `scilib.tsfm.forecast` (Chronos-2, assets `chronos_2` / `chronos_bolt_base`; `candidates(..., pretrained=True)` adds chronos2 and ens_chronos2); `scilib.buildingsbench.forecast` (Transformer-Gaussian-L trained on simulated Buildings-900K, asset `buildingsbench_gaussian_l`; needs Box-Cox-normalised loads, calendar, latitude/longitude and building type as wired in the operator below).
+- Operators: `building_load_day_ahead_context_forecast`, `building_load_day_ahead_learned_ensemble`, `building_load_day_ahead_pretrained_transformer`, `building_load_balanced_cvrmse`.
 
-- `load_dev`
-- `load_eval_inputs`
-- `load_history`
-- `score_dev`
+**Routes.** Baselines: persistence, per-hour median of the last 7 days (strong for residential), `core_forecast`. Learned: the `ens` ensemble fitted on the buildings' own history. Choose with `backtest_history`; keep the simple candidate unless another wins clearly.
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR33.md` and call `scienceclaw_bench` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+**Rules.**
+- Respect causality: use only data observed before each target window and only that building's history. With several windows per building, never use a later window's context to forecast an earlier one.
+- Medians over a few buildings are noisy and loads drift months after the history ends; a small backtest edge is weak evidence.
+- Keep kWh units and (n, 24) shape; clip at 0; a forecast far above the recent maximum signals a unit error.
+- Chronos corpora include public electricity-load data, and BuildingsBench models come from the same project as the data; disclose possible overlap.

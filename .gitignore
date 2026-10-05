@@ -123,3 +123,7 @@ dist/protocol.schema.json
 # Synthing
 **/.stfolder/
 .dev-state
+
+# ScienceClaw engine build output
+packages/scienceclaw/build/
+*.egg-info/

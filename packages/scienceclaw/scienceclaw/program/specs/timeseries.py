@@ -1,0 +1,300 @@
+"""Typed operators for forecasting and sequential-prediction tools of the library: panel and pretrained time-series forecasting, building
+loads, gridded weather fields, water-quality forecasts, annual macro panels and adaptive testing."""
+from __future__ import annotations
+
+from typing import Any
+
+from scienceclaw.program.specs._common import p
+
+# Box-Cox / standardisation and latitude-longitude normalisation constants of the Buildings-900K pretraining set (BuildingsBench metadata)
+_BUILDINGS_TRANSFORMER_CODE = """import numpy as np
+import pandas as pd
+from scilib import buildingsbench
+from scilib._pretrained import model_path
+lam, mean, scale = -0.07064358516149455, 0.1483089899143884, 1.9011249329440785
+ctx = np.asarray(inputs['context'], dtype=float)
+n = ctx.shape[0]
+t0 = pd.to_datetime([str(t) for t in inputs['target_start']], format='ISO8601')
+cat = np.asarray(inputs['category']).astype(str)
+if not np.isin(cat, ['residential', 'commercial']).all():
+    raise ValueError("category must be 'residential' or 'commercial'")
+hours = t0.values[:, None].astype('datetime64[h]') + np.arange(-168, 24).astype('timedelta64[h]')
+ts = pd.DatetimeIndex(hours.ravel())
+denom = np.where(ts.is_leap_year, 365.0, 364.0)
+cal = {'day_of_year': np.asarray(ts.dayofyear) / denom, 'day_of_week': np.asarray(ts.dayofweek) / 6.0, 'hour_of_day': np.asarray(ts.hour) / 23.0}
+feats = {k: (v.reshape(n, 192, 1) * 2 - 1).astype(np.float32) for k, v in cal.items()}
+lat = (np.asarray(inputs['latitude'], dtype=float) - 38.45693432756524) / 3.210432810857673
+lon = (np.asarray(inputs['longitude'], dtype=float) + 91.82287942687819) / 5.742624233803012
+feats['latitude'] = np.repeat(lat[:, None, None], 192, axis=1).astype(np.float32)
+feats['longitude'] = np.repeat(lon[:, None, None], 192, axis=1).astype(np.float32)
+feats['building_type'] = np.repeat((cat == 'commercial').astype(np.int64)[:, None, None], 192, axis=1)
+z = (((np.clip(ctx, 0.0, None) + 1e-6) ** lam - 1.0) / lam - mean) / scale
+feats['load'] = np.concatenate([z, np.zeros((n, 24))], axis=1)[:, :, None].astype(np.float32)
+params = buildingsbench.forecast(feats, model_path=model_path('buildingsbench', 'Transformer_Gaussian_L.pt'), source_path=model_path('buildingsbench', 'source'), device='cpu')
+raw = (params[:, :, 0].astype(float) * scale + mean) * lam + 1.0
+kwh = np.maximum(np.maximum(raw, 1e-12) ** (1.0 / lam) - 1e-6, 0.0)
+return {'forecast': kwh, 'gaussian_params': params}"""
+
+# id, tool, description, inputs, outputs, body of run(), pre, post, applicability tags
+SPECS: list[dict[str, Any]] = [
+    # ---------------------------------------------------------------------------------------------- classical panel forecasting
+    dict(id="seasonal_panel_forecast_ensemble", tool="forecast.fit_predict",
+         description="Point forecasts of a panel of non-negative seasonal series (monthly, quarterly, weekly counts, sales, demand, tourism) as the median of "
+                     "Theta, STL+ETS and damped-trend ETS plus two global window models (ridge and extra-trees) fitted on the panel itself; clipped at zero.",
+         inputs={"histories": p("list", "list of 1-D float series, oldest value first, no NaN, lengths may differ"),
+                 "horizon": p("number", "number of future steps to forecast", unit="1"),
+                 "period": p("number", "observations per season (12 monthly, 4 quarterly, 1 none)", unit="1")},
+         outputs={"forecast": p("array", "point forecast of the steps after the end of each history, in the units of the input", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import forecast\nout = forecast.fit_predict(inputs['histories'], int(inputs['horizon']), int(inputs['period']), "
+              "methods=('theta', 'stl_ets', 'ets_damped_add'), n_jobs=1)\nreturn {'forecast': out}",
+         pre=[{"port": "histories", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
+         tags=["forecasting", "time series", "seasonal", "ensemble", "ets", "theta", "panel", "monthly", "m4"]),
+    dict(id="statistical_forecast_single_method", tool="forecast.forecast_panel",
+         description="Forecast every series of a panel with one named statistical method: repeat_last, repeat_season, seasonal_average, repeat_season_drift, ses, "
+                     "holt_damped, theta, ets, ets_damped_add, ets_damped_mul, stl_ets or sarima_airline (a failed fit falls back to repeating the last season).",
+         inputs={"histories": p("list", "list of 1-D float series, oldest value first, no NaN"),
+                 "horizon": p("number", "number of future steps to forecast", unit="1"),
+                 "period": p("number", "observations per season (12 monthly, 4 quarterly, 1 none)", unit="1"),
+                 "method": p("text", "method name, e.g. 'theta', 'ets_damped_add', 'stl_ets', 'sarima_airline', 'repeat_season'")},
+         outputs={"forecast": p("array", "point forecast per series, in the units of the input", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import forecast\nm = str(inputs['method'])\n"
+              "out = forecast.forecast_panel(inputs['histories'], int(inputs['horizon']), int(inputs['period']), methods=[m], n_jobs=1)[m]\nreturn {'forecast': out}",
+         pre=[{"port": "histories", "check": "nonempty"}, {"port": "method", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "time series", "seasonal", "theta", "ets", "arima", "baseline"]),
+    dict(id="forecast_backtest_method_ranking", tool="forecast.backtest_panel",
+         description="Rolling-origin backtest on a panel of seasonal series: the last steps of each series are held out at several origins, five methods "
+                     "(repeat_season, seasonal_average, theta, holt_damped, stl_ets) forecast them, and the mean absolute scaled error (MASE) per method plus the ranking is returned.",
+         inputs={"histories": p("list", "list of 1-D float series, oldest value first; each must be longer than 2 * period + 2 + horizon * n_origins"),
+                 "horizon": p("number", "length of each held-out window", unit="1"),
+                 "period": p("number", "observations per season (12 monthly, 4 quarterly, 1 none)", unit="1"),
+                 "n_origins": p("number", "number of rolling origins spaced one horizon apart", unit="1")},
+         outputs={"mase": p("dict", "{method: mean MASE over series and origins} (lower is better; 1 = as accurate as the in-sample seasonal naive)"),
+                  "ranked": p("list", "method names from lowest to highest MASE")},
+         code="from scilib import forecast\nbt = forecast.backtest_panel(inputs['histories'], int(inputs['horizon']), int(inputs['period']), "
+              "methods=('repeat_season', 'seasonal_average', 'theta', 'holt_damped', 'stl_ets'), n_origins=int(inputs['n_origins']), global_models=(), n_jobs=1)\n"
+              "return {'mase': bt['mase'], 'ranked': bt['ranked']}",
+         pre=[{"port": "histories", "check": "nonempty"}], post=[{"port": "ranked", "check": "nonempty"}],
+         tags=["forecasting", "backtest", "model selection", "mase", "rolling origin", "time series"]),
+    dict(id="forecast_scaled_error_metrics", tool="forecast.panel_mase",
+         description="Accuracy of point forecasts of a panel of series: mean MASE and RMSSE (errors scaled by the in-sample seasonal-naive error) and mean sMAPE in percent.",
+         inputs={"y_true": p("array", "observed values of the forecast window", shape=("n", "horizon"), dtype="float"),
+                 "y_pred": p("array", "forecasts of the same window", shape=("n", "horizon"), dtype="float"),
+                 "insamples": p("list", "list of n 1-D training series that precede each window (they set the scale)"),
+                 "period": p("number", "observations per season used for the scale (1 = lag-1 differences)", unit="1")},
+         outputs={"mase": p("number", "mean absolute scaled error over the series", unit="1"),
+                  "rmsse": p("number", "mean root mean squared scaled error over the series", unit="1"),
+                  "smape": p("number", "mean symmetric MAPE over the series", unit="%")},
+         code="import numpy as np\nfrom scilib import forecast\ny, f, ins, m = inputs['y_true'], inputs['y_pred'], inputs['insamples'], int(inputs['period'])\n"
+              "return {'mase': forecast.panel_mase(y, f, ins, m), 'rmsse': float(np.mean([forecast.rmsse(a, b, c, m) for a, b, c in zip(y, f, ins)])), "
+              "'smape': float(np.mean([forecast.smape(a, b) for a, b in zip(y, f)]))}",
+         pre=[{"port": "y_true", "check": "finite"}, {"port": "y_pred", "check": "finite"}], post=[{"port": "mase", "check": "finite"}],
+         tags=["forecasting", "metric", "mase", "smape", "rmsse", "evaluation"]),
+    dict(id="forecast_members_combination", tool="forecast.combine",
+         description="Combine forecasts of several models of the same panel element-wise by median, mean or trimmed mean (forecast combination / ensembling).",
+         inputs={"forecasts": p("dict", "{model name: float array (n, horizon)}, all of one shape"),
+                 "how": p("text", "'median', 'mean' or 'trimmed' (mean after dropping the largest and smallest member)")},
+         outputs={"forecast": p("array", "combined forecast", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import forecast\nreturn {'forecast': forecast.combine(inputs['forecasts'], str(inputs['how']))}",
+         pre=[{"port": "forecasts", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "ensemble", "combination", "median", "time series"]),
+    # ---------------------------------------------------------------------------------------------- pretrained forecasters
+    dict(id="chronos_median_forecast_nonnegative_panel", tool="forecast.pretrained_forecast",
+         description="Median forecast of a panel of non-negative series (counts, sales, demand, tourism, loads) from the pretrained Chronos-2 model, zero-shot: log1p scale, "
+                     "the last 120 observations as context, no seasonal period needed.",
+         inputs={"histories": p("list", "list of 1-D float series, oldest value first, no NaN, all values >= 0 (series with negative values are used as they are)"),
+                 "horizon": p("number", "number of future steps to forecast (1..1024)", unit="1")},
+         outputs={"forecast": p("array", "median forecast of the steps after the end of each history, in the units of the input", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import forecast\nreturn {'forecast': forecast.pretrained_forecast(inputs['histories'], int(inputs['horizon']), 'chronos_2')}",
+         pre=[{"port": "histories", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "time series", "pretrained", "chronos", "foundation model", "zero-shot", "panel", "seasonal"]),
+    dict(id="granite_ttm_point_forecast", tool="granite.forecast",
+         description="Point forecast of 96 future steps from the last 512 values of univariate series with the pretrained IBM Granite TinyTimeMixer r2 (3 M parameters), zero-shot.",
+         inputs={"context": p("array", "the 512 most recent values of each series, oldest first, no NaN", shape=("n", 512), dtype="float")},
+         outputs={"forecast": p("array", "forecast of the 96 steps after each context, in the units of the input", shape=("n", 96, 1), dtype="float")},
+         code="from scilib import granite\nfrom scilib._pretrained import model_path\nreturn {'forecast': granite.forecast(inputs['context'], model_dir=model_path('granite'))}",
+         pre=[{"port": "context", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "time series", "pretrained", "granite", "tinytimemixer", "zero-shot"]),
+    # ---------------------------------------------------------------------------------------------- building loads
+    dict(id="building_load_day_ahead_context_forecast", tool="loadforecast.core_forecast",
+         description="Day-ahead hourly forecast of building electricity load from the previous seven days only: per-hour median of the last 7 days for residential "
+                     "buildings, a backtest-weighted blend of yesterday and that median for commercial buildings (kWh, smart meter).",
+         inputs={"context": p("array", "hourly loads of the 168 hours (7 days) before the first target hour, oldest first", shape=("n", 168), unit="kWh", dtype="float"),
+                 "category": p("list", "'residential' or 'commercial' for each row")},
+         outputs={"forecast": p("array", "load of the next 24 hours", shape=("n", 24), unit="kWh", dtype="float")},
+         code="from scilib import loadforecast\nreturn {'forecast': loadforecast.core_forecast(inputs['context'], inputs['category'])}",
+         pre=[{"port": "context", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
+         tags=["forecasting", "energy", "building", "electricity", "load", "day-ahead", "smart meter", "baseline"]),
+    dict(id="building_load_day_ahead_learned_ensemble", tool="loadforecast.forecast_candidates",
+         description="Day-ahead hourly building electricity load forecast: a pooled LightGBM + Ridge model fitted on sliding windows of the buildings' own load histories, "
+                     "averaged with the context-only median/blend forecast (kWh, smart meter, residential and commercial).",
+         inputs={"load": p("array", "hourly load history of each building, one row per building (history only, before every target)", shape=("n_buildings", "T"), unit="kWh", dtype="float"),
+                 "history_start": p("list", "ISO timestamp of the first hour of each history row, e.g. '2016-01-01 00:00:00'"),
+                 "history_building_id": p("list", "distinct id of each history row"),
+                 "history_category": p("list", "'residential' or 'commercial' for each history row"),
+                 "context": p("array", "hourly loads of the 168 hours before the first target hour, one row per forecast window", shape=("n", 168), unit="kWh", dtype="float"),
+                 "target_start": p("list", "ISO timestamp of the first target hour of each window"),
+                 "building_id": p("list", "building id of each window (must occur in history_building_id)"),
+                 "category": p("list", "'residential' or 'commercial' for each window")},
+         outputs={"forecast": p("array", "load of the 24 hours from target_start", shape=("n", 24), unit="kWh", dtype="float")},
+         code="from scilib import loadforecast\nc = loadforecast.forecast_candidates(inputs['load'], inputs['history_start'], inputs['history_building_id'], inputs['history_category'], "
+              "inputs['context'], inputs['target_start'], inputs['building_id'], inputs['category'])\nreturn {'forecast': c['ens']}",
+         pre=[{"port": "load", "check": "finite"}, {"port": "context", "check": "finite"}],
+         post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
+         tags=["forecasting", "energy", "building", "electricity", "load", "day-ahead", "lightgbm", "ridge", "smart meter", "cvrmse"]),
+    dict(id="building_load_day_ahead_pretrained_transformer", tool="buildingsbench.forecast",
+         description="Day-ahead hourly building electricity load forecast (24 h) from the last 168 hours with the pretrained BuildingsBench Transformer-Gaussian-L (161 M parameters, "
+                     "trained on 900 K simulated US buildings), zero-shot: Box-Cox normalised loads, calendar, location and building type in; mean forecast in kWh and "
+                     "Gaussian parameters (mean, std) in the normalised load space out.",
+         inputs={"context": p("array", "hourly loads of the 168 hours before the first target hour, oldest first", shape=("n", 168), unit="kWh", dtype="float"),
+                 "target_start": p("list", "ISO timestamp (no time zone) of the first forecast hour of each row, e.g. '2013-05-14 00:00:00'"),
+                 "latitude": p("array", "building latitude", shape=("n",), unit="deg", dtype="float"),
+                 "longitude": p("array", "building longitude (negative west)", shape=("n",), unit="deg", dtype="float"),
+                 "category": p("list", "'residential' or 'commercial' for each row")},
+         outputs={"forecast": p("array", "predicted mean load of the 24 hours from target_start, >= 0", shape=("n", 24), unit="kWh", dtype="float"),
+                  "gaussian_params": p("array", "predictive mean and standard deviation of each hour in the model's Box-Cox standardised load space", shape=("n", 24, 2), dtype="float")},
+         code=_BUILDINGS_TRANSFORMER_CODE,
+         pre=[{"port": "context", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}, {"port": "forecast", "check": "range", "value": [0, None]}],
+         tags=["forecasting", "energy", "building", "electricity", "load", "day-ahead", "pretrained", "transformer", "buildingsbench", "zero-shot", "smart meter"]),
+    dict(id="building_load_balanced_cvrmse", tool="loadforecast.balanced_cvrmse",
+         description="Balanced CVRMSE (percent, lower is better) of day-ahead building load forecasts: CVRMSE per building, median within residential and commercial, "
+                     "mean of the two medians.",
+         inputs={"y_true": p("array", "observed hourly loads of the forecast windows", shape=("n", 24), unit="kWh", dtype="float"),
+                 "y_pred": p("array", "forecast loads of the same windows", shape=("n", 24), unit="kWh", dtype="float"),
+                 "building_id": p("list", "building id of each window (rows of one building are pooled)"),
+                 "category": p("list", "'residential' or 'commercial' for each window")},
+         outputs={"cvrmse": p("number", "balanced coefficient of variation of the RMSE", unit="%")},
+         code="from scilib import loadforecast\nreturn {'cvrmse': loadforecast.balanced_cvrmse(inputs['y_true'], inputs['y_pred'], inputs['building_id'], inputs['category'])}",
+         pre=[{"port": "y_true", "check": "finite"}, {"port": "y_pred", "check": "finite"}], post=[{"port": "cvrmse", "check": "finite"}],
+         tags=["forecasting", "energy", "building", "metric", "cvrmse", "evaluation", "load"]),
+    # ---------------------------------------------------------------------------------------------- gridded weather
+    dict(id="gridded_field_patch_ridge_forecast", tool="weather.fit_predict",
+         description="24-hour-ahead forecast of a global gridded surface field (2 m temperature on a 64 x 32 equiangular longitude x latitude grid, 6-hourly): seasonal cycle per "
+                     "grid cell and UTC hour plus a patch-wise ridge regression of the anomaly on the four preceding fields, fitted on a training record.",
+         inputs={"fields": p("array", "training record of the field, 6-hourly, consecutive steps", shape=("T", "lon", "lat"), unit="K", dtype="float"),
+                 "times": p("list", "ISO UTC time of each training step, e.g. '2018-01-01T06:00'"),
+                 "context": p("array", "fields at init-18, init-12, init-6 and init hours", shape=("n", 4, "lon", "lat"), unit="K", dtype="float"),
+                 "init_time": p("list", "ISO UTC initialisation time of each context")},
+         outputs={"forecast": p("array", "field 24 hours after each init_time", shape=("n", "lon", "lat"), unit="K", dtype="float")},
+         code="from scilib import weather\nreturn {'forecast': weather.fit_predict(inputs['fields'], inputs['times'], inputs['context'], inputs['init_time'])}",
+         pre=[{"port": "fields", "check": "finite"}, {"port": "context", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["weather", "forecasting", "gridded", "temperature", "era5", "weatherbench", "ridge", "climate"]),
+    dict(id="gridded_field_lat_weighted_rmse", tool="weather.lat_weighted_rmse",
+         description="Latitude-weighted root mean squared error of forecast fields on an equiangular longitude x latitude grid (WeatherBench 2 convention), averaged over the fields.",
+         inputs={"pred": p("array", "forecast fields", shape=("n", "lon", "lat"), dtype="float"),
+                 "truth": p("array", "verifying fields", shape=("n", "lon", "lat"), dtype="float")},
+         outputs={"rmse": p("number", "mean over fields of sqrt(area-weighted mean squared error), in the units of the field")},
+         code="from scilib import weather\nreturn {'rmse': weather.lat_weighted_rmse(inputs['pred'], inputs['truth'])}",
+         pre=[{"port": "pred", "check": "finite"}, {"port": "truth", "check": "finite"}], post=[{"port": "rmse", "check": "finite"}],
+         tags=["weather", "metric", "rmse", "gridded", "evaluation", "climate"]),
+    dict(id="gridded_field_seasonal_anomalies", tool="weather.fit_seasonal_cycle",
+         description="Remove the mean seasonal cycle from a gridded record: per grid cell and UTC-hour bin a constant plus three annual harmonics are fitted by least squares, "
+                     "and the anomalies (field minus cycle) are returned.",
+         inputs={"fields": p("array", "record of a gridded field, one slice per time", shape=("T", "lon", "lat"), dtype="float"),
+                 "times": p("list", "ISO UTC time of each slice")},
+         outputs={"anomalies": p("array", "field minus its fitted seasonal cycle", shape=("T", "lon", "lat"), dtype="float")},
+         code="from scilib import weather\ncycle = weather.fit_seasonal_cycle(inputs['fields'], inputs['times'])\nreturn {'anomalies': weather.anomalies(inputs['fields'], inputs['times'], cycle)}",
+         pre=[{"port": "fields", "check": "finite"}], post=[{"port": "anomalies", "check": "finite"}],
+         tags=["weather", "climate", "anomaly", "seasonal cycle", "harmonics", "gridded"]),
+    # ---------------------------------------------------------------------------------------------- water quality
+    dict(id="aquatic_oxygen_temperature_forecast_30d", tool="aquatics.fit_predict",
+         description="Probabilistic 30-day daily forecast of dissolved oxygen and water temperature at monitoring sites from their daily histories: day-of-year profile plus "
+                     "ridge regression of the anomaly on recent anomalies per lead day, normal predictive distributions (mean and standard deviation).",
+         inputs={"history": p("array", "daily means ending on the reference date; channel 0 dissolved oxygen, 1 water temperature, 2 chlorophyll-a; NaN = not observed",
+                              shape=("n", "L", 3), dtype="float"),
+                 "reference_date": p("list", "ISO date (YYYY-MM-DD) of the last history day of each item")},
+         outputs={"forecast": p("dict", "{'oxygen_mu', 'oxygen_sigma', 'temperature_mu', 'temperature_sigma'}: float arrays (n, 30) for the 30 days after the reference date; "
+                                         "oxygen in mg/L, temperature in degC")},
+         code="from scilib import aquatics\nreturn {'forecast': aquatics.fit_predict(inputs['history'], inputs['reference_date'])}",
+         pre=[{"port": "history", "check": "nonempty"}], post=[{"port": "forecast", "check": "type", "value": "dict"}],
+         tags=["environment", "water quality", "forecasting", "probabilistic", "dissolved oxygen", "temperature", "neon", "crps", "ecological forecasting"]),
+    dict(id="aquatic_climatology_forecast_30d", tool="aquatics.doy_window_forecast",
+         description="Day-of-year climatology baseline for 30-day daily forecasts of dissolved oxygen and water temperature: mean and standard deviation of the site's observations "
+                     "within +-7 days of each target day of the year (normal predictive distribution).",
+         inputs={"history": p("array", "daily means ending on the reference date; channel 0 dissolved oxygen, 1 water temperature, 2 chlorophyll-a; NaN = not observed",
+                              shape=("n", "L", 3), dtype="float"),
+                 "reference_date": p("list", "ISO date (YYYY-MM-DD) of the last history day of each item")},
+         outputs={"forecast": p("dict", "{'oxygen_mu', 'oxygen_sigma', 'temperature_mu', 'temperature_sigma'}: float arrays (n, 30)")},
+         code="from scilib import aquatics\nreturn {'forecast': aquatics.doy_window_forecast(inputs['history'], inputs['reference_date'])}",
+         pre=[{"port": "history", "check": "nonempty"}], post=[{"port": "forecast", "check": "type", "value": "dict"}],
+         tags=["environment", "water quality", "forecasting", "climatology", "baseline", "probabilistic", "neon"]),
+    dict(id="normal_forecast_crps_score", tool="aquatics.score",
+         description="Mean continuous ranked probability score (CRPS) of normal predictive distributions for dissolved oxygen and water temperature at observed days (NaN skipped); lower is better.",
+         inputs={"forecast": p("dict", "{'oxygen_mu', 'oxygen_sigma', 'temperature_mu', 'temperature_sigma'}: float arrays (n, 30)"),
+                 "observed": p("array", "observed daily values of the forecast days; channel 0 oxygen, 1 temperature; NaN = not observed", shape=("n", 30, 2), dtype="float")},
+         outputs={"crps": p("number", "equal-weight mean of the oxygen CRPS (mg/L) and the temperature CRPS (degC)"),
+                  "per_variable": p("dict", "{'oxygen': CRPS in mg/L, 'temperature': CRPS in degC}")},
+         code="from scilib import aquatics\nmean, per = aquatics.score(inputs['forecast'], inputs['observed'])\nreturn {'crps': mean, 'per_variable': per}",
+         pre=[{"port": "forecast", "check": "type", "value": "dict"}], post=[{"port": "crps", "check": "finite"}],
+         tags=["metric", "crps", "probabilistic forecast", "evaluation", "water quality", "scoring rule"]),
+    # ---------------------------------------------------------------------------------------------- annual macro panels
+    dict(id="annual_panel_forecast_pooled", tool="macro.fit_predict",
+         description="Multi-step forecast of annual economic or demographic series (level or percentage indicators) from a panel of economies: log-ratio forecasts by pooled ridge, "
+                     "Huber and LightGBM models trained on the panel plus a robust drift, equally weighted, returned as levels.",
+         inputs={"train_panel": p("table", "one row per economy and indicator kind: columns economy_id, region, income_level, indicator, then one column per period t-31 .. t0 (NaN = missing)"),
+                 "history": p("array", "series of the items to forecast, oldest first, NaN = missing", shape=("n", "L"), dtype="float"),
+                 "indicator": p("list", "indicator kind of each item (a value of the panel's indicator column)"),
+                 "horizon": p("number", "number of annual steps ahead (1..horizon)", unit="1")},
+         outputs={"forecast": p("array", "level forecasts of the periods after the last observed one; percentage kinds are capped at 100", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import macro\nout = macro.fit_predict(inputs['train_panel'], inputs['history'], list(inputs['indicator']), horizon=int(inputs['horizon']))\nreturn {'forecast': out}",
+         pre=[{"port": "train_panel", "check": "nonempty"}, {"port": "history", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["economics", "macro", "forecasting", "panel", "annual", "world bank", "gdp", "unemployment", "smape", "cross-country"]),
+    dict(id="annual_panel_forecast_with_covariates", tool="macro.fit_predict",
+         description="Multi-step forecast of annual economic series per economy using the economy's other indicator series (growth, inflation, ...) as covariates, pooled over a panel "
+                     "of economies: ridge, Huber, LightGBM and robust-drift members of the log-ratio ln(y[t+h]/y[t]), equally weighted, returned as levels.",
+         inputs={"train_panel": p("table", "one row per economy and indicator kind: columns economy_id, region, income_level, indicator, then one column per period t-31 .. t0 (NaN = missing)"),
+                 "history": p("array", "series of the items to forecast, oldest first, NaN = missing", shape=("n", "L"), dtype="float"),
+                 "indicator": p("list", "indicator kind of each item"),
+                 "covariates": p("array", "all indicator series of the item's economy over the same periods", shape=("n", "k", "L"), dtype="float"),
+                 "covariate_indicators": p("list", "indicator kind of each of the k covariate series"),
+                 "economy_id": p("list", "economy id of each item"),
+                 "horizon": p("number", "number of annual steps ahead (1..horizon)", unit="1")},
+         outputs={"forecast": p("array", "level forecasts of the periods after the last observed one; percentage kinds are capped at 100", shape=("n", "horizon"), dtype="float")},
+         code="from scilib import macro\nout = macro.fit_predict(inputs['train_panel'], inputs['history'], list(inputs['indicator']), covariates=inputs['covariates'], "
+              "covariate_indicators=list(inputs['covariate_indicators']), economy_id=list(inputs['economy_id']), horizon=int(inputs['horizon']))\nreturn {'forecast': out}",
+         pre=[{"port": "train_panel", "check": "nonempty"}, {"port": "history", "check": "nonempty"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["economics", "macro", "forecasting", "panel", "annual", "covariates", "world bank", "gdp", "unemployment", "cross-country"]),
+    dict(id="annual_series_local_forecast", tool="macro.local_forecast",
+         description="Forecast one strictly positive annual series from its own history with a simple method: flat (no change), drift (damped mean log-change), revert (mean reversion), "
+                     "theta or holt (damped trend).",
+         inputs={"series": p("array", "1-D positive series, oldest first", shape=("L",), dtype="float"),
+                 "method": p("text", "'flat', 'drift', 'revert', 'theta' or 'holt'"),
+                 "horizon": p("number", "number of steps ahead", unit="1")},
+         outputs={"forecast": p("array", "level forecast of the steps after the end of the series", shape=("horizon",), dtype="float")},
+         code="from scilib import macro\nreturn {'forecast': macro.local_forecast(inputs['series'], str(inputs['method']), int(inputs['horizon']))}",
+         pre=[{"port": "series", "check": "finite"}], post=[{"port": "forecast", "check": "finite"}],
+         tags=["forecasting", "annual", "economics", "baseline", "drift", "random walk", "time series"]),
+    # ---------------------------------------------------------------------------------------------- adaptive testing
+    dict(id="irt_item_response_fit", tool="adaptive.fit_item_curves",
+         description="Two-parameter item response theory (IRT) fit of a student x question correctness matrix by marginal maximum likelihood: discrimination and difficulty of every question.",
+         inputs={"answers": p("array", "1 = answered correctly, 0 = incorrectly, -1 = not answered", shape=("n_students", "n_questions"), dtype="int")},
+         outputs={"discrimination": p("array", "slope a_q > 0 of each question's logistic curve", shape=("n_questions",), dtype="float"),
+                  "difficulty": p("array", "difficulty b_q of each question on the ability scale (standard-normal abilities)", shape=("n_questions",), dtype="float")},
+         code="from scilib import adaptive\nm = adaptive.fit_item_curves(inputs['answers'])\nreturn {'discrimination': m['discrimination'], 'difficulty': m['difficulty']}",
+         pre=[{"port": "answers", "check": "nonempty"}], post=[{"port": "discrimination", "check": "finite"}, {"port": "difficulty", "check": "finite"}],
+         tags=["education", "psychometrics", "item response theory", "irt", "rasch", "knowledge tracing", "question difficulty", "student"]),
+    dict(id="irt_adaptive_question_selection", tool="adaptive.select_queries",
+         description="Choose the next questions to ask each student in adaptive testing: greedy batch Bayesian active learning (mutual information with the ability) under an IRT model "
+                     "fitted on a training answer matrix, given the answers already revealed and a per-student budget.",
+         inputs={"answers": p("array", "training matrix: 1 correct, 0 incorrect, -1 not answered", shape=("n_train", "n_questions"), dtype="int"),
+                 "can_query": p("array", "True where a student's question may be revealed", shape=("n", "n_questions"), dtype="bool"),
+                 "revealed": p("array", "answers revealed so far: -1 not revealed, 0 incorrect, 1 correct (all -1 at the start)", shape=("n", "n_questions"), dtype="int"),
+                 "k": p("number", "questions to select per student in this round", unit="1"),
+                 "budget": p("number", "maximum revealed plus selected questions per student", unit="1")},
+         outputs={"selections": p("array", "question ids per student, -1 = none", shape=("n", "k"), dtype="int")},
+         code="from scilib import adaptive\nout = adaptive.select_queries(inputs['answers'], inputs['can_query'], inputs['revealed'], k=int(inputs['k']), budget=int(inputs['budget']))\n"
+              "return {'selections': out}",
+         pre=[{"port": "answers", "check": "nonempty"}], post=[{"port": "selections", "check": "finite"}],
+         tags=["education", "adaptive testing", "active learning", "item response theory", "question selection", "bald", "student"]),
+    dict(id="irt_correctness_prediction", tool="adaptive.predict",
+         description="Predict whether students answer target questions correctly from the answers revealed so far: posterior over each student's ability under an IRT model fitted on a "
+                     "training answer matrix, posterior-predictive probability and its 0/1 decision.",
+         inputs={"answers": p("array", "training matrix: 1 correct, 0 incorrect, -1 not answered", shape=("n_train", "n_questions"), dtype="int"),
+                 "revealed": p("array", "answers revealed so far: -1 not revealed, 0 incorrect, 1 correct", shape=("n", "n_questions"), dtype="int"),
+                 "targets": p("array", "True where correctness must be predicted", shape=("n", "n_questions"), dtype="bool")},
+         outputs={"predictions": p("array", "1 = predicted correct, 0 = incorrect on target cells, -1 elsewhere", shape=("n", "n_questions"), dtype="int"),
+                  "probabilities": p("array", "probability of a correct answer for every cell", shape=("n", "n_questions"), dtype="float")},
+         code="from scilib import adaptive\nm = adaptive.fit_item_curves(inputs['answers'])\n"
+              "return {'predictions': adaptive.predict(m, inputs['revealed'], inputs['targets']), 'probabilities': adaptive.predict_proba(m, inputs['revealed'])}",
+         pre=[{"port": "answers", "check": "nonempty"}], post=[{"port": "probabilities", "check": "finite"}, {"port": "probabilities", "check": "range", "value": [0, 1]}],
+         tags=["education", "psychometrics", "item response theory", "student performance prediction", "knowledge tracing", "adaptive testing"]),
+]

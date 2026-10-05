@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/scienceclaw",
+  "version": "2026.3.9",
+  "private": true,
+  "description": "ScienceClaw canvas orchestration, tool library and program tools",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

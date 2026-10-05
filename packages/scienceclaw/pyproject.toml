@@ -1,0 +1,41 @@
+[project]
+name = "scienceclaw"
+version = "0.1.0"
+description = "ScienceClaw engine: typed workflow orchestration, the scientific tool library and verifiable program-level self-evolution for AI-for-Science agents"
+requires-python = ">=3.11"
+dependencies = ["numpy", "pandas", "scipy", "scikit-learn", "pyyaml"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+domain = ["statsmodels", "networkx", "sympy", "joblib", "lightgbm", "xgboost", "stochtree", "rdkit", "nibabel", "jiwer", "sacrebleu", "conllu", "z3-solver"]
+# Heavy model stacks remain optional so the base install stays light. These
+# groups mirror the actual scilib imports used by the corresponding domain
+# adapters.
+vision = ["torch", "torchvision", "transformers", "scikit-image", "lightgbm", "Pillow"]
+audio = ["torch", "torchaudio", "demucs", "imageio-ffmpeg", "transformers", "hydra-core", "omegaconf"]
+nlp = ["stanza>=1.14,<1.15", "transformers", "sentencepiece", "conllu", "jiwer", "sacrebleu"]
+forecast = ["statsmodels", "lightgbm", "chronos-forecasting", "granite-tsfm", "transformers"]
+materials = ["ase", "phonopy", "pymatgen", "chgnet", "sevenn"]
+retrieval = ["open-clip-torch", "Pillow", "torch"]
+# Keep this explicit rather than referring to scienceclaw[vision,...]; pip and
+# uv do not expand self-referencing extras reliably in editable installs.
+all = [
+  "statsmodels", "networkx", "sympy", "joblib", "lightgbm", "xgboost", "stochtree", "rdkit", "nibabel",
+  "jiwer", "sacrebleu", "conllu", "z3-solver", "torch", "torchvision", "torchaudio",
+  "demucs", "imageio-ffmpeg", "transformers", "scikit-image", "Pillow", "stanza>=1.14,<1.15", "sentencepiece",
+  "hydra-core", "omegaconf", "chronos-forecasting", "granite-tsfm", "ase", "phonopy", "pymatgen",
+  "chgnet", "sevenn", "open-clip-torch",
+]
+
+[project.scripts]
+scienceclaw = "scienceclaw.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["scienceclaw*", "scilib*"]
+
+[tool.setuptools.package-data]
+"scienceclaw.tools" = ["weights.json"]
+

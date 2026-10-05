@@ -40,7 +40,7 @@ const entrypoints = [
   "open-prose",
   "phone-control",
   "qwen-portal-auth",
-  "scienceclaw-bench",
+  "scienceclaw",
   "synology-chat",
   "talk-voice",
   "test-utils",

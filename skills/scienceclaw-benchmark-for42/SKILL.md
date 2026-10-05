@@ -1,43 +1,24 @@
 ---
 name: scienceclaw-benchmark-for42
-description: "Run and improve the FoR42 PhysioNet/CinC 2019 sepsis benchmark route with the integrated ScienceClaw agent. Use when working on Health sciences scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task gives hourly ICU records (vitals, labs, demographics, one stay per patient) with sepsis labels and asks for causal hour-by-hour sepsis alarms on new stays, scored by normalized clinical utility (PhysioNet/CinC 2019 early sepsis prediction; corresponds to FoR42 of the companion ScienceClaw-Eval benchmark)."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR42 — PhysioNet/CinC 2019 sepsis
+# Early sepsis alarms from hourly ICU data
 
-Use this skill for the `FoR42` adapter. The task metric is **normalized clinical utility**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for42_sepsis`.
+**Task.** Input: a long table, one row per patient-hour (`patient_id`, `hour`, the 40 challenge variables: vitals, labs, Age, Gender, Unit1/Unit2, HospAdmTime, ICULOS); the labelled table also has `SepsisLabel`. Deliverable: one 0/1 integer array per stay to score, as long as the stay, in order of first appearance.
 
-## Tool surface
+**Quality.** Normalized clinical utility, higher is better: `(U_obs - U_inaction) / (U_best - U_inaction)` summed over stays; 1 is optimal, 0 equals never alarming, negative is worse than silence. Per hour: a true alarm earns up to +1 from 12 h before to 3 h after t_sepsis (first positive label + 6 h), a miss costs up to -2, a false alarm -0.05.
 
-The adapter currently declares these tool references:
+**Tools (`from scilib import sepsis`, no pretrained weights).**
+- `fit_predict(train, [table_a, table_b])` returns `(preds, info)` with the chosen threshold and out-of-fold utility (`oof_utility`); operator `sepsis_early_warning_alarms`.
+- `SepsisModel(targets, smooth, hold, prevalence, linear_weight)`: shallow LightGBM plus logistic regression on the causal features of `build_features`; tune on grouped out-of-fold utility.
+- `normalized_utility(labels, preds)` (operator `sepsis_normalized_utility`), `stay_folds`, `causal_smooth`, `hold_alarms`.
 
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
+**Routes.** Baseline: class-balanced logistic regression on last-observation-carried-forward vitals plus static variables, threshold chosen for utility. Stronger: the boosted ensemble, compared by patient-grouped out-of-fold utility, not row-level AUC.
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR42.md` and call `scienceclaw_bench` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+**Rules.**
+- Strict causality: the alarm at hour t uses rows 0..t of that stay only. Never use stay length, hours to the end of the record or whole-stay statistics: septic records end soon after onset, so "alarm near the end" scores well offline and is useless in use. Check by truncating stays and re-running; earlier hours must not change.
+- Split by patient, never by row. Septic stays are rare (about 7 % in the public data), so utility is noisy; report its spread.
+- The best threshold depends on the septic share (false alarms cost per hour); re-tune for a different hospital. Variables can be wholly missing at one site (EtCO2 in hospital A).
+- Keep the declared output: finite 0/1 integers, per-stay lengths.

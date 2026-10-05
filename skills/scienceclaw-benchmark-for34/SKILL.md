@@ -1,44 +1,25 @@
 ---
 name: scienceclaw-benchmark-for34
-description: "Run and improve the FoR34 OGB ogbg-molhiv benchmark route with the integrated ScienceClaw agent. Use when working on Chemical sciences scores, tools, visible-dev selection, or formal evidence."
+description: "Use when predicting a binary molecular property such as HIV replication inhibition (OGB ogbg-molhiv, MoleculeNet-style activity) from SMILES strings and labelled molecules, delivering one probability-like score per query molecule evaluated by ROC-AUC under a scaffold split. Corresponds to FoR34 of the companion ScienceClaw-Eval benchmark."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR34 — OGB ogbg-molhiv
+# Molecular activity classification (ogbg-molhiv)
 
-Use this skill for the `FoR34` adapter. The task metric is **ROC-AUC**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for34_molhiv`.
+**Task.** Input: SMILES of labelled molecules (1 = active, 0 = inactive; actives are a few percent) and SMILES of query molecules. Deliverable: a 1-D float array, one score in [0, 1] per query molecule in query order (higher = more likely active); only the ordering matters.
 
-## Tool surface
+**Quality.** ROC-AUC, higher is better; rank-based and insensitive to prevalence. OGB splits by Bemis-Murcko scaffold, so evaluation molecules have scaffolds absent from training.
 
-The adapter currently declares these tool references:
+**Library** (needs RDKit; check `scienceclaw_tools(operation=show, target=molecules)`):
+- `scilib.molecules.featurize(smiles, kinds=...)` returns `(X, valid, names)`; kinds `morgan_counts`, `atompair_counts`, `maccs`, `descriptors` (RDKit 2D) or `concat`; unparsable SMILES give a zero row and `valid` False.
+- `scaffold_groups(smiles)` for grouped splits; `fit_predict(train, y, *queries)`: class-balanced RandomForest + ExtraTrees (`TreeEnsemble`), finite scores in [0, 1], median score for unparsable query SMILES; `grouped_cv_auc(train, y, groups="scaffold")`: out-of-fold AUC with scaffold-disjoint folds.
+- Operators: `molecule_features_rdkit`, `molecule_scaffold_ids`, `molecule_activity_classifier`, `molecule_scaffold_cv_auc`.
+- No pretrained molecular weights ship with the library; the route is classical featurisation plus tree ensembles.
 
-- `featurize_molecules`
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
+**Routes.** Baseline: class-balanced logistic regression on a few trivial counts (atoms, bonds, rings, element fractions). Default: `molecules.fit_predict` on `concat` features. Compare feature blocks, tree counts and rank-averaged blends by pooled out-of-fold AUC from `grouped_cv_auc`.
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR34.md` and call `scienceclaw_bench` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+**Rules.**
+- Validate with scaffold-grouped folds; random folds overestimate AUC under a scaffold shift.
+- AUC on a small query set with few actives rests on a handful of positive-negative pairs and is very noisy: do not choose models on the query set or read small differences as real.
+- Never use query labels or label-derived features. Keep every query row (invalid SMILES still need a finite score) and its order.
+- Output finite, within [0, 1], one value per query molecule.

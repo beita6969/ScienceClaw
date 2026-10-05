@@ -1,43 +1,25 @@
 ---
 name: scienceclaw-benchmark-for35
-description: "Run and improve the FoR35 Monash Tourism Monthly benchmark route with the integrated ScienceClaw agent. Use when working on Commerce, management, tourism and services scores, tools, visible-dev selection, or formal evidence."
+description: "Use when forecasting monthly tourism, visitor or other seasonal business and service series (Monash Tourism Monthly, 24-month horizon, period 12) from each series' history, delivering non-negative forecasts per series scored by mean MASE. Corresponds to FoR35 of the companion ScienceClaw-Eval benchmark."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR35 — Monash Tourism Monthly
+# Monthly seasonal series forecasting (Monash Tourism Monthly)
 
-Use this skill for the `FoR35` adapter. The task metric is **mean MASE**;
-minimize is better. The adapter module is
-`scienceclaw.bench.tasks.for35_tourism`.
+**Task.** Input: histories of monthly series (about 90-330 observations, own units), horizon 24, seasonal period 12, possibly a pool of other series of the same collection. Deliverable: float array (n_series, 24), the 24 months after each history, finite, >= 0, in the series' units.
 
-## Tool surface
+**Quality.** Mean MASE over series, lower is better: mean absolute error over the horizon divided by the in-sample seasonal-naive error (lag 12). Reference: seasonal naive (repeat the last 12 months); its published mean MASE on the full Tourism Monthly set is about 1.63.
 
-The adapter currently declares these tool references:
+**Library** (check `scienceclaw_tools(operation=show, target=forecast)`):
+- `scilib.forecast.fit_predict(histories, horizon, period, train=..., phase=...)`: median of damped ETS, Theta, STL+ETS, airline SARIMA and global ridge / extra-trees window models, clipped at 0. Also `forecast_panel`, `combine`, `global_window`, `global_lgbm`, rolling-origin `backtest_panel` + `combination_mase`, metrics `mase`, `panel_mase`, `smape`, `rmsse`.
+- Pretrained, zero-shot, GPU or remote worker (guard with `scilib.tsfm.available()`; assets `chronos_2`, `chronos_bolt_base`): `forecast.pretrained_forecast(histories, 24)` (Chronos-2 median, last 120 values, log1p for non-negative series); `fit_predict(..., pretrained=w)` blends it with weight `w`; `tsfm.forecast` gives quantiles.
+- Operators: `seasonal_panel_forecast_ensemble`, `statistical_forecast_single_method`, `forecast_backtest_method_ranking`, `chronos_median_forecast_nonnegative_panel`.
 
-- `load_dev`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
+**Routes.** Baselines: seasonal naive, per-season mean, damped ETS, Theta. Default: the `fit_predict` ensemble, optionally blended with a pretrained forecast. Choose by `backtest_panel` (hold out the last 24 months of each history).
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR35.md` and call `scienceclaw_bench` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+**Rules.**
+- Respect temporal causality: nothing after a series' forecast origin may inform its forecast. When backtesting, cut every pool series at the same origin (`train_cut="auto"` does this when the pool contains the histories).
+- Build the deliverable from the series to be forecast, not from truncated backtest copies of them.
+- Pass `phase` / `train_phase` (month - 1 of the first observation) when series start in different months.
+- Mean MASE over few series is noisy; a 2-3 % backtest gain is within noise.
+- Chronos pretraining corpora include Monash-archive-type data, so tourism series may have been seen. Disclose this overlap.

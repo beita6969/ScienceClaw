@@ -16,7 +16,7 @@ domain = ["statsmodels", "networkx", "sympy", "joblib", "lightgbm", "xgboost", "
 # adapters.
 vision = ["torch", "torchvision", "transformers", "scikit-image", "lightgbm", "Pillow"]
 audio = ["torch", "torchaudio", "demucs", "imageio-ffmpeg", "transformers", "hydra-core", "omegaconf"]
-nlp = ["stanza", "transformers", "sentencepiece", "conllu", "jiwer", "sacrebleu"]
+nlp = ["stanza>=1.14,<1.15", "transformers", "sentencepiece", "conllu", "jiwer", "sacrebleu"]
 forecast = ["statsmodels", "lightgbm", "chronos-forecasting", "granite-tsfm", "transformers"]
 materials = ["ase", "phonopy", "pymatgen", "chgnet", "sevenn"]
 retrieval = ["open-clip-torch", "Pillow", "torch"]
@@ -25,7 +25,7 @@ retrieval = ["open-clip-torch", "Pillow", "torch"]
 all = [
   "statsmodels", "networkx", "sympy", "joblib", "lightgbm", "xgboost", "stochtree", "rdkit", "nibabel",
   "jiwer", "sacrebleu", "conllu", "z3-solver", "torch", "torchvision", "torchaudio",
-  "demucs", "imageio-ffmpeg", "transformers", "scikit-image", "Pillow", "stanza", "sentencepiece",
+  "demucs", "imageio-ffmpeg", "transformers", "scikit-image", "Pillow", "stanza>=1.14,<1.15", "sentencepiece",
   "hydra-core", "omegaconf", "chronos-forecasting", "granite-tsfm", "ase", "phonopy", "pymatgen",
   "chgnet", "sevenn", "open-clip-torch",
 ]

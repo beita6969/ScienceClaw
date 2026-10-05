@@ -1,63 +1,56 @@
 ---
 name: scienceclaw-benchmark
-description: "Route and reproduce an integrated ScienceClaw FoR30–FoR52 benchmark run, including frozen tool selection, visible-dev scoring, self-evolution, and evidence-backed score diagnosis. Use for benchmark work; use the general gateway skills for unrelated tasks."
+description: "Index of the 23 discipline skills (FoR30-FoR52) that mirror the disciplines of the companion ScienceClaw-Eval benchmark: find which discipline skill fits a scientific task (plant panoptic segmentation, protein fitness prediction, hippocampus segmentation, building load forecasting, molecule property prediction, music source separation, sepsis early warning, French dependency parsing, contract evidence retrieval, ...). Use to pick the right discipline skill and the scilib tools it names."
 metadata: { "openclaw": { "emoji": "🧪" } }
 ---
 
-# ScienceClaw benchmark orchestration
+# ScienceClaw discipline skills
 
-Use this skill when a request concerns the paper's 23-discipline benchmark, a
-benchmark score, a frozen SOTA component, a tool-on run, or the self-evolution
-loop that produces and validates skills/operators.
+Each `scienceclaw-benchmark-forNN` skill describes one scientific task family: its inputs, the deliverable, how
+quality is judged, and the scilib tools and pretrained weights that fit it. The 23 skills correspond to the 23
+disciplines of the companion ScienceClaw-Eval benchmark; its evaluation data is hosted on Hugging Face
+(<https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>) and is not part of this repository.
 
-## Routing
+## How to use
 
-1. Call `scienceclaw_eval(operation=catalog)` once at the start of a task and
-   record the adapter, tool refs, config names, and launcher names it returns.
-   Call `operation=list_tasks` when availability or data-root status matters.
-2. Load exactly one matching dataset skill, `scienceclaw-benchmark-for30`
-   through `scienceclaw-benchmark-for52`, and read its task document before
-   selecting a tool. Its metric direction and output contract take precedence
-   over generic SOTA intuition.
-3. Use `load_train` and the adapter's visible `score_dev` (or its documented
-   visible substitute) to compare one frozen route with a named baseline. Keep
-   tool/checkpoint/preprocessing provenance in the run receipt.
-4. Use `scienceclaw_eval(operation=report)` with the `runId` of an existing
-   server-side run to inspect its report.
-5. To solve one benchmark episode interactively, open it on the canvas with
-   `scienceclaw_canvas(operation=open, episode={discipline, split, index})` (see
-   `scienceclaw-canvas`); its verdict stays sealed until the run is evaluated server-side.
-6. Keep the benchmark engine and gateway separate: the gateway routes and
-   records; the Python package owns typed graphs, adapters, replay, scoring,
-   self-evolution, and receipts. Read only the relevant reference below.
+1. Match the user's task to one row below and load that discipline skill.
+2. Confirm the tools it names with `scienceclaw_tools` (`search`, `show`, `status`, `weights`) and do not plan around a
+   tool or weight that is reported as unavailable on this host.
+3. Build the workflow on the canvas (see `scienceclaw-canvas`): read the inputs through the task's `load_<name>` tools,
+   keep the deliverable's type, shape and unit, and replay before finishing.
 
-## Self-evolution contract
+## Disciplines
 
-The agent may propose skills and operators, but every candidate must be
-attributable to a concrete source episode and replayable from its bundle. The
-promotion order is `source replay → visible D_val → H_val → logical-token and
-wall budgets → strict Q_val improvement → snapshot`. A skill is a routing
-recipe; it must not hide labels, alter an evaluator, or silently change a
-dataset split. Read `scienceclaw-evolution` for the candidate and receipt
-contract.
+| Code | Discipline (ANZSRC division) | Task | Quality metric | Skill |
+| --- | --- | --- | --- | --- |
+| FoR30 | Agricultural, veterinary and food sciences | PhenoBench hierarchical panoptic segmentation | PQ+ (higher is better) | `scienceclaw-benchmark-for30` |
+| FoR31 | Biological sciences | ProteinGym substitutions | mean Spearman (higher is better) | `scienceclaw-benchmark-for31` |
+| FoR32 | Biomedical and clinical sciences | MSD Task04 Hippocampus | DSC (higher is better) | `scienceclaw-benchmark-for32` |
+| FoR33 | Built environment and design | BuildingsBench | balanced NRMSE (%) (lower is better) | `scienceclaw-benchmark-for33` |
+| FoR34 | Chemical sciences | OGB ogbg-molhiv | ROC-AUC (higher is better) | `scienceclaw-benchmark-for34` |
+| FoR35 | Commerce, management, tourism and services | Monash Tourism Monthly | mean MASE (lower is better) | `scienceclaw-benchmark-for35` |
+| FoR36 | Creative arts and writing | MUSDB18 four-stem separation | mean target-median SDR (dB) (higher is better) | `scienceclaw-benchmark-for36` |
+| FoR37 | Earth sciences | WeatherBench2 | 2m temperature RMSE (K) (lower is better) | `scienceclaw-benchmark-for37` |
+| FoR38 | Economics | World Bank macro forecasting | mean sMAPE (%) (lower is better) | `scienceclaw-benchmark-for38` |
+| FoR39 | Education | Eedi NeurIPS 2020 Task 4 | organizer 10-mask accuracy (higher is better) | `scienceclaw-benchmark-for39` |
+| FoR40 | Engineering | DCASE 2024 Task 2 | official DCASE score (higher is better) | `scienceclaw-benchmark-for40` |
+| FoR41 | Environmental sciences | NEON aquatics forecasting | mean CRPS (oxygen + temperature) (lower is better) | `scienceclaw-benchmark-for41` |
+| FoR42 | Health sciences | PhysioNet/CinC 2019 sepsis | normalized clinical utility (higher is better) | `scienceclaw-benchmark-for42` |
+| FoR43 | History, heritage and archaeology | HIPE-OCRepair 2026 | weighted cMER-micro (lower is better) | `scienceclaw-benchmark-for43` |
+| FoR44 | Human society | ACIC 2016 | response-SD normalized RMSE (lower is better) | `scienceclaw-benchmark-for44` |
+| FoR45 | Indigenous studies | AmericasNLP 2026 | mean sentence chrF++ (higher is better) | `scienceclaw-benchmark-for45` |
+| FoR46 | Information and computing sciences | HumanEval → MBPP | execution pass@1 (higher is better) | `scienceclaw-benchmark-for46` |
+| FoR47 | Language, communication and culture | CoNLL-2018 UD | LAS (higher is better) | `scienceclaw-benchmark-for47` |
+| FoR48 | Law and legal studies | ContractNLI | mAP (higher is better) | `scienceclaw-benchmark-for48` |
+| FoR49 | Mathematical sciences | SMT-COMP 2025 QF_NIA | oracle-agreement accuracy (higher is better) | `scienceclaw-benchmark-for49` |
+| FoR50 | Philosophy and religious studies | SemEval-2023 Task 4 ValueEval | official F1 (higher is better) | `scienceclaw-benchmark-for50` |
+| FoR51 | Physical sciences | Matbench phonons | MAE (lower is better) | `scienceclaw-benchmark-for51` |
+| FoR52 | Psychology | Psych-201 discrete | micro accuracy (higher is better) | `scienceclaw-benchmark-for52` |
 
-## Evidence boundaries
+## Rules that apply to every discipline
 
-- `train`, `dev`, and explicitly documented visible pools may guide tool choice.
-- `id`/`ood` targets are evaluator-only. The policy must not see them during
-  construction, skill writing, or tool selection.
-- Never reuse an evaluated formal item or relax an acceptance rule to make a
-  candidate pass.
-- Store configs, program snapshots, tool provenance, hashes, and per-episode
-  receipts with every reported result.
-- Treat external weights as frozen assets and disclose training-domain overlap;
-  do not train a new checkpoint inside this workflow.
-
-For score diagnosis, separate a route failure from an accounting failure:
-check split coverage, metric direction, pooled-vs-episode score kind, tool
-provenance, and the report's expected episode counts before changing a model.
-If a visible comparison does not beat the incumbent under the same config and
-budget, record the rejection and move to the next route. Do not tune against
-an evaluated formal item.
-
-Dataset-specific routing lives in the 23 `scienceclaw-benchmark-for*` skills.
+- Use only the inputs the task declares; never use target information, and respect the temporal order of forecasting
+  and clinical data.
+- Prefer a frozen checkpoint whose input/output contract is documented over a model trained inside the workflow, and
+  report which checkpoint (and version) produced a result. Pretrained weights may have seen similar data: say so.
+- Keep a simple baseline next to a pretrained route so that the gain, if any, is visible.

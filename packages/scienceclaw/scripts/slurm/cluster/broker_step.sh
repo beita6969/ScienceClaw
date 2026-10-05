@@ -4,9 +4,9 @@ F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}; L=${SCIENCECLAW_STORE_ROO
 cd $F/scienceclaw
 mkdir -p "$R/remote_spool"
 export PYTHONPATH=$F/scienceclaw SCIENCECLAW_DATA_ROOT=$L/scienceclaw-data/datasets SCIENCECLAW_MODELS=$L/models CUDA_VISIBLE_DEVICES=
-# The two split batches start together and may also race this driver-launched
-# broker.  Hold the same lock for the whole broker lifetime; a second broker
-# exits cleanly instead of consuming the shared spool twice.
+# Several launches may race to start the broker.  Hold the same lock for the
+# whole broker lifetime; a second broker exits cleanly instead of consuming
+# the shared spool twice.
 exec 9>"$R/remote_spool/.broker.lock"
 /usr/bin/flock -n 9 || { echo "broker already owns $R/remote_spool"; exit 0; }
 exec $F/envs/sc-harness/bin/python -u scripts/remote/broker.py --spool $R/remote_spool --local --gpu ${1:-2,3,2,3,2,3} --root $L/sc-tools \

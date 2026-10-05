@@ -233,6 +233,12 @@ ScienceClaw/
 └── docs/                   # Documentation
 ```
 
+## ScienceClaw-Eval benchmark
+
+The accompanying benchmark, **ScienceClaw-Eval**, is introduced in the paper *"ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents Across the Natural and Social Sciences"*. It covers 23 disciplines (FoR30–FoR52) and evaluates agents on sequential task streams and with independent reset evaluation. The benchmark is released separately: its evaluation data is hosted on Hugging Face at [`beita6969/scienceclaw-64-samples`](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples).
+
+This repository contains the **agent system only**: typed canvas workflow orchestration, the scientific tool library (`scilib`), the Skill/Operator program with verified, user-promoted self-evolution ([`packages/scienceclaw`](packages/scienceclaw)), and the OpenClaw gateway plugin ([`extensions/scienceclaw`](extensions/scienceclaw)). It does not include an evaluation harness or evaluation datasets.
+
 ## Contact Us
 
 📧 **mingdazhang@ieee.org**

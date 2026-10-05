@@ -1,4 +1,4 @@
-"""ScienceClaw benchmark and self-evolution engine."""
+"""ScienceClaw engine: typed workflow orchestration, the scientific tool library and verified program self-evolution."""
 import sys as _sys
 from pathlib import Path as _Path
 

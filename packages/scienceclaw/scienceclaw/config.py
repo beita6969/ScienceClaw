@@ -9,13 +9,6 @@ from typing import Any
 import yaml
 
 
-def _default_data_root() -> str:
-    return os.environ.get(
-        "SCIENCECLAW_DATA_ROOT",
-        str(Path.home() / ".cache" / "scienceclaw" / "datasets"),
-    )
-
-
 @dataclass
 class ModelRole:
     # Empty -> $SCIENCECLAW_<ROLE>_MODEL, then $SCIENCECLAW_MODEL (resolved when the first request is built).
@@ -91,39 +84,15 @@ class EvolutionConfig:
 
 
 @dataclass
-class BenchConfig:
-    disciplines: list[str] = field(default_factory=list)   # empty -> all available
-    items_per_episode: int = 16
-    rounds: int = 7                          # source episodes per discipline (= rounds)
-    n_val: int = 2
-    n_id: int = 4
-    n_ood: int = 4
-    seed: int = 20260928
-    # Resolved from the deployment environment; checked-in YAML may leave it
-    # empty to keep configs portable across laptops and HPC hosts.
-    data_root: str = field(default_factory=_default_data_root)
-
-
-@dataclass
 class RunConfig:
     name: str = "dev"
     runs_root: str = "runs"
     llm: LLMConfig = field(default_factory=LLMConfig)
     solver: SolverConfig = field(default_factory=SolverConfig)
     evolution: EvolutionConfig = field(default_factory=EvolutionConfig)
-    bench: BenchConfig = field(default_factory=BenchConfig)
 
     def to_dict(self) -> dict:
         return asdict(self)
-
-    def gate_warnings(self) -> list[str]:
-        """Config combinations under which the Eq. 3 noise guard can never admit a single-discipline candidate."""
-        m, n_val = self.evolution.min_improved_episodes, self.bench.n_val
-        if m > n_val:
-            return [f"evolution.min_improved_episodes={m} > bench.n_val={n_val}: a candidate from one discipline touches at "
-                    f"most {n_val} val episode(s), so the noise guard rejects every such candidate whatever its gain "
-                    f"(set min_improved_episodes <= n_val, or 1 for the literal rule)"]
-        return []
 
     def dump(self, path: str | Path) -> None:
         Path(path).write_text(yaml.safe_dump(self.to_dict(), sort_keys=False, allow_unicode=True))
@@ -143,11 +112,6 @@ def _build(cls, data: dict | None, base=None):
         if f.name not in data:
             continue
         v = data[f.name]
-        # An empty value in a checked-in portable YAML means "use the runtime
-        # deployment root", rather than replacing the dataclass default with
-        # an unusable empty path.
-        if cls is BenchConfig and f.name == "data_root" and v == "":
-            continue
         ft = f.type if not isinstance(f.type, str) else eval(f.type, globals())  # noqa: S307 - local dataclass names only
         if is_dataclass(ft) and isinstance(v, dict):
             kwargs[f.name] = _build(ft, v, getattr(base, f.name))
@@ -156,7 +120,7 @@ def _build(cls, data: dict | None, base=None):
     return replace(base, **kwargs)
 
 
-_ENV_FIELDS = (("runs_root",), ("llm", "cache_path"), ("bench", "data_root"), ("llm", "base_url"),
+_ENV_FIELDS = (("runs_root",), ("llm", "cache_path"), ("llm", "base_url"),
                ("llm", "policy", "model"), ("llm", "executor", "model"), ("llm", "patch", "model"))
 
 

@@ -1,8 +1,8 @@
 """Live tasks: an executable task specification D_t = (D_T, D_V, D_E) declared by a plain JSON document.
 
-A benchmark episode comes from a dataset adapter. A *live* task comes from a user request: the gateway agent declares the
+A *live* task comes from a user request: the gateway agent declares the
 objective, the input files, the schema of the deliverable and the hard constraints, and this module turns that declaration
-into the same :class:`scienceclaw.bench.task.Episode` the engine already knows how to orchestrate, execute, replay and verify:
+into the same :class:`scienceclaw.task.Episode` the engine already knows how to orchestrate, execute, replay and verify:
 
 * every input file becomes a ``load_<name>`` tool of D_E (read-only, restricted to the allowed input roots);
 * the declared constraints become the visible hard constraints of D_V;
@@ -18,7 +18,7 @@ from typing import Any
 
 import numpy as np
 
-from scienceclaw.bench.task import Budget, ConstraintSpec, Episode, EvalResult, ToolSpec
+from scienceclaw.task import Budget, ConstraintSpec, Episode, EvalResult, ToolSpec
 from scienceclaw.core.operators import check_contract_entries
 from scienceclaw.core.schema import PORT_TYPES, PortSchema
 

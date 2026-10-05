@@ -12,7 +12,7 @@ tag / applicability bonus:
   output type) against ``applicability["input_types"]`` or, if absent, the operator's input port types.
 
 Applicability adds to the score, and a component learned in one discipline stays retrievable for another
-when it is *relevant* to the episode (cross-discipline transfer is part of the benchmark): a relevance
+when it is *relevant* to the episode (cross-discipline transfer is intended): a relevance
 floor (:class:`RetrievalWeights` ``floor``; DESIGN decision 8) keeps only components with a metadata match
 (discipline, task type or an episode tag among the component's tags / applicability) or a strong lexical
 match (BM25 covering at least ``min_lexical_frac`` of the query's idf mass). Without the floor every

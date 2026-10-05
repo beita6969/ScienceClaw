@@ -7,8 +7,6 @@ export type EngineConfig = {
   repoRoot?: string;
   home?: string;
   inputRoots?: string[];
-  runRoot?: string;
-  dataRoot?: string;
   modelRoot?: string;
   configPath?: string;
   llm?: { baseUrl?: string; apiKey?: string; model?: string };
@@ -56,8 +54,6 @@ function buildEnv(cfg: EngineConfig, packageRoot: string): NodeJS.ProcessEnv {
   set("SCIENCECLAW_SETUP_PROFILE", cfg.setupProfile);
   set("SCIENCECLAW_HOME", cfg.home ? path.resolve(cfg.home) : undefined);
   set("SCIENCECLAW_INPUT_ROOTS", cfg.inputRoots?.map((p) => path.resolve(p)).join(path.delimiter));
-  set("SCIENCECLAW_RUN_ROOT", cfg.runRoot ? path.resolve(cfg.runRoot) : undefined);
-  set("SCIENCECLAW_DATA_ROOT", cfg.dataRoot ? path.resolve(cfg.dataRoot) : undefined);
   set("SCIENCECLAW_MODELS", cfg.modelRoot ? path.resolve(cfg.modelRoot) : undefined);
   set("SCIENCECLAW_CONFIG", cfg.configPath ? path.resolve(cfg.configPath) : undefined);
   set("SCIENCECLAW_API_BASE_URL", cfg.llm?.baseUrl);

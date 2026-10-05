@@ -1,5 +1,5 @@
 #!/bin/bash
-# torch-free interpreter for probe.py + sandbox worker nodes (tools then go through the spool to the local broker, as on the Mac)
+# torch-free interpreter for the engine process and its sandbox worker nodes (heavy tools then go through the spool to the local broker)
 F=${SCIENCECLAW_WORK_ROOT:?set SCIENCECLAW_WORK_ROOT}; L=${SCIENCECLAW_STORE_ROOT:-$F}
 E=$F/envs/sc-run
 [ -d $E ] || /usr/bin/python3.11 -m venv $E

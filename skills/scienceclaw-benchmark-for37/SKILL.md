@@ -1,43 +1,23 @@
 ---
 name: scienceclaw-benchmark-for37
-description: "Run and improve the FoR37 WeatherBench2 benchmark route with the integrated ScienceClaw agent. Use when working on Earth sciences scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task asks for a 24-hour-ahead forecast of a global gridded surface field (2 m temperature on a 64x32 equiangular ERA5 / WeatherBench 2 grid, 6-hourly) from a training record and the four preceding fields of each initialisation, delivered in kelvin and judged by latitude-weighted RMSE (FoR37 of the companion ScienceClaw-Eval benchmark)."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR37 — WeatherBench2
+# Global gridded 2 m temperature forecast, 24 h lead
 
-Use this skill for the `FoR37` adapter. The task metric is **2m temperature RMSE (K)**;
-minimize is better. The adapter module is
-`scienceclaw.bench.tasks.for37_weatherbench`.
+## Task
+- Input: a training record `fields (T, lon, lat)` in K with ISO UTC `times` (6-hourly, consecutive steps); per initialisation `context (n, 4, lon, lat)` in K at init-18 h, -12 h, -6 h, 0 h and `init_time` (n ISO strings).
+- Deliverable: float forecast `(n, lon, lat)` in K for init + 24 h, axes in the store's (longitude, latitude) order, finite and within a physical range (about 150-350 K, which catches degrees Celsius).
+- Quality: WeatherBench 2 RMSE, lower is better: per initialisation sqrt of the area-weighted mean squared error (weights proportional to sin(lat + d/2) - sin(lat - d/2), mean 1), then the mean over initialisations (`scilib.weather.lat_weighted_rmse`). Natural references: persistence (the field at init) and seasonal cycle plus damped anomaly persistence.
 
-## Tool surface
+## Routes
+- `scilib.weather.fit_predict(fields, times, context, init_time)` (operator `gridded_field_patch_ridge_forecast`): per grid cell and UTC-hour bin a seasonal cycle (constant plus 3 annual harmonics), then one ridge regression per latitude row of the anomaly at +24 h on the (2r+1)x(2r+1) anomaly patches of the four context fields (defaults radius 2, lam 30; longitude wraps). Building blocks: `fit_seasonal_cycle`, `seasonal_cycle_at`, `anomalies` (operator `gridded_field_seasonal_anomalies`), `fit_patch_ridge`, `predict_patch_ridge`, `lat_weights`.
+- Validation: `weather.blocked_cv(fields, times, gap_days=6)` runs temporal block cross-validation inside the record (training steps farther than `gap_days` from the held-out block) and returns per-initialisation RMSE. Operator `gridded_field_lat_weighted_rmse` scores any forecast.
+- The tool library has no pretrained global weather model asset (`scienceclaw_tools(operation=weights)` lists what is staged).
 
-The adapter currently declares these tool references:
-
-- `load_dev`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
-
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR37.md` and call `scienceclaw_eval` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+## Pitfalls
+- Respect temporal causality: fit only on record steps that precede the forecasts you issue, and compute row i of the forecast from `context[i]` and `init_time[i]` alone. Another initialisation's context can contain the future of item i, so never pool contexts across items to forecast a target.
+- A seasonal cycle fitted on a short record (for instance one year) is extrapolated to other seasons or years; validate on a later or different period, not on random time steps (neighbouring steps are strongly autocorrelated, hence the block gap).
+- Use one forecast function for validation initialisations and final initialisations, and score validation forecasts only against validation targets built from validation contexts.
+- Keep units in K and the (lon, lat) axis order; longitude is periodic, latitude is not. Do not convert to degrees Celsius or transpose the output.

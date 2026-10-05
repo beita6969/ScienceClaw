@@ -1,46 +1,22 @@
 ---
 name: scienceclaw-benchmark-for36
-description: "Run and improve the FoR36 MUSDB18 four-stem separation benchmark route with the integrated ScienceClaw agent. Use when working on Creative arts and writing scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task asks to separate stereo music mixtures into four stems (vocals, drums, bass, other) and deliver the estimated stems, optionally with training mixtures plus reference stems, judged by BSSEval-v4 source-to-distortion ratio (SDR, dB), as in MUSDB18 music source separation (FoR36 of the companion ScienceClaw-Eval benchmark)."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR36 — MUSDB18 four-stem separation
+# Music source separation: vocals / drums / bass / other
 
-Use this skill for the `FoR36` adapter. The task metric is **mean target-median SDR (dB)**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for36_musdb`.
+## Task
+- Input: stereo mixtures `(k, n, 2)` (linear PCM, sample rate given by the task); optionally training mixtures with stems `(m, 4, n, 2)`.
+- Deliverable: float estimates `(k, 4, n, 2)`, axis 1 in the order (vocals, drums, bass, other), same rate and length as the input, on the amplitude scale of the mixture. Finite, and no estimated target exactly zero over a whole 1-s window (the metric skips such windows).
+- Quality: mean over the four targets of the median over items of the median over 1-s windows of SDR = 10 log10(sum ref^2 / sum (est - ref)^2), dB, higher is better (`scilib.audiosep.sdr_scores`).
 
-## Tool surface
+## Routes
+- Frozen neural separators: `scilib.audiosep_pretrained.separate_pretrained(mixtures, model, sample_rate)` with `htdemucs`, `htdemucs_ft` or `mdx_extra` (asset `demucs`); `scilib.scnet_pretrained.separate_pretrained(mixtures, model="mimo_scnet_small")` (asset `scnet_mimo_small`). Operators `music_source_separation_htdemucs`, `music_source_separation_htdemucs_ft`, `music_source_separation_scnet`. Check `audiosep_pretrained.available(model)`, `scnet_pretrained.available()` and `scienceclaw_tools(operation=weights)` first.
+- Trained CPU baseline: `audiosep.separate(train_mixtures, train_stems, mixtures)` (STFT ratio masks from boosted trees; operator `music_source_separation_softmask`; at least 2 training excerpts). `audiosep.cross_validate(..., groups=track_ids)` gives grouped k-fold SDR. Score with `audiosep.sdr_scores` (operator `music_separation_sdr`).
 
-The adapter currently declares these tool references:
-
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
-- `separate_htdemucs`
-- `separate_htdemucs_ft`
-- `separate_scnet`
-
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR36.md` and call `scienceclaw_eval` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+## Pitfalls
+- SDR is not scale invariant: an almost-zero estimate scores about 0 dB and copying the mixture into every stem scores strongly negative, so a level change alone moves the score. `audiosep.gain_only` and `cross_validate` report `mixture_sdr`, `null_sdr` and `gain_only_sdr` beside the separator; separate level effect from separation and never submit near-silent stems.
+- Pretrained overlap: `htdemucs` was trained on MUSDB18-HQ plus further songs; assume the other Demucs bags overlap likewise. MUSDB18 training tracks (including visible training or validation excerpts) were seen in training and score higher than unseen songs; disclose this, and check the training data of any other checkpoint (e.g. SCNet) before calling it clean.
+- Never use reference stems or oracle masks of the items being separated to build the deliverable; keep all excerpts of a track in one fold.
+- The wrappers already return the input length and the order (vocals, drums, bass, other); do not permute again. A silent reference stem gives NaN windows that the median ignores.

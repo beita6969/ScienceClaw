@@ -50,7 +50,6 @@ export function createCanvasTool(worker: EngineWorker) {
     parameters: Type.Object({
       operation: enumOf(CANVAS_OPS, "open | act | render | replay | finish | status | list"),
       task: Type.Optional(Obj),
-      episode: Type.Optional(Obj),
       sessionId: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9_-]{4,40}$", maxLength: 40 })),
       action: Type.Optional(Type.Union([Obj, Type.String()])),
     }),
@@ -60,7 +59,7 @@ export function createCanvasTool(worker: EngineWorker) {
         throw new Error(`operation must be one of: ${CANVAS_OPS.join(", ")}`);
       }
       if (op === "open") {
-        const r = asRecord(await worker.call("canvas.open", { task: params.task, episode: params.episode }));
+        const r = asRecord(await worker.call("canvas.open", { task: params.task }));
         const head =
           `Canvas session ${String(r.session_id)} opened (program ${String(r.program)}, ${String(r.steps)} steps).\n` +
           `Send ONE action per call: scienceclaw_canvas(operation="act", sessionId, action=<JSON object from the Actions section>). ` +
@@ -116,7 +115,6 @@ export function createToolsTool(worker: EngineWorker) {
       target: Type.Optional(Type.String({ maxLength: 120, description: "tool id (tsfm.forecast) or module (tsfm)" })),
       k: Type.Optional(Type.Integer({ minimum: 1, maximum: 30 })),
       kind: Type.Optional(enumOf(["pretrained", "library"] as const, "restrict to pretrained-model or classical tools")),
-      task: Type.Optional(Type.String({ maxLength: 12, description: "discipline code such as FoR37" })),
       availableOnly: Type.Optional(Type.Boolean()),
       modules: Type.Optional(Type.Array(Type.String({ maxLength: 60 }), { maxItems: 60 })),
       start: Type.Optional(Type.Boolean({ description: "with operation=setup: start the installation if it is not complete" })),
@@ -129,7 +127,6 @@ export function createToolsTool(worker: EngineWorker) {
             query: required(params, "query"),
             k: params.k,
             kind: params.kind,
-            task: params.task,
             available_only: params.availableOnly,
           }),
         );
@@ -187,32 +184,6 @@ export function createProgramTool(worker: EngineWorker) {
         return result(pretty(await worker.call("program.rollback", { version: required(params, "version") })), undefined);
       }
       return result(pretty(await worker.call(`program.${op}`)), undefined);
-    },
-  };
-}
-
-const EVAL_OPS = ["catalog", "list_tasks", "report"] as const;
-
-export function createEvalTool(worker: EngineWorker) {
-  return {
-    name: "scienceclaw_eval",
-    label: "ScienceClaw-Eval",
-    description:
-      "Inspect the ScienceClaw-Eval benchmark of 23 disciplines: catalog lists adapters, tool refs, configs and launchers; " +
-      "list_tasks shows which task datasets are installed here; report builds the report of a finished run (runId). " +
-      "Formal hidden-split evaluation is intentionally unavailable through this tool. Benchmark episodes can be solved " +
-      "interactively with scienceclaw_canvas(operation=open, episode={discipline, split, index}) when their data are installed.",
-    parameters: Type.Object({
-      operation: enumOf(EVAL_OPS, "catalog | list_tasks | report"),
-      runId: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9_.-]+$", maxLength: 128 })),
-    }),
-    async execute(_id: string, params: Record<string, unknown>) {
-      const op = String(params.operation ?? "");
-      if (!(EVAL_OPS as readonly string[]).includes(op)) {
-        throw new Error(`operation must be one of: ${EVAL_OPS.join(", ")}`);
-      }
-      const payload = op === "report" ? { run_id: required(params, "runId") } : {};
-      return result(pretty(await worker.call(`eval.${op}`, payload, 120_000)), undefined);
     },
   };
 }
@@ -292,6 +263,5 @@ export function createScienceClawTools(_api: OpenClawPluginApi, worker: EngineWo
     createToolsTool(worker),
     createProgramTool(worker),
     createEvolveTool(worker),
-    createEvalTool(worker),
   ];
 }

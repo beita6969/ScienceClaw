@@ -8,16 +8,15 @@
 
 The process is long-lived so that canvas sessions keep their graphs, checkpoints and evidence between calls. Methods:
 
-* ``canvas.open|act|render|replay|finish|status|list``: typed workflow orchestration (live tasks or benchmark episodes);
+* ``canvas.open|act|render|replay|finish|status|list``: typed workflow orchestration of live tasks;
 * ``tools.search|show|status`` and ``weights.status|plan``: the scientific tool library and its pretrained weights;
 * ``program.summary|skills|operators|show|history|rollback``: the versioned agent program (Skills and Operators);
-* ``eval.catalog|list_tasks|report``: the ScienceClaw-Eval benchmark (formal hidden-split evaluation is not exposed);
 * ``evolve.val_add|val_list|val_remove|propose|gate|run|status|candidates|candidate``: program self-evolution from finished
   live sessions (``propose``, ``gate`` and ``run`` are background jobs polled with ``evolve.status``).
 
 Environment: ``SCIENCECLAW_HOME`` (state, default ``~/.scienceclaw``), ``SCIENCECLAW_INPUT_ROOTS`` (directories live tasks may
 read, ``os.pathsep``-separated, default: the working directory), ``SCIENCECLAW_CONFIG`` (optional run config with the ``llm``
-section), ``SCIENCECLAW_RUN_ROOT`` (evaluation runs), ``SCIENCECLAW_DATA_ROOT`` and ``SCIENCECLAW_MODELS``.
+section), ``SCIENCECLAW_DATA_ROOT`` (protected from code nodes) and ``SCIENCECLAW_MODELS``.
 """
 from __future__ import annotations
 
@@ -33,9 +32,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 log = logging.getLogger("scienceclaw.rpc")
-PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 _SESSION_ID = re.compile(r"^[A-Za-z0-9_-]{4,40}$")
-PRACTICE_SPLITS = ("src", "val")
 
 
 def _json_safe(value: Any) -> Any:
@@ -73,7 +70,6 @@ class Service:
             "program.summary": self.program_summary, "program.skills": self.program_skills,
             "program.operators": self.program_operators, "program.show": self.program_show,
             "program.history": self.program_history, "program.rollback": self.program_rollback,
-            "eval.catalog": self.eval_catalog, "eval.list_tasks": self.eval_list_tasks, "eval.report": self.eval_report,
             "evolve.val_add": self.evolve_val_add, "evolve.val_list": self.evolve_val_list,
             "evolve.val_remove": self.evolve_val_remove, "evolve.propose": self.evolve_propose,
             "evolve.gate": self.evolve_gate, "evolve.run": self.evolve_run, "evolve.status": self.evolve_status,
@@ -143,45 +139,20 @@ class Service:
         from scienceclaw import bootstrap
         from scienceclaw.canvas import CanvasSession, build_live_episode
         bootstrap.require()
-        if self.root_problems and not p.get("episode"):
+        if self.root_problems:
             raise ValueError("unsafe input roots: " + "; ".join(self.root_problems) + " (set inputRoots to a dedicated workspace)")
+        task = p.get("task")
+        if not isinstance(task, dict):
+            raise ValueError("canvas.open needs a 'task' object (objective, inputs, required_output, constraints)")
         self._evict_closed()
         sid = uuid.uuid4().hex[:12]
         run_dir = self.home / "sessions" / sid
         program = self.program()
-        if p.get("episode"):
-            ep = self._benchmark_episode(p["episode"])
-            session = CanvasSession(ep, program, run_dir, llm=self.llm(), session_id=sid, reveal_verdict=False, kind="benchmark",
-                                    spec={"episode": p["episode"]})
-        else:
-            task = p.get("task")
-            if not isinstance(task, dict):
-                raise ValueError("canvas.open needs a 'task' object (live task) or an 'episode' reference (benchmark task)")
-            ep = build_live_episode(task, task_id=f"live-{sid}", input_roots=self.input_roots)
-            session = CanvasSession(ep, program, run_dir, llm=self.llm(), session_id=sid, kind="live", spec=task)
+        ep = build_live_episode(task, task_id=f"live-{sid}", input_roots=self.input_roots)
+        session = CanvasSession(ep, program, run_dir, llm=self.llm(), session_id=sid, kind="live", spec=task)
         self.sessions[sid] = session
         return {"session_id": sid, "kind": session.kind, "program": program.version, "steps": session.run.max_steps,
                 "retrieved": session.retrieved, "context": session.context()}
-
-    def _benchmark_episode(self, ref: dict):
-        from scienceclaw.bench.splits import adapter_status, load_adapters
-        from scienceclaw.config import BenchConfig
-        code = str(ref.get("discipline", ""))
-        if not code:
-            raise ValueError("episode.discipline is required, e.g. 'FoR37'")
-        cfg = BenchConfig(disciplines=[code])
-        if os.environ.get("SCIENCECLAW_DATA_ROOT"):
-            cfg.data_root = os.environ["SCIENCECLAW_DATA_ROOT"]
-        try:
-            adapter = load_adapters(cfg)[code]
-        except RuntimeError as ex:
-            row = next((r for r in adapter_status(cfg) if r["code"] == code), None)
-            raise RuntimeError(f"{ex}" + (f" ({row['reason']})" if row and row.get("reason") else "")) from None
-        split, index = str(ref.get("split", "src")), int(ref.get("index", 0))
-        if split not in PRACTICE_SPLITS:
-            raise ValueError(f"only the practice splits {PRACTICE_SPLITS} can be opened here; held-out splits are evaluated server-side")
-        episodes = adapter.build_episodes(split, index + 1, cfg.seed, int(ref.get("items", 16)))
-        return episodes[index]
 
     def _evict_closed(self, keep: int = 64) -> None:
         """Forget the oldest finished sessions once more than ``keep`` are held (their receipts stay on disk)."""
@@ -216,7 +187,7 @@ class Service:
     def tools_search(self, p: dict) -> dict:
         from scienceclaw import tools
         self._need(p, "query")
-        hits = tools.search(str(p["query"]), int(p.get("k", 8)), kind=p.get("kind"), task=p.get("task"),
+        hits = tools.search(str(p["query"]), int(p.get("k", 8)), kind=p.get("kind"),
                             available_only=bool(p.get("available_only", False)))
         return {"tools": [dict(e.to_dict(), card=e.card()) for e in hits]}
 
@@ -271,40 +242,6 @@ class Service:
     def program_rollback(self, p: dict) -> dict:
         self._need(p, "version")
         return {"head": self.store.rollback(str(p["version"]))}
-
-    # ---------------------------------------------------------------------------------------------- eval
-    def eval_catalog(self, p: dict) -> dict:
-        from scienceclaw.bench.registry import DISCIPLINES
-        task_dir = PACKAGE_ROOT / "scienceclaw" / "bench" / "tasks"
-        refs: set[str] = set()
-        for d in DISCIPLINES:
-            src = task_dir / f"{d.module}.py"
-            if src.is_file():
-                refs.update(re.findall(r'ToolSpec\s*\(\s*"([A-Za-z0-9_]+)"', src.read_text(encoding="utf-8")))
-        return {"disciplines": [d.__dict__ for d in DISCIPLINES], "tool_refs": sorted(refs),
-                "configs": sorted(f.name for f in (PACKAGE_ROOT / "configs").iterdir() if f.is_file()),
-                "scripts": sorted(str(f.relative_to(PACKAGE_ROOT)) for f in (PACKAGE_ROOT / "scripts").rglob("*")
-                                  if f.is_file() and f.suffix in {".py", ".sh", ".sbatch"})}
-
-    def eval_list_tasks(self, p: dict) -> dict:
-        from scienceclaw.bench.splits import adapter_status
-        from scienceclaw.config import BenchConfig
-        cfg = BenchConfig()
-        if p.get("data_root") or os.environ.get("SCIENCECLAW_DATA_ROOT"):
-            cfg.data_root = str(Path(p.get("data_root") or os.environ["SCIENCECLAW_DATA_ROOT"]).expanduser().resolve())
-        return {"tasks": adapter_status(cfg)}
-
-    def eval_report(self, p: dict) -> dict:
-        from scienceclaw.experiments.report import build_report
-        self._need(p, "run_id")
-        run_id = str(p["run_id"])
-        run_root = Path(os.environ.get("SCIENCECLAW_RUN_ROOT") or PACKAGE_ROOT / "runs").expanduser().resolve()
-        if Path(run_id).name != run_id:
-            raise ValueError("run_id must be a single directory name")
-        run_dir = (run_root / run_id).resolve()
-        if run_dir.parent != run_root or not run_dir.is_dir():
-            raise ValueError("run_id is outside the configured run root or does not exist")
-        return {"run_id": run_id, "report": str(build_report(run_dir))}
 
     # ------------------------------------------------------------------------------------------ evolve
     def _finished_live_session(self, p: dict):

@@ -2,7 +2,7 @@
 
 Every ``scilib`` module is parsed statically (nothing heavy is imported to build the catalog) into :class:`ToolEntry` records:
 its public functions with signatures and documentation, the third-party packages it needs, the weight assets it reads
-(from :mod:`scienceclaw.tools.weights`), whether it can fall back to a remote GPU worker and which benchmark disciplines use it.
+(from :mod:`scienceclaw.tools.weights`), and whether it can fall back to a remote GPU worker.
 :func:`probe` then asks a module whether it can actually run here (``available()``), and :func:`search` retrieves tools for a
 natural-language need with the same BM25 index the Skill/Operator retriever uses.
 """
@@ -37,7 +37,6 @@ class ToolEntry:
     requires: tuple[str, ...]     # packages beyond numpy / scipy / pandas / scikit-learn
     weights: tuple[str, ...]      # ids in weights.json
     remote: bool                  # can run on a remote GPU worker when it cannot run locally
-    tasks: tuple[str, ...]        # benchmark disciplines whose adapters use the module
     tags: tuple[str, ...]
 
     @property
@@ -53,8 +52,6 @@ class ToolEntry:
             lines.append(f"  weights: {', '.join(self.weights)}")
         if self.remote:
             lines.append("  runs on a remote GPU worker when local resources are missing")
-        if self.tasks:
-            lines.append(f"  used by: {', '.join(self.tasks)}")
         if full:
             lines += ["", self.doc.strip()]
         return "\n".join(lines)
@@ -62,7 +59,7 @@ class ToolEntry:
     def to_dict(self) -> dict[str, Any]:
         return {"id": self.id, "module": self.module, "name": self.name, "kind": self.kind, "summary": self.summary,
                 "signature": self.signature, "requires": list(self.requires), "weights": list(self.weights),
-                "remote": self.remote, "tasks": list(self.tasks), "tags": list(self.tags)}
+                "remote": self.remote, "tags": list(self.tags)}
 
 
 # ---------------------------------------------------------------------------------------------------- static analysis
@@ -108,21 +105,6 @@ def _public_names(tree: ast.Module) -> list[str] | None:
 
 
 @lru_cache(maxsize=1)
-def _task_usage() -> dict[str, tuple[str, ...]]:
-    """module -> benchmark disciplines whose adapter references it (static scan of ``bench/tasks``)."""
-    tasks_dir = Path(__file__).resolve().parents[1] / "bench" / "tasks"
-    usage: dict[str, set[str]] = {}
-    for f in sorted(tasks_dir.glob("for*.py")):
-        m = re.match(r"for(\d+)_", f.name)
-        if not m:
-            continue
-        code = f"FoR{m.group(1)}"
-        for mod in set(re.findall(r"\bscilib(?:\.|\s+import\s+)([a-z_0-9]+)", f.read_text(encoding="utf-8"))):
-            usage.setdefault(mod, set()).add(code)
-    return {k: tuple(sorted(v)) for k, v in usage.items()}
-
-
-@lru_cache(maxsize=1)
 def _weights_by_module() -> dict[str, tuple[str, ...]]:
     out: dict[str, list[str]] = {}
     for a in W.load():
@@ -134,7 +116,7 @@ def _weights_by_module() -> dict[str, tuple[str, ...]]:
 @lru_cache(maxsize=1)
 def catalog() -> tuple[ToolEntry, ...]:
     entries: list[ToolEntry] = []
-    usage, wmap = _task_usage(), _weights_by_module()
+    wmap = _weights_by_module()
     for path in sorted(SCILIB_DIR.glob("*.py")):
         mod = path.stem
         if mod.startswith("__") or mod in _SKIP_MODULES:
@@ -152,7 +134,6 @@ def catalog() -> tuple[ToolEntry, ...]:
         weights = wmap.get(mod, ())
         kind = "pretrained" if weights or "model_path(" in src or "MODEL_ENV" in src else "library"
         remote = "_remote" in src
-        tasks = usage.get(mod, ())
         domain_tags = tuple(sorted({t for t in re.split(r"[_\W]+", mod) if t} | ({"pretrained", "weights"} if kind == "pretrained" else set())))
         for name in public:
             node = funcs.get(name) or classes.get(name)
@@ -168,7 +149,7 @@ def catalog() -> tuple[ToolEntry, ...]:
             about = _line_about(mdoc, name)
             summary = _first_sentence(fdoc) if fdoc else (_first_sentence(about) if about and not about.startswith("`") else msummary)
             entries.append(ToolEntry(id=f"{mod}.{name}", module=mod, name=name, kind=kind, summary=summary, signature=sig,
-                                     doc=doc, requires=requires, weights=weights, remote=remote, tasks=tasks, tags=domain_tags))
+                                     doc=doc, requires=requires, weights=weights, remote=remote, tags=domain_tags))
     return tuple(entries)
 
 
@@ -208,13 +189,12 @@ def module_doc(module: str) -> str:
 @lru_cache(maxsize=1)
 def _index() -> BM25Index[ToolEntry]:
     es = list(catalog())
-    texts = [" ".join([e.id, e.name, e.module, e.summary, e.doc[:2500], " ".join(e.tags), " ".join(e.tasks), " ".join(e.requires)]) for e in es]
+    texts = [" ".join([e.id, e.name, e.module, e.summary, e.doc[:2500], " ".join(e.tags), " ".join(e.requires)]) for e in es]
     return BM25Index(es, texts)
 
 
-def search(query: str, k: int = 8, *, kind: str | None = None, task: str | None = None,
-           available_only: bool = False) -> list[ToolEntry]:
-    """Tools ranked for a natural-language need. ``task`` limits to a discipline code ("FoR37"); ``available_only`` probes."""
+def search(query: str, k: int = 8, *, kind: str | None = None, available_only: bool = False) -> list[ToolEntry]:
+    """Tools ranked for a natural-language need. ``available_only`` probes whether the module can run here."""
     idx = _index()
     scores = idx.scores(tokenize(query))
     ranked = sorted(zip(scores, idx.items), key=lambda p: (-p[0], p[1].id))
@@ -222,7 +202,7 @@ def search(query: str, k: int = 8, *, kind: str | None = None, task: str | None 
     for s, e in ranked:
         if s <= 0:
             break
-        if kind and e.kind != kind or task and task not in e.tasks:
+        if kind and e.kind != kind:
             continue
         if available_only and not probe(e.module)["available"]:
             continue

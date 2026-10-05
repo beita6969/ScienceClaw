@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from scienceclaw.bench.task import Budget, Episode, EvalResult, ToolSpec
+from scienceclaw.task import Budget, Episode, EvalResult, ToolSpec
 from scienceclaw.canvas.session import CanvasSession
 from scienceclaw.core.program import AgentProgram
 from scienceclaw.core.schema import PortSchema

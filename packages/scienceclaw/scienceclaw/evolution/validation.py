@@ -165,7 +165,7 @@ def source_pass(result: Any, require_acceptance: bool = True) -> bool:
     ev = getattr(result, "eval", None)
     if ev is None:
         return False
-    from ..bench.task import passes
+    from ..task import passes
 
     return passes(ev, require_acceptance)
 

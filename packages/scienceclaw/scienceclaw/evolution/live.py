@@ -194,7 +194,7 @@ class LiveEvolution:
     def propose(self, session: Any, variant: str | None = None) -> dict[str, Any]:
         """Build candidate bundles from a finished live session (Eq. 9-12) and store them as pending."""
         if getattr(session, "kind", "") != "live":
-            raise ValueError("only live sessions are evolved here; benchmark episodes are evolved by `scienceclaw.cli evolve`")
+            raise ValueError("only finished live sessions can be evolved here")
         if not session.closed or session.result is None:
             raise ValueError("finish the session first: evolution learns from its replay-verified result")
         evo = self.cfg.evolution

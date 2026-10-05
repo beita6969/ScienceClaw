@@ -2,7 +2,7 @@
 
 OpenClaw skills are Markdown files with a YAML front matter. The same files are the strategy-level half of the editable
 program A = (S, O): they are parsed into :class:`scienceclaw.core.skills.Skill` records so that the canvas orchestration
-retrieves them per task with the BM25/metadata retriever, exactly as the benchmark engine does, and so that evolved
+retrieves them per task with the BM25/metadata retriever, exactly as the engine does for any task, and so that evolved
 Skills are written back as versioned records of the same program.
 """
 from __future__ import annotations
@@ -20,7 +20,6 @@ from scienceclaw.core.skills import Skill
 
 DEFAULT_PATTERNS = ("scienceclaw-*",)
 _FRONT = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.S)
-_FOR = re.compile(r"for(\d{2})$")
 
 
 def default_skills_dir() -> Path | None:
@@ -52,18 +51,7 @@ def parse_skill_md(path: Path) -> Skill:
 
 
 def _tags(sid: str, description: str) -> list[str]:
-    tags = [t for t in re.split(r"[-_]+", sid) if t]
-    m = _FOR.search(sid)
-    if m:
-        code = f"FoR{m.group(1)}"
-        tags.append(code)
-        try:
-            from scienceclaw.bench.registry import BY_CODE
-            d = BY_CODE[code]
-            tags += [d.family, d.name, d.metric]
-        except (ImportError, KeyError):
-            pass
-    return list(dict.fromkeys(tags))
+    return list(dict.fromkeys(t for t in re.split(r"[-_]+", sid) if t))
 
 
 def load_skills(skills_dir: str | Path | None = None, patterns: Iterable[str] = DEFAULT_PATTERNS) -> dict[str, Skill]:

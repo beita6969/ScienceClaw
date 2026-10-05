@@ -114,7 +114,7 @@ def protect(path: str | Path) -> None:
 
 
 def protected_paths() -> list[str]:
-    """Locations code nodes must not read or write: benchmark data, evaluator payloads and runs, engine state, credentials."""
+    """Locations code nodes must not read or write: protected data roots, evaluator payloads and runs, engine state, credentials."""
     home = Path.home()
     out = [os.environ.get("SCIENCECLAW_DATA_ROOT"), os.environ.get("SCIENCECLAW_RUN_ROOT"), os.environ.get("SCIENCECLAW_HOME"),
            str(home / ".cache" / "scienceclaw" / "datasets"), str(home / ".config" / "scienceclaw"), str(home / ".scienceclaw"),

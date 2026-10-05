@@ -64,7 +64,7 @@ class Service:
         deny_paths([self.home, Path.home() / ".config" / "scienceclaw", Path.home() / ".ssh"])
         self.root_problems = check_roots(self.input_roots)
         self.methods: dict[str, Callable[[dict], Any]] = {
-            "ping": self.ping,
+            "ping": self.ping, "setup.status": self.setup_status, "setup.start": self.setup_start,
             "canvas.open": self.canvas_open, "canvas.act": self.canvas_act, "canvas.render": self.canvas_render,
             "canvas.replay": self.canvas_replay, "canvas.finish": self.canvas_finish, "canvas.status": self.canvas_status,
             "canvas.list": self.canvas_list,
@@ -128,8 +128,21 @@ class Service:
         return {"pong": True, "pid": os.getpid(), "sessions": len(self.sessions), "home": str(self.home)}
 
     # ------------------------------------------------------------------------------------------ canvas
+    def setup_status(self, p: dict) -> dict:
+        from scienceclaw import bootstrap
+        st = bootstrap.status()
+        rec = bootstrap.read_state() or {}
+        return {**st, "download_gb": rec.get("download_gb"), "results": [{"id": r["id"], "status": r["status"]} for r in rec.get("results", [])],
+                "model_root": rec.get("model_root")}
+
+    def setup_start(self, p: dict) -> dict:
+        from scienceclaw import bootstrap
+        return bootstrap.start_background(p.get("profile"))
+
     def canvas_open(self, p: dict) -> dict:
+        from scienceclaw import bootstrap
         from scienceclaw.canvas import CanvasSession, build_live_episode
+        bootstrap.require()
         if self.root_problems and not p.get("episode"):
             raise ValueError("unsafe input roots: " + "; ".join(self.root_problems) + " (set inputRoots to a dedicated workspace)")
         self._evict_closed()
@@ -301,6 +314,8 @@ class Service:
         return s
 
     def evolve_val_add(self, p: dict) -> dict:
+        from scienceclaw import bootstrap
+        bootstrap.require()
         if p.get("session_id"):
             s = self._finished_live_session(p)
             if not (s.result is not None and s.result.passed):
@@ -321,6 +336,8 @@ class Service:
         return self.evolution.val_remove(str(p["id"]))
 
     def evolve_propose(self, p: dict) -> dict:
+        from scienceclaw import bootstrap
+        bootstrap.require()
         self._need(p, "session_id")
         s, evo = self._finished_live_session(p), self.evolution
         return evo.start_job("propose", lambda: evo.propose(s, p.get("variant")))

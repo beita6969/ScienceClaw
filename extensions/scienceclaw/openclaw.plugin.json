@@ -58,6 +58,16 @@
       },
       "autoPromote": {
         "type": "boolean"
+      },
+      "autoSetup": {
+        "type": "boolean"
+      },
+      "setupProfile": {
+        "type": "string",
+        "enum": [
+          "full",
+          "light"
+        ]
       }
     }
   },
@@ -119,6 +129,16 @@
     "autoPromote": {
       "label": "Promote validated changes automatically",
       "help": "Off by default: an admitted program change waits for the user to promote it with `scienceclaw live promote`",
+      "advanced": true
+    },
+    "autoSetup": {
+      "label": "Install the tool library automatically",
+      "help": "On by default: installs the Python packages, pretrained weights and upstream sources of every tool when the plugin first starts (about 20 GB for the full profile). Tasks wait for it; `python -m scienceclaw.cli setup` does the same by hand.",
+      "advanced": true
+    },
+    "setupProfile": {
+      "label": "Tool installation profile",
+      "help": "full installs every tool; light leaves out the assets larger than 1.5 GB",
       "advanced": true
     }
   }

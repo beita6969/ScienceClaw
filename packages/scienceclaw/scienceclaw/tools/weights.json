@@ -20,7 +20,8 @@
         "torch",
         "chronos"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 0.5
     },
     {
       "id": "chronos_bolt_base",
@@ -39,7 +40,8 @@
         "torch",
         "chronos"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 0.4
     },
     {
       "id": "ast_audioset",
@@ -58,7 +60,8 @@
         "torch",
         "transformers"
       ],
-      "license": "BSD-3-Clause"
+      "license": "BSD-3-Clause",
+      "approx_gb": 0.35
     },
     {
       "id": "clap_htsat_unfused",
@@ -78,7 +81,8 @@
         "transformers"
       ],
       "license": "Apache-2.0",
-      "allow_bin": true
+      "allow_bin": true,
+      "approx_gb": 0.6
     },
     {
       "id": "bge_large_en",
@@ -97,7 +101,8 @@
         "torch",
         "transformers"
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "approx_gb": 1.3
     },
     {
       "id": "bge_reranker_large",
@@ -116,7 +121,8 @@
         "torch",
         "transformers"
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "approx_gb": 2.2
     },
     {
       "id": "nli_deberta_v3_large",
@@ -135,7 +141,8 @@
         "torch",
         "transformers"
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "approx_gb": 1.8
     },
     {
       "id": "esm2_650m",
@@ -154,7 +161,8 @@
         "torch",
         "transformers"
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "approx_gb": 2.6
     },
     {
       "id": "sam2_hf",
@@ -178,7 +186,8 @@
         "*.pt",
         "*.yaml"
       ],
-      "note": "Only config.json, model.safetensors and the processor files are read; the repository's 898 MB .pt is skipped."
+      "note": "Only config.json, model.safetensors and the processor files are read; the repository's 898 MB .pt is skipped.",
+      "approx_gb": 0.9
     },
     {
       "id": "sam2_pt",
@@ -189,13 +198,14 @@
       "check": [
         "sam2.1_hiera_large.pt"
       ],
-      "used_by": [
-        "phenoseg_sam"
-      ],
+      "used_by": [],
       "requires": [
         "torch"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 0.9,
+      "optional": true,
+      "note": "Original SAM 2.1 checkpoint (host may be unreachable); the SAM wrapper reads the Hugging Face asset sam2_hf instead."
     },
     {
       "id": "dinov2_large",
@@ -214,7 +224,8 @@
         "torch",
         "transformers"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 1.2
     },
     {
       "id": "dinov2_base",
@@ -233,7 +244,8 @@
         "torch",
         "transformers"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 0.35
     },
     {
       "id": "camembert_large",
@@ -252,7 +264,8 @@
         "torch",
         "transformers"
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "approx_gb": 1.4
     },
     {
       "id": "stanza_fr",
@@ -279,7 +292,8 @@
         "transformers",
         "stanza"
       ],
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "approx_gb": 0.35
     },
     {
       "id": "phenobench_weyler",
@@ -297,7 +311,8 @@
         "torch"
       ],
       "license": null,
-      "sha256": "ef78b9b9c1a9ac56e4359ac847038e3901dfd2ddff093bfcdf5cd3e44a116e67"
+      "sha256": "ef78b9b9c1a9ac56e4359ac847038e3901dfd2ddff093bfcdf5cd3e44a116e67",
+      "approx_gb": 0.03
     },
     {
       "id": "demucs",
@@ -336,7 +351,8 @@
         "printf \"models: ['f7e0c4bc', 'd12395a8', '92cfc3b6', '04573f0d']\\nweights: [\\n  [1., 0., 0., 0.],\\n  [0., 1., 0., 0.],\\n  [0., 0., 1., 0.],\\n  [0., 0., 0., 1.],\\n]\\n\" > {dir}/htdemucs_ft.yaml",
         "printf \"models: ['e51eebcc', 'a1d90b5c', '5d2d6c55', 'cfa93e08']\\nsegment: 44\\n\" > {dir}/mdx_extra.yaml"
       ],
-      "note": "Mirror of the official checkpoints (dl.fbaipublicfiles.com may be unreachable); the hash suffix of every file name is checked against its sha256."
+      "note": "Mirror of the official checkpoints (dl.fbaipublicfiles.com may be unreachable); the hash suffix of every file name is checked against its sha256.",
+      "approx_gb": 1.1
     },
     {
       "id": "scnet_mimo_small",
@@ -369,7 +385,8 @@
         "echo 'f0eaaab7e899ffc548b29d51d76b89727253fb0a529b787b258eabfcf47db6fb  {dir}/mimo-scnet_small.zip' | sha256sum -c -",
         "unzip -oq {dir}/mimo-scnet_small.zip -d {dir} && rm {dir}/mimo-scnet_small.zip",
         "d=$(mktemp -d) && git clone -q https://github.com/SonyResearch/mimo-audio-separation $d && git -C $d checkout -q 9169bbb && mkdir -p {dir}/source && cp -r $d/src {dir}/source/src && rm -rf $d"
-      ]
+      ],
+      "approx_gb": 0.05
     },
     {
       "id": "hapt",
@@ -388,7 +405,8 @@
       ],
       "license": null,
       "sha256": "27a470149c6dc5ead0a7dca4d0626ae4f0a2a0acfb9b6ad6dd6348bb8e566b3e",
-      "bytes": 29064938
+      "bytes": 29064938,
+      "approx_gb": 0.03
     },
     {
       "id": "phenobench_m2f",
@@ -417,7 +435,8 @@
         "python $(python -c \"import pathlib, scienceclaw; print(pathlib.Path(scienceclaw.__file__).parents[1] / 'scripts')\")/convert_phenobench_m2f.py {dir}/panoptic_segmentation/Mask2former/model.pth {dir}/hf_plants",
         "python $(python -c \"import pathlib, scienceclaw; print(pathlib.Path(scienceclaw.__file__).parents[1] / 'scripts')\")/convert_phenobench_m2f.py {dir}/leaf_instance_segmentation/Mask2former/model.pth {dir}/hf_leaves",
         "rm -rf {dir}/panoptic_segmentation {dir}/leaf_instance_segmentation"
-      ]
+      ],
+      "approx_gb": 0.7
     },
     {
       "id": "open_clip_vit_b32",
@@ -436,7 +455,8 @@
         "open_clip"
       ],
       "sha256": "40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af",
-      "license": "OpenAI CLIP weights; verify before deployment"
+      "license": "OpenAI CLIP weights; verify before deployment",
+      "approx_gb": 0.35
     },
     {
       "id": "buildingsbench_gaussian_l",
@@ -461,7 +481,8 @@
       "note": "The checkpoint also holds optimizer state (1.9 GB); only its 'model' entry is read. The pinned upstream source (NREL/BuildingsBench) is staged into <dir>/source; SCIENCECLAW_BUILDINGS_SOURCE overrides that location.",
       "post": [
         "d=$(mktemp -d) && git clone -q https://github.com/NREL/BuildingsBench $d && git -C $d checkout -q c60e25f37dbae8f3664df0879aaa13a7fe25952d && mkdir -p {dir}/source && cp -r $d/buildings_bench {dir}/source/buildings_bench && rm -rf $d"
-      ]
+      ],
+      "approx_gb": 1.9
     },
     {
       "id": "beats_iter3",
@@ -490,7 +511,8 @@
       ],
       "post": [
         "d=$(mktemp -d) && git -C $d init -q && git -C $d remote add origin https://github.com/microsoft/unilm && git -C $d fetch -q --depth 1 origin 31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd && git -C $d checkout -q FETCH_HEAD -- beats && mkdir -p {dir}/source && cp $d/beats/BEATs.py $d/beats/backbone.py $d/beats/modules.py {dir}/source/ && rm -rf $d"
-      ]
+      ],
+      "approx_gb": 0.36
     },
     {
       "id": "granite_ttm_r2",
@@ -512,7 +534,8 @@
       "bytes": 3240592,
       "sha256": "a706726a7eb01bbcb42994b7dcb3c06ea9557898dbae8d480eb04fe8ccb89710",
       "env": "SCIENCECLAW_GRANITE_MODEL",
-      "note": "Validate a 6-hour resampling policy on src/val before formal use."
+      "note": "Validate a 6-hour resampling policy on src/val before formal use.",
+      "approx_gb": 0.01
     },
     {
       "id": "innereye_hippocampus",
@@ -538,7 +561,8 @@
       "post": [
         "mkdir -p {dir}/extracted && unzip -oq {dir}/hippocampus_segmentation_model.zip -d {dir}/extracted && rm {dir}/hippocampus_segmentation_model.zip",
         "mkdir -p {dir}/extracted/nested && unzip -oq {dir}/extracted/Hippocampus_123.zip -d {dir}/extracted/nested && rm {dir}/extracted/Hippocampus_123.zip"
-      ]
+      ],
+      "approx_gb": 0.6
     },
     {
       "id": "mass_base",
@@ -555,7 +579,9 @@
       ],
       "license": "MIT",
       "sha256": "8f27f19e5bd6013f792a2319207d6ec8652229cf4f89d1f29233ff12e9342b32",
-      "note": "zero-shot transfer on FoR32 crops is below visible location atlas; no formal ToolSpec or scorer submission."
+      "note": "zero-shot transfer on FoR32 crops is below visible location atlas; no formal ToolSpec or scorer submission.",
+      "approx_gb": 1.0,
+      "optional": true
     },
     {
       "id": "tabpfn_25",
@@ -589,7 +615,8 @@
         "torch"
       ],
       "license": null,
-      "note": "Weights ship with the pip package."
+      "note": "Weights ship with the pip package.",
+      "approx_gb": 0.01
     },
     {
       "id": "sevennet",
@@ -608,7 +635,8 @@
         "torch"
       ],
       "license": null,
-      "note": "Pretrained potentials are resolved by the sevenn package."
+      "note": "Pretrained potentials are resolved by the sevenn package.",
+      "approx_gb": 0.02
     }
   ]
 }

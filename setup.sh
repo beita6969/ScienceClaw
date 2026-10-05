@@ -186,6 +186,19 @@ install_python_deps() {
 }
 
 # ---- Install MCP servers ----
+install_scienceclaw_engine() {
+    log_step "Installing the ScienceClaw engine and every tool of its library (packages, pretrained weights, upstream sources)..."
+    local py="${SCIENCECLAW_PYTHON:-python3}"
+    "$py" -m pip install --quiet -e "$PWD/packages/scienceclaw[all]" || { log_err "pip install of the engine failed"; return 1; }
+    if [ "${SCIENCECLAW_SKIP_TOOLS:-0}" = "1" ]; then
+        log_warn "SCIENCECLAW_SKIP_TOOLS=1: tools will be installed on first use instead (python -m scienceclaw.cli setup)"
+        return 0
+    fi
+    "$py" -m scienceclaw.cli setup --profile "${SCIENCECLAW_SETUP_PROFILE:-full}" \
+        && log_ok "ScienceClaw tool library installed" \
+        || { log_err "tool installation incomplete: see 'python -m scienceclaw.cli doctor' and ~/.scienceclaw/setup/*.log"; return 1; }
+}
+
 install_mcp_servers() {
     log_step "Installing MCP servers for academic research..."
 
@@ -327,6 +340,8 @@ main() {
     # Phase 3: Python
     log_step "Phase 3/5: Installing Python scientific stack..."
     install_python_deps
+
+    install_scienceclaw_engine
 
     # Phase 4: MCP Servers
     log_step "Phase 4/5: Installing MCP servers..."

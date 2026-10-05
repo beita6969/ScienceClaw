@@ -68,8 +68,25 @@ def cmd_list_tasks(args: argparse.Namespace) -> int:
     return 0
 
 
+def _setup_gate(args: argparse.Namespace) -> bool:
+    """Refuse to run benchmark work on a machine whose tools are not installed (run `setup` first)."""
+    from . import bootstrap
+
+    if getattr(args, "skip_setup_check", False):
+        return True
+    try:
+        bootstrap.require(auto=False)
+    except bootstrap.SetupRequired as ex:
+        print(f"{ex}\n(--skip-setup-check runs anyway; tools that are missing will then fail inside the workflows)", file=sys.stderr)
+        return False
+    return True
+
+
 def cmd_evolve(args: argparse.Namespace) -> int:
     from .experiments.run_stream import run_stream
+
+    if not _setup_gate(args):
+        return 2
 
     if args.resume:
         run_dir = run_stream(None, resume_dir=args.resume)
@@ -91,6 +108,8 @@ def cmd_evolve(args: argparse.Namespace) -> int:
 def cmd_evaluate(args: argparse.Namespace) -> int:
     from .experiments.evaluate import evaluate_family_transfer, evaluate_snapshots
 
+    if not _setup_gate(args):
+        return 2
     snaps: Any = "all" if args.snapshots in (None, "all") else [s.strip() for s in args.snapshots.split(",") if s.strip()]
     splits = tuple(s.strip() for s in args.splits.split(",") if s.strip())
     path = evaluate_snapshots(args.run, snaps, splits, workers=args.workers, include_rep=not args.no_rep,
@@ -185,6 +204,44 @@ def cmd_live(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_setup(args: argparse.Namespace) -> int:
+    """Install and verify every tool of the library (Python packages, pretrained weights, upstream sources)."""
+    from . import bootstrap
+
+    def progress(p: dict) -> None:
+        extra = f" ({p['index']}/{p['total']}, ~{p['approx_gb']} GB)" if "index" in p else ""
+        print(f"[setup] {p.get('asset') or p['step']}{extra}: {p.get('message', '')}".rstrip(": "), flush=True)
+
+    st = bootstrap.run(args.profile, args.only or None, args.skip or None, args.with_optional, check_only=args.check,
+                       progress=None if args.check else progress)
+    if args.check:
+        print(json.dumps({k: st[k] for k in ("profile", "model_root", "to_stage", "download_gb", "free_gb", "complete")}, indent=1))
+        return 0 if st["complete"] else 1
+    if st.get("error"):
+        print(f"[setup] {st['error']}", file=sys.stderr)
+        return 2
+    for r in st["results"]:
+        print(f"  {r['id']:28s} {r['status']:7s} {r.get('seconds', '')}s" + ("" if r["status"] == "ok" else f"  see {r.get('log')}"))
+    gaps = st.get("modules") or []
+    if gaps:
+        print("\nmodules that still cannot run here:")
+        _print_table([{"module": m["module"], "reason": str(m["reason"])[:100]} for m in gaps], ["module", "reason"])
+    print("\nsetup complete" if st["complete"] else f"\nsetup INCOMPLETE: assets {st.get('missing_assets')}, "
+          f"packages {st['python']['missing_modules']}")
+    return 0 if st["complete"] else 1
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    from . import bootstrap, tools
+
+    st = bootstrap.status()
+    print(f"setup: {st['state']}" + (f" - {st['detail']}" if st.get("detail") else ""))
+    rows = [{"module": r["module"], "kind": r["kind"], "available": "yes" if r["available"] else "no", "reason": str(r["reason"])[:90]}
+            for r in tools.status_table()]
+    _print_table(rows, ["module", "kind", "available", "reason"])
+    return 0 if st["complete"] else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m scienceclaw.cli", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -199,6 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--resume", default=None, metavar="RUN_DIR", help="continue an interrupted run in place")
     s.add_argument("--set", action="append", default=[], metavar="KEY=VALUE", help="dotted config override")
     s.add_argument("--name", default=None)
+    s.add_argument("--skip-setup-check", action="store_true", help="run even if `setup` has not completed on this machine")
     s.set_defaults(fn=cmd_evolve)
 
     s = sub.add_parser("evaluate", help="evaluate frozen snapshots on held-out splits")
@@ -209,6 +267,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--workers", type=int, default=8)
     s.add_argument("--family-transfer", default=None, metavar="SPLIT",
                    help="also evaluate per-source-family programs on SPLIT (e.g. ood)")
+    s.add_argument("--skip-setup-check", action="store_true", help="run even if `setup` has not completed on this machine")
     s.set_defaults(fn=cmd_evaluate)
 
     s = sub.add_parser("report", help="build report tables from eval/results.jsonl")
@@ -246,6 +305,18 @@ def build_parser() -> argparse.ArgumentParser:
     a = ws.add_parser("verify")
     a.add_argument("ids", nargs="*")
     s.set_defaults(fn=cmd_weights)
+
+    s = sub.add_parser("setup", help="install and verify every tool: Python packages, pretrained weights, upstream sources")
+    s.add_argument("--profile", choices=("full", "light"), default=os.environ.get("SCIENCECLAW_SETUP_PROFILE", "full"),
+                   help="light leaves out assets larger than 1.5 GB")
+    s.add_argument("--only", nargs="*", default=None, help="stage only these weight assets")
+    s.add_argument("--skip", nargs="*", default=None, help="leave these weight assets out")
+    s.add_argument("--with-optional", action="store_true", help="also stage assets no wrapper needs")
+    s.add_argument("--check", action="store_true", help="only report what is missing (exit 1 if anything is)")
+    s.set_defaults(fn=cmd_setup)
+
+    s = sub.add_parser("doctor", help="setup state and availability of every library module")
+    s.set_defaults(fn=cmd_doctor)
 
     s = sub.add_parser("live", help="candidates learned from live sessions: review, promote, roll back")
     s.add_argument("--home", default=None, help="engine state directory (default $SCIENCECLAW_HOME or ~/.scienceclaw)")

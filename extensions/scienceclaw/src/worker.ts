@@ -13,6 +13,8 @@ export type EngineConfig = {
   configPath?: string;
   llm?: { baseUrl?: string; apiKey?: string; model?: string };
   autoPromote?: boolean;
+  autoSetup?: boolean;
+  setupProfile?: "full" | "light";
   timeoutMs?: number;
   maxResponseBytes?: number;
 };
@@ -50,6 +52,8 @@ function buildEnv(cfg: EngineConfig, packageRoot: string): NodeJS.ProcessEnv {
   };
   set("SCIENCECLAW_SKILLS_DIR", path.resolve(packageRoot, "..", "..", "skills"));
   set("SCIENCECLAW_AUTO_PROMOTE", cfg.autoPromote ? "1" : undefined);
+  set("SCIENCECLAW_AUTO_SETUP", cfg.autoSetup === false ? undefined : "1");
+  set("SCIENCECLAW_SETUP_PROFILE", cfg.setupProfile);
   set("SCIENCECLAW_HOME", cfg.home ? path.resolve(cfg.home) : undefined);
   set("SCIENCECLAW_INPUT_ROOTS", cfg.inputRoots?.map((p) => path.resolve(p)).join(path.delimiter));
   set("SCIENCECLAW_RUN_ROOT", cfg.runRoot ? path.resolve(cfg.runRoot) : undefined);

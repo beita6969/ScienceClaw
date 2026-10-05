@@ -10,7 +10,7 @@ task data and finished-run reports.
 | Tool | Operations |
 | --- | --- |
 | `scienceclaw_canvas` | `open`, `act`, `render`, `replay`, `finish`, `status`, `list` |
-| `scienceclaw_tools` | `search`, `show`, `status`, `weights` |
+| `scienceclaw_tools` | `search`, `show`, `status`, `weights`, `setup` |
 | `scienceclaw_program` | `summary`, `skills`, `operators`, `show`, `history`, `rollback` |
 | `scienceclaw_evolve` | `val_add`, `val_list`, `val_remove`, `propose`, `gate`, `run`, `status`, `candidates`, `show` |
 | `scienceclaw_eval` | `catalog`, `list_tasks`, `report` |
@@ -51,5 +51,9 @@ given under `llm`, or any backend registered through `scienceclaw.llm.interface`
 
 Keep `home` (session receipts, program store) outside the directories the agent can read freely; a session opened
 from a benchmark episode keeps its verdict sealed, but its receipts on disk are not.
+
+On first start the plugin installs the whole tool library (Python packages, pretrained weights, upstream sources; about 19 GB for the
+full profile) in the background and the engine refuses tasks until that is done. `autoSetup: false` turns the automatic start off
+(run `python -m scienceclaw.cli setup` yourself), `setupProfile: "light"` skips the assets larger than 1.5 GB.
 
 Formal hidden-split evaluation is not reachable through these tools.

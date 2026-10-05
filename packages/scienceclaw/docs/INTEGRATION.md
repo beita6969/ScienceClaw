@@ -63,6 +63,19 @@ is consumed by the pretrained wrappers and the Slurm launchers.
 4. Run formal evaluation with the existing server-side launcher and preserve
    its config, hashes, and per-episode receipts.
 
+## First install: every tool is set up before work starts
+
+`python -m scienceclaw.cli setup` installs the `[all]` extra, stages every pretrained asset of `tools/weights.json` (plus the
+pinned upstream sources some wrappers need) under `SCIENCECLAW_MODELS`, verifies them and records the result in
+`$SCIENCECLAW_HOME/setup.json`. The full profile downloads about 19 GB and checks the free space first; `--profile light` leaves out
+assets larger than 1.5 GB, `--only/--skip` select assets, `--check` only reports. `python -m scienceclaw.cli doctor` shows the setup
+state and why any module cannot run. The root `setup.sh` runs it as part of the installation.
+
+Until the setup is complete the engine refuses `canvas.open` and the evolution methods, and `scienceclaw.cli evolve|evaluate` refuse to
+start (`--skip-setup-check` overrides). The plugin installs automatically when it first starts (`autoSetup`, on by default;
+`setupProfile` selects the profile); `scienceclaw_tools(operation=setup)` shows the progress. `SCIENCECLAW_SKIP_SETUP_CHECK=1` disables
+the gate for development.
+
 ## Models, tools and safety switches
 
 * **Language model.** `llm.backend` is `openai` (an OpenAI-compatible endpoint), `command` (a local program that reads the

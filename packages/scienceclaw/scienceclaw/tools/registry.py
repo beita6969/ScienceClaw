@@ -148,7 +148,7 @@ def catalog() -> tuple[ToolEntry, ...]:
         public = [n for n in (names if names is not None else [*funcs, *classes])
                   if not n.startswith("_") and n != "available"]
         msummary = _first_sentence(mdoc)
-        requires = tuple(sorted(_third_party_imports(tree)))
+        requires = tuple(sorted(_third_party_imports(tree) - STAGED_SOURCES))
         weights = wmap.get(mod, ())
         kind = "pretrained" if weights or "model_path(" in src or "MODEL_ENV" in src else "library"
         remote = "_remote" in src
@@ -182,6 +182,10 @@ def _line_about(module_doc: str, name: str) -> str:
 
 
 # ---------------------------------------------------------------------------------------------------- queries
+# packages that are not installed with pip: their sources are staged next to the weights (see the post steps of weights.json)
+STAGED_SOURCES = frozenset({"buildings_bench"})
+
+
 def modules() -> list[str]:
     return sorted({e.module for e in catalog()})
 

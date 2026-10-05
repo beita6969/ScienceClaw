@@ -98,7 +98,7 @@ export function createCanvasTool(worker: EngineWorker) {
   };
 }
 
-const TOOL_OPS = ["search", "show", "status", "weights"] as const;
+const TOOL_OPS = ["search", "show", "status", "weights", "setup"] as const;
 
 export function createToolsTool(worker: EngineWorker) {
   return {
@@ -109,9 +109,9 @@ export function createToolsTool(worker: EngineWorker) {
       "genomics, geoscience, linguistics and more, plus wrappers of pretrained models (Chronos-2, ESM-2, Demucs, SAM 2.1, DINOv2, " +
       "Stanza, BGE, DeBERTa, SevenNet, ...). operation=search ranks tools for a natural-language need; show prints a tool or module " +
       "with its documentation and whether it can run here; status lists which modules are available and why not; weights shows which " +
-      "pretrained weights are staged and how to stage the rest. Tools run inside canvas code nodes.",
+      "pretrained weights are staged; setup shows the installation of the whole library (start=true begins it). Tools run inside canvas code nodes.",
     parameters: Type.Object({
-      operation: enumOf(TOOL_OPS, "search | show | status | weights"),
+      operation: enumOf(TOOL_OPS, "search | show | status | weights | setup"),
       query: Type.Optional(Type.String({ maxLength: 500 })),
       target: Type.Optional(Type.String({ maxLength: 120, description: "tool id (tsfm.forecast) or module (tsfm)" })),
       k: Type.Optional(Type.Integer({ minimum: 1, maximum: 30 })),
@@ -119,6 +119,7 @@ export function createToolsTool(worker: EngineWorker) {
       task: Type.Optional(Type.String({ maxLength: 12, description: "discipline code such as FoR37" })),
       availableOnly: Type.Optional(Type.Boolean()),
       modules: Type.Optional(Type.Array(Type.String({ maxLength: 60 }), { maxItems: 60 })),
+      start: Type.Optional(Type.Boolean({ description: "with operation=setup: start the installation if it is not complete" })),
     }),
     async execute(_id: string, params: Record<string, unknown>) {
       const op = String(params.operation ?? "");
@@ -147,6 +148,11 @@ export function createToolsTool(worker: EngineWorker) {
       }
       if (op === "weights") {
         return result(pretty(await worker.call("weights.status")), undefined);
+      }
+      if (op === "setup") {
+        const st = (await worker.call("setup.status")) as { complete?: boolean; state?: string };
+        const now = params.start === true && !st.complete && st.state !== "running" ? await worker.call("setup.start", {}) : st;
+        return result(pretty(now), undefined);
       }
       throw new Error(`operation must be one of: ${TOOL_OPS.join(", ")}`);
     },

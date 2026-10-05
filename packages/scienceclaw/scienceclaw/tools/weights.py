@@ -39,6 +39,8 @@ class WeightAsset:
     flatten: bool = False          # multi-file url assets: store every file directly in `subdir`
     post: tuple[str, ...] = ()     # shell commands run after the download; "{dir}" is the asset directory
     allow_bin: bool = False        # huggingface assets: keep *.bin files (the repo ships no safetensors)
+    approx_gb: float = 0.0         # download size, for the disk check of the setup command
+    optional: bool = False         # not needed by any wrapper: skipped by the setup command unless asked for
     exclude: tuple[str, ...] = ()  # huggingface assets: further patterns to skip
     include: tuple[str, ...] = ()  # huggingface assets: download only these files (patterns) of a multi-checkpoint repo
     extra: dict[str, Any] = field(default_factory=dict, compare=False)
@@ -64,13 +66,13 @@ def load() -> list[WeightAsset]:
     out = []
     for a in doc["assets"]:
         known = {"id", "title", "kind", "source", "subdir", "check", "used_by", "requires", "license", "files", "sha256",
-                 "bytes", "env", "restricted", "note", "flatten", "post", "allow_bin", "include", "exclude"}
+                 "bytes", "env", "restricted", "note", "flatten", "post", "allow_bin", "include", "exclude", "approx_gb", "optional"}
         out.append(WeightAsset(
             id=a["id"], title=a["title"], kind=a["kind"], source=a.get("source"), subdir=a.get("subdir"),
             check=tuple(a.get("check", ())), used_by=tuple(a.get("used_by", ())), requires=tuple(a.get("requires", ())),
             license=a.get("license"), files=tuple(a.get("files", ())), sha256=a.get("sha256"), bytes=a.get("bytes"),
             env=a.get("env"), restricted=bool(a.get("restricted", False)), note=a.get("note"),
-            flatten=bool(a.get("flatten", False)), post=tuple(a.get("post", ())), allow_bin=bool(a.get("allow_bin", False)), include=tuple(a.get("include", ())), exclude=tuple(a.get("exclude", ())),
+            flatten=bool(a.get("flatten", False)), post=tuple(a.get("post", ())), allow_bin=bool(a.get("allow_bin", False)), include=tuple(a.get("include", ())), exclude=tuple(a.get("exclude", ())), approx_gb=float(a.get("approx_gb", 0.0)), optional=bool(a.get("optional", False)),
             extra={k: v for k, v in a.items() if k not in known}))
     return out
 

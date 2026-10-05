@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" role="img" aria-label="ScienceClaw: verifiable program-level self-evolution for AI-for-Science agents">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="0.5" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+  <text x="600" y="132" text-anchor="middle" font-family="Inter, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="-3" fill="url(#g)">ScienceClaw</text>
+  <text x="600" y="188" text-anchor="middle" font-family="Inter, 'SF Pro Text', 'Segoe UI', Helvetica, Arial, sans-serif" font-size="29" font-weight="500" letter-spacing="0.5" fill="#64748b">Verifiable program-level self-evolution for AI-for-Science agents</text>
+  <rect x="540" y="214" width="120" height="5" rx="2.5" fill="url(#g)"/>
+</svg>

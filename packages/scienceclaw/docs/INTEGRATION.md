@@ -62,3 +62,20 @@ is consumed by the pretrained wrappers and the Slurm launchers.
    `scienceclaw_eval` for catalog, task availability or report inspection.
 4. Run formal evaluation with the existing server-side launcher and preserve
    its config, hashes, and per-episode receipts.
+
+## Models, tools and safety switches
+
+* **Language model.** `llm.backend` is `openai` (an OpenAI-compatible endpoint), `command` (a local program that reads the
+  prompt on stdin and prints the completion; `llm.command` or `SCIENCECLAW_LLM_COMMAND`, with `{system}` and `{model}`
+  placeholders) or `package.module:factory`. Model names and credentials come from the environment.
+* **Tool library.** `python -m scienceclaw.cli tools status` shows which of the 47 scilib modules run here and why not;
+  `python -m scienceclaw.cli weights status|plan|verify` stages the pretrained checkpoints and the upstream sources some
+  wrappers need. The typed operators in `scienceclaw/program/specs/` wrap the main entry points; `program.check.check_operator`
+  runs one through the real canvas on concrete inputs.
+* **Code-node sandbox.** Workers run with an allow-listed environment, a runtime audit guard (protected data and state
+  locations, sockets, programs other than the interpreter, native libraries, the engine's sources) and, where `unshare`
+  works, in new user, network and pid namespaces (`SCIENCECLAW_SANDBOX_ISOLATION=auto|off|require`). Run untrusted
+  workloads in a container as well.
+* **Program changes learned from live sessions** wait as `ready` until the user promotes them:
+  `python -m scienceclaw.cli live candidates|show|promote|rollback|history` (`autoPromote` in the plugin configuration
+  makes the gate promote by itself).

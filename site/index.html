@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScienceClaw — Verifiable Program-Level Self-Evolution</title>
+<meta name="description" content="ScienceClaw is an AI-for-Science agent that gets better from replay-verified executions: Skills and typed Operators evolve, the foundation model never does. Evaluated across 23 disciplines.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ScienceClaw — Verifiable Program-Level Self-Evolution">
+<meta property="og:description" content="Skills and Operators that grow from replay-verified executions. The model is never updated.">
+<meta property="og:url" content="https://scienceclaw.science/">
+<meta property="og:image" content="https://scienceclaw.science/img/overview.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d1b2a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="container nav-content">
+    <a href="#top" class="nav-logo">Science<span>Claw</span></a>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false" id="navToggle"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#gateway">Gateway</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#start">Get started</a>
+      <a href="https://github.com/beita6969/ScienceClaw" class="btn-nav" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="container hero-content">
+    <div class="hero-badge">Open source · Verifiable program-level self-evolution</div>
+    <h1>Science<span class="accent">Claw</span></h1>
+    <p class="hero-subtitle">An AI-for-Science agent that improves from verified execution — and never touches the model.</p>
+    <p class="hero-desc">Each task is solved as a typed, executable workflow. When a repair is reproduced under a clean replay, it becomes a linked <strong>Skill</strong> and <strong>Operator</strong>, and is kept only if independent validation tasks improve.</p>
+    <div class="hero-buttons">
+      <a href="https://github.com/beita6969/ScienceClaw" class="btn btn-primary" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.8-.26.8-.58v-2.23c-3.34.73-4.03-1.42-4.03-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.2.7.82.58A12 12 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#start" class="btn btn-secondary">Quick start</a>
+      <a href="https://huggingface.co/datasets/beita6969/scienceclaw-64-samples" class="btn btn-ghost" target="_blank" rel="noopener">Benchmark data ↗</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-number" data-count="23" data-dec="0">23</span><span class="stat-label">Disciplines</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-number" data-count="16.45" data-dec="2" data-prefix="+" data-suffix="%">+16.45%</span><span class="stat-label">Mean OOD gain over the frozen agent</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-number" data-count="98.23" data-dec="2" data-suffix="%">98.23%</span><span class="stat-label">Hard-constraint pass rate</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-number">0</span><span class="stat-label">Model parameters updated</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- Overview figure -->
+<section class="section tight">
+  <div class="container">
+    <figure class="figure wide reveal">
+      <button class="zoom" data-src="img/overview.webp" aria-label="Enlarge figure"><img src="img/overview.webp" alt="Overview of ScienceClaw across the natural and social sciences" width="2000" height="992" loading="lazy"></button>
+      <figcaption>ScienceClaw-Eval spans 23 disciplines across the natural and social sciences, while ScienceClaw turns verified execution evidence into persistent Skill–Operator program updates.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- Method -->
+<section class="section alt" id="method">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Method</span>
+      <h2>Persistent improvement, without training the model</h2>
+      <p>A repair that works once rarely survives: it lives in a transient context, or in a single tool or prompt. ScienceClaw asks a sharper question.</p>
+    </div>
+
+    <blockquote class="question reveal">How can verified scientific executions drive persistent and transferable program-level self-evolution without updating foundation-model parameters?</blockquote>
+
+    <div class="steps">
+      <article class="step reveal">
+        <span class="step-n">01</span>
+        <h3>A fixed model, an evolving program</h3>
+        <p>The model is frozen. What evolves is a versioned program of <b>Skills</b> (decomposition, workflow construction, recovery) and typed <b>Operators</b> with explicit input, output and domain contracts.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-n">02</span>
+        <h3>Typed, execution-guided workflows</h3>
+        <p>Ports carry a schema of type, shape, unit and provenance. The agent edits the graph one atomic action at a time, and nodes are fingerprinted so an edit reruns only what it affects.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-n">03</span>
+        <h3>Evidence you can replay</h3>
+        <p>Every result is regenerated from a reset environment and checked against hard scientific constraints. A failed replay and a later passing one bracket the shortest reproduced repair.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-n">04</span>
+        <h3>Linked Skill–Operator updates</h3>
+        <p>A repair splits by edit type into a Skill patch and a typed Operator, committed as one atomic bundle. Forming, ranking and selecting candidates needs no LLM judge.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-n">05</span>
+        <h3>A gate, not a guess</h3>
+        <p>An update persists only if source replay reproduces and uses it, every hard check holds on independent validation tasks, cost stays in budget, and the score strictly improves.</p>
+      </article>
+      <article class="step reveal">
+        <span class="step-n">06</span>
+        <h3>You stay in control</h3>
+        <p>Updates are versioned snapshots with receipts. In the gateway they wait as candidates until you promote them, and any version can be rolled back.</p>
+      </article>
+    </div>
+
+    <figure class="figure reveal">
+      <button class="zoom" data-src="img/method_overview.webp" aria-label="Enlarge figure"><img src="img/method_overview.webp" alt="Definition and overview of the ScienceClaw task" width="2000" height="750" loading="lazy"></button>
+      <figcaption>Given task specification D<sub>t</sub> and agent program A<sub>r</sub>, ScienceClaw produces a scientific solution Z<sub>t</sub> and retains a candidate update only after source-task replay and independent program validation.</figcaption>
+    </figure>
+
+    <details class="more reveal">
+      <summary>Task formulation</summary>
+      <figure class="figure flush">
+        <button class="zoom" data-src="img/task_formulation.webp" aria-label="Enlarge figure"><img src="img/task_formulation.webp" alt="Task formulation of verifiable program-level self-evolution" width="2000" height="1507" loading="lazy"></button>
+        <figcaption>Task formulation of verifiable program-level self-evolution for AI-for-Science agents.</figcaption>
+      </figure>
+    </details>
+  </div>
+</section>
+
+<!-- Results -->
+<section class="section" id="results">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Results</span>
+      <h2>It keeps getting better — and the gain transfers</h2>
+      <p>Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 64 OOD instances per discipline and one fixed foundation model. OOD means an independently sourced dataset of the same discipline; OOD results never generate or select updates.</p>
+    </div>
+
+    <div class="kpis reveal">
+      <div class="kpi"><b>+16.45%</b><span>mean OOD gain over the frozen agent<br><i>+11.57% to +23.34% per discipline</i></span></div>
+      <div class="kpi"><b>77.83 → 91.30</b><span>OOD macro success rate over seven rounds<br><i>+13.47 pp</i></span></div>
+      <div class="kpi"><b>70 / 161</b><span>candidates promoted<br><i>43.48%, a selective gate that still moves</i></span></div>
+      <div class="kpi"><b>18 / 20</b><span>cross-family transfer pairs positive<br><i>+1.57 pp across, +14.68 pp within a family</i></span></div>
+      <div class="kpi"><b>0.13 pp</b><span>average forgetting<br><i>max 0.51 pp, 11.89% negative transfer</i></span></div>
+      <div class="kpi"><b>98.23%</b><span>of instances pass every hard constraint<br><i>1.23% erroneous promotions</i></span></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card reveal">
+        <h3>OOD macro success rate by round</h3>
+        <p class="card-sub">Frozen agent, RuleEvo (a ScienceClaw variant that evolves by deterministic trace projection alone) and the full system.</p>
+        <div id="trajChart" class="chart" role="img" aria-label="Line chart of OOD macro success rate by round"></div>
+      </div>
+      <div class="card reveal">
+        <h3>What the gain depends on</h3>
+        <p class="card-sub">Share of the full system's gain that each ablation variant retains.</p>
+        <div id="retainChart" class="bars"></div>
+      </div>
+    </div>
+
+    <div class="card reveal wide-card">
+      <div class="card-head">
+        <div>
+          <h3>Gain over the frozen agent, by discipline</h3>
+          <p class="card-sub">Relative improvement in each discipline's task-native metric, computed from the rounded scores in the paper's tables.</p>
+        </div>
+        <div class="toggles">
+          <div class="seg" id="splitSeg" role="group" aria-label="Split">
+            <button class="on" data-v="ood">OOD</button><button data-v="iid">IID</button>
+          </div>
+          <div class="seg" id="sortSeg" role="group" aria-label="Sort">
+            <button class="on" data-v="code">By FoR</button><button data-v="gain">By gain</button>
+          </div>
+        </div>
+      </div>
+      <div id="discChart" class="dbars"></div>
+    </div>
+
+    <div class="grid-2 figs">
+      <figure class="figure reveal">
+        <button class="zoom" data-src="img/ablation_heatmap.webp" aria-label="Enlarge figure"><img src="img/ablation_heatmap.webp" alt="Ablation heatmap across 23 disciplines" width="2000" height="615" loading="lazy"></button>
+        <figcaption>Task-native scores of the ablation variants across 23 disciplines; colours are normalised within each discipline (darker is better).</figcaption>
+      </figure>
+      <figure class="figure reveal">
+        <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="1400" height="753" loading="lazy"></button>
+        <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay.</figcaption>
+      </figure>
+    </div>
+
+    <p class="note reveal">Reported trajectories are final snapshots, not uncertainty estimates over source orders or model configurations, and cost comparisons are relative to the protocol, not absolute.</p>
+  </div>
+</section>
+
+<!-- Gateway -->
+<section class="section dark" id="gateway">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">In practice</span>
+      <h2>Use it from the gateway</h2>
+      <p>ScienceClaw runs on the OpenClaw gateway as a plugin with four tools. The agent builds a workflow step by step; you decide what it keeps.</p>
+    </div>
+
+    <div class="split">
+      <div class="reveal">
+        <ol class="flow">
+          <li><b>Declare the task.</b> Objective, inputs, required output and constraints. Inputs become read-only loaders; constraints are the acceptance test.</li>
+          <li><b>Build the workflow.</b> Find tools, then add, modify or remove one node or edge per step, reading typed feedback after each edit.</li>
+          <li><b>Verify.</b> <code>replay</code> re-executes the whole graph from a reset state; <code>finish</code> returns the verified deliverable.</li>
+          <li><b>Evolve (optional).</b> Register independent validation tasks, propose candidates from the verified session, and gate them.</li>
+          <li><b>You decide.</b> Review and promote with the CLI. Every promotion is a new program version you can roll back.</li>
+        </ol>
+      </div>
+      <div class="reveal">
+        <div class="tools">
+          <div class="tool"><code>scienceclaw_canvas</code><span>open · act · render · replay · finish · status · list</span></div>
+          <div class="tool"><code>scienceclaw_tools</code><span>search · show · status · weights · setup</span></div>
+          <div class="tool"><code>scienceclaw_program</code><span>summary · skills · operators · show · history · rollback</span></div>
+          <div class="tool"><code>scienceclaw_evolve</code><span>val_add · propose · gate · run · status · candidates · show</span></div>
+        </div>
+        <div class="code"><pre><span class="c"># review what the gate let through, then decide</span>
+python -m scienceclaw.cli live candidates
+python -m scienceclaw.cli live show &lt;candidate&gt;
+python -m scienceclaw.cli live promote &lt;candidate&gt;
+python -m scienceclaw.cli live rollback &lt;version&gt;</pre></div>
+      </div>
+    </div>
+
+    <div class="facts reveal">
+      <div class="fact"><b>300+</b><span>skills, including 36 seed Skills for the evolving program</span></div>
+      <div class="fact"><b>112</b><span>typed library Operators</span></div>
+      <div class="fact"><b>292</b><span>scientific tool functions in 42 <code>scilib</code> modules</span></div>
+      <div class="fact"><b>28</b><span>pretrained-weight assets, fetched on demand</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Safety + research protocol -->
+<section class="section alt">
+  <div class="container">
+    <div class="grid-3">
+      <article class="card reveal">
+        <div class="ico">🔒</div>
+        <h3>Nothing persists without evidence</h3>
+        <p>Source replay, validation, budget and strict improvement must all hold, and the gate fails closed when the model is unavailable.</p>
+      </article>
+      <article class="card reveal">
+        <div class="ico">🧪</div>
+        <h3>Sandboxed execution</h3>
+        <p>Code nodes run in a separate process with a scrubbed environment, a static scan and a runtime audit guard, plus user, network and pid namespaces where the host supports them.</p>
+      </article>
+      <article class="card reveal">
+        <div class="ico">📚</div>
+        <h3>A citation protocol</h3>
+        <p>In the gateway, every citation must come from a tool result in the current conversation, searches cross several sources, and results are written to a file before an answer is final.</p>
+      </article>
+    </div>
+    <p class="note reveal">Persistent executable updates can reuse errors and widen the attack surface. Run untrusted workloads in a container as well. ScienceClaw should support, not replace, experts; high-stakes use needs provenance, licensing and privacy safeguards, and independent review.</p>
+  </div>
+</section>
+
+<!-- Benchmark -->
+<section class="section" id="benchmark">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Benchmark</span>
+      <h2>ScienceClaw-Eval</h2>
+      <p>A companion benchmark for continual self-evolution rather than single-shot ability. Systems share the foundation model, the initial program, the source order, the tools and the budget.</p>
+    </div>
+
+    <div class="grid-4 reveal">
+      <div class="mini"><b>Source stream</b><span>the only evolution evidence</span></div>
+      <div class="mini"><b>Validation set</b><span>independent, used to select candidates</span></div>
+      <div class="mini"><b>ID and OOD</b><span>held-out and cross-dataset, per discipline</span></div>
+      <div class="mini"><b>Replay set</b><span>earlier source tasks, to measure retention</span></div>
+    </div>
+
+    <figure class="figure reveal">
+      <button class="zoom" data-src="img/benchmark_construction.webp" aria-label="Enlarge figure"><img src="img/benchmark_construction.webp" alt="Construction of ScienceClaw-Eval" width="2000" height="745" loading="lazy"></button>
+      <figcaption>Scientific-task collection, executable instantiation, validation and reproduction, and lineage-aware evaluation splits.</figcaption>
+    </figure>
+
+    <div class="chips reveal" id="chips" aria-label="The 23 disciplines"></div>
+
+    <p class="lead-line reveal">An instance counts as solved only if execution completes within budget, the task-native metric meets its acceptance rule, and every scientific hard constraint holds. The evaluation data, 64 IID and 64 OOD records per discipline, is on <a href="https://huggingface.co/datasets/beita6969/scienceclaw-64-samples" target="_blank" rel="noopener">Hugging Face</a>.</p>
+  </div>
+</section>
+
+<!-- Get started -->
+<section class="section alt" id="start">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Get started</span>
+      <h2>From clone to a running agent</h2>
+    </div>
+    <div class="install">
+      <div class="inst reveal">
+        <span class="n">1</span><h3>Clone</h3>
+        <div class="code copy"><pre>git clone https://github.com/beita6969/ScienceClaw.git
+cd ScienceClaw</pre><button class="copybtn" aria-label="Copy">Copy</button></div>
+      </div>
+      <div class="inst reveal">
+        <span class="n">2</span><h3>Set up</h3>
+        <div class="code copy"><pre>chmod +x setup.sh &amp;&amp; ./setup.sh</pre><button class="copybtn" aria-label="Copy">Copy</button></div>
+        <p>Installs Node and Python dependencies, the engine, its tools and pretrained weights, MCP servers and skills.</p>
+      </div>
+      <div class="inst reveal">
+        <span class="n">3</span><h3>Run</h3>
+        <div class="code copy"><pre>npx openclaw gateway</pre><button class="copybtn" aria-label="Copy">Copy</button></div>
+        <p>Enable the <code>scienceclaw</code> plugin in <code>~/.openclaw/openclaw.json</code>.</p>
+      </div>
+    </div>
+    <div class="byom reveal">
+      <h3>Bring your own model</h3>
+      <p>The engine never assumes a model family. Point it at any OpenAI-compatible endpoint, a local program, or your own backend.</p>
+      <div class="code copy"><pre>export SCIENCECLAW_API_BASE_URL=&lt;your OpenAI-compatible endpoint&gt;
+export SCIENCECLAW_API_KEY=&lt;your key&gt;
+export SCIENCECLAW_MODEL=&lt;your model name&gt;</pre><button class="copybtn" aria-label="Copy">Copy</button></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <a href="#top" class="nav-logo">Science<span>Claw</span></a>
+      <p>Verifiable program-level self-evolution for AI-for-Science agents. Built on the <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">OpenClaw</a> gateway.</p>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <a href="https://github.com/beita6969/ScienceClaw" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/datasets/beita6969/scienceclaw-64-samples" target="_blank" rel="noopener">Benchmark data</a>
+      <a href="https://github.com/beita6969/ScienceClaw/blob/main/packages/scienceclaw/docs/DESIGN.md" target="_blank" rel="noopener">Design document</a>
+      <a href="https://github.com/beita6969/ScienceClaw/blob/main/SCIENCE.md" target="_blank" rel="noopener">SCIENCE.md</a>
+      <a href="https://github.com/beita6969/ScienceClaw/tree/main/skills" target="_blank" rel="noopener">Skills catalog</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="mailto:mingdazhang@ieee.org">mingdazhang@ieee.org</a>
+      <p class="muted">MIT License © 2026 ScienceClaw</p>
+    </div>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" hidden><button class="lb-close" aria-label="Close">×</button><img alt=""></div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

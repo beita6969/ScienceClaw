@@ -259,11 +259,10 @@ def _feedback_section(with_operators: bool, show_dev_score: bool) -> str:
 
 _ACCEPTANCE = """\
 # Acceptance
-The deliverable counts as solved when all of the following hold on the hidden evaluation items:
-- the task metric beats the task's reference predictor by a fixed margin;
-- all constraints hold, including any that are not listed under "Constraints";
-- the final workflow, replayed from its stored specification, reproduces the deliverable within the budget.
-The metric values and the reference predictor are not shown to you."""
+The deliverable counts as solved when all of the following hold:
+- every constraint holds, including any that are not listed under "Constraints" (for example a quality bar that is checked
+  on held-out data the workflow never loads; its value is not shown to you);
+- the final workflow, replayed from its stored specification, reproduces the deliverable within the budget."""
 
 _ORCH = {
     "canvas": """\
@@ -312,7 +311,7 @@ def build_system_prompt(episode: Any, skills: Sequence[Any], operators: Sequence
     """System prompt for the policy π_Θ0 on one episode.
 
     Args:
-        episode: a :class:`scienceclaw.bench.task.Episode`; only its public view is rendered.
+        episode: a :class:`scienceclaw.task.Episode`; only its public view is rendered.
         skills: retrieved Skills (rendered in full with ``Skill.render()``).
         operators: retrieved Operators (``OperatorSpec.render()``: signature, description, contract). Rendered only
             in the orchestrations that accept operator nodes (``canvas``, ``single_turn``).

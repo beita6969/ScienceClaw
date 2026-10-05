@@ -1,48 +1,23 @@
 ---
 name: scienceclaw-benchmark-for45
-description: "Run and improve the FoR45 AmericasNLP 2026 benchmark route with the integrated ScienceClaw agent. Use when working on Indigenous studies scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task gives small culturally specific images with language metadata (Indigenous languages of the Americas) and a few captioned training examples per language, and asks for one caption string in the item's own language per image, scored by mean sentence chrF++ against the reference captions (AmericasNLP 2026 cultural image captioning; corresponds to FoR45 of the companion ScienceClaw-Eval benchmark)."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR45 — AmericasNLP 2026
+# Image captioning for low-resource Indigenous languages
 
-Use this skill for the `FoR45` adapter. The task metric is **mean sentence chrF++**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for45_americasnlp`.
+**Task.** Input: evaluation items (language, ISO 639-3 code, culture) with uint8 RGB images (e.g. 64x64x3), and visible training rows (`caption`, `iso_lang`, `has_image`, images; some rows are caption-only). Deliverable: a list of non-empty strings, one per item, in that item's language (`captions.fit_predict` caps strings at 1000 characters; follow what the task declares).
 
-## Tool surface
+**Quality.** Mean sentence chrF++, higher is better: `sacrebleu CHRF(word_order=2)` (character 1-6-grams, word 1-2-grams, beta 2, case-sensitive, 0-100) against the reference caption. Baseline: the per-language medoid of the visible training captions.
 
-The adapter currently declares these tool references:
+**Tools.**
+- `from scilib import captions`: `chrf`, `mean_chrf` (operator `caption_chrf_score`), `medoid` (`caption_medoid`), `consensus_caption` (`caption_consensus_string`), `mbr_caption` (`caption_mbr_clauses`), `by_language`, `fit_predict(train_rows, items, method="consensus"|"mbr"|"medoid")` (one string per language, from that language's captions only). Estimate a strategy on unseen captions with `loo_score` / `loo_compare` / `loo_lengths` (operator `caption_holdout_chrf_estimate`), setting `n_train` to the real training size.
+- `from scilib import clip_retrieval`: `available()`, `provenance()`, `encode_images` (`image_embedding_clip`), `retrieve_captions(train_rows, train_images, eval_items, eval_images, k=1, selection="nearest"|"caption_medoid", fallback=...)` (`image_caption_retrieval_clip`): same-language cosine nearest-neighbour caption lookup; caption-only rows are skipped.
+- Weights `open_clip_vit_b32` (OpenAI CLIP ViT-B/32 via `open_clip`; needs torch). Check with `scienceclaw_tools(operation=weights)` and `clip_retrieval.available()`; nothing downloads implicitly; verify the licence. Disclose its use: it is an external pretrained encoder that sees no captions or labels.
 
-- `clip_knn_reference`
-- `clip_knn_reference_medoid`
-- `clip_retrieval_status`
-- `image_features`
-- `image_knn_reference`
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
+**Routes.** (1) Language-level caption: medoid, or a consensus/MBR string maximising mean chrF++ against the language's pool. (2) Image-conditioned retrieval, optionally `k>1` with `selection="caption_medoid"`. With few captions per language, retrieval can score below the medoid; choose by leave-one-out chrF++ on the training rows.
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR45.md` and call `scienceclaw_eval` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+**Rules.**
+- Never pool captions across languages. `retrieve_captions` returns `""` for a language without a captioned image, so pass `fallback=` (e.g. that language's medoid).
+- Use no target captions. Consensus and MBR strings optimise n-gram overlap and are not grammatical; say so in the report.
+- One string per item, input order. Do not claim image understanding from pixel statistics.

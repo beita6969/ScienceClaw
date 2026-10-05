@@ -143,7 +143,7 @@ def serve(a) -> None:
         try:
             raw = gzip.decompress(req.read_bytes())
             try:
-                known.update(known_blobs(a))                # chunks staged since the last request (scripts/remote/prestage.py)
+                known.update(known_blobs(a))                # chunks staged since the last request
             except Exception:  # noqa: BLE001
                 pass
             gpu = slots.get()

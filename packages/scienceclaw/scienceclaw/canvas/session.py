@@ -1,6 +1,6 @@
 """A canvas orchestration session: the multi-turn loop of the paper (Eq. 5-8) driven from outside.
 
-The benchmark solver owns the loop: it asks a policy for an atomic canvas edit, executes it, and shows the feedback. Inside a
+In a batch solver the engine owns the loop: it asks a policy for an atomic canvas edit, executes it, and shows the feedback. Inside a
 gateway the policy is the agent that is already talking to the user, so the loop is inverted: the agent *acts* on a session
 (one atomic edit per call) and gets the visible feedback back. Everything below that boundary is the engine unchanged:
 

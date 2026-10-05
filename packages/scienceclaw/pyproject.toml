@@ -1,7 +1,7 @@
 [project]
 name = "scienceclaw"
 version = "0.1.0"
-description = "ScienceClaw benchmark and self-evolution engine: verifiable program-level self-evolution for AI-for-Science agents"
+description = "ScienceClaw engine: typed workflow orchestration, the scientific tool library and verifiable program-level self-evolution for AI-for-Science agents"
 requires-python = ">=3.11"
 dependencies = ["numpy", "pandas", "scipy", "scikit-learn", "pyyaml"]
 

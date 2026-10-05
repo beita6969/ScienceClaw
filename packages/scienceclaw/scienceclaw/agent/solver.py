@@ -9,7 +9,7 @@ Per episode the solver
    f_{t,k} is shown in the next turn;
 3. in ``mode="source"`` regenerates evidence e_{t,k} by *reset replay* (Eq. 8) whenever a new complete
    workflow is submitted (see "Replay trigger" below), evaluates it with the hidden evaluator and records
-   ``Pass`` (``bench.task.passes``). The policy is never told anything from the hidden evaluation;
+   ``Pass`` (``scienceclaw.task.passes``). The policy is never told anything from the hidden evaluation;
 4. selects the final solution G*_t (DESIGN decision 7): the replay-verified passing graph with the best
    *visible* dev score (ties: latest step); otherwise the latest graph that produced an output (replayed
    now if it was not yet); otherwise failure (y = None, z = 0). In modes ``"val"``/``"eval"`` only this
@@ -52,7 +52,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-from ..bench.task import EvalResult, passes
+from ..task import EvalResult, passes
 from ..core.graph import Edge, Node, WorkflowGraph
 from ..core.retrieval import Retriever
 from ..core.trace import Evidence, Trace

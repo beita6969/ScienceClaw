@@ -1,26 +1,25 @@
-# ScienceClaw — all DESIGN.md defaults made explicit (RunConfig()).
-# Paper-scale protocol: 23 disciplines (empty list = all available adapters), 7 rounds,
-# n_val 2, n_id 4 x 16 items, n_ood 4 x 16 items. Decisions 1-10 of DESIGN.md section 1.
-# The API key is read at request time from llm.credentials_file and is never copied anywhere.
+# ScienceClaw run configuration: the defaults of RunConfig() made explicit (see docs/DESIGN.md section 1).
+# No model is named here: set SCIENCECLAW_MODEL (or the model of each role) and the endpoint / credentials for your
+# own deployment. The API key is read at request time from llm.credentials_file and is never copied anywhere.
 name: default
 runs_root: runs
 llm:
   base_url: ''
   credentials_file: ~/.config/scienceclaw/credentials.json
   policy:
-    model: "${SCIENCECLAW_MODEL}"
+    model: ""                     # empty: taken from SCIENCECLAW_<ROLE>_MODEL, then SCIENCECLAW_MODEL
     max_tokens: 6000
     temperature: 0.0
     reasoning_effort: low
     json_mode: true
   executor:
-    model: "${SCIENCECLAW_MODEL}"
+    model: ""                     # empty: taken from SCIENCECLAW_<ROLE>_MODEL, then SCIENCECLAW_MODEL
     max_tokens: 2000
     temperature: 0.0
     reasoning_effort: low
     json_mode: false
   patch:
-    model: "${SCIENCECLAW_MODEL}"
+    model: ""                     # empty: taken from SCIENCECLAW_<ROLE>_MODEL, then SCIENCECLAW_MODEL
     max_tokens: 4000
     temperature: 0.0
     reasoning_effort: low
@@ -58,12 +57,3 @@ evolution:
   max_regressed_episodes: 1                # -1 = unlimited
   infra_retries: 2                         # bounded retries of a solve cut short by a gateway outage
   infra_backoff_s: 30.0
-bench:
-  disciplines: []
-  items_per_episode: 16
-  rounds: 7
-  n_val: 2
-  n_id: 4
-  n_ood: 4
-  seed: 20260928
-  data_root: ""

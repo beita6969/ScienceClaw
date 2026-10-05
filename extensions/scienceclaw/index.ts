@@ -6,7 +6,7 @@ const plugin = {
   id: "scienceclaw",
   name: "ScienceClaw",
   description:
-    "Verifiable program-level self-evolution and typed workflow orchestration for scientific agents: canvas sessions, the scientific tool library, the versioned Skill/Operator program and the ScienceClaw-Eval benchmark.",
+    "Typed workflow (canvas) orchestration for scientific agents, the scientific tool library, and a versioned Skill/Operator program that evolves through replay-verified, user-promoted updates.",
   register(api: OpenClawPluginApi) {
     const worker = new EngineWorker((api.pluginConfig ?? {}) as EngineConfig);
     for (const tool of createScienceClawTools(api, worker)) {

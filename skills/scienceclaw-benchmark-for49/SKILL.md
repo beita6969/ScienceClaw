@@ -1,51 +1,29 @@
 ---
 name: scienceclaw-benchmark-for49
-description: "Run and improve the FoR49 SMT-COMP 2025 QF_NIA benchmark route with the integrated ScienceClaw agent. Use when working on Mathematical sciences scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task gives SMT-LIB v2 scripts (quantifier-free nonlinear integer or integer-real arithmetic, QF_NIA / QF_NIRA, SMT-COMP style single-query instances) and asks for the satisfiability verdict of each one (sat, unsat or unknown) as a list in input order, judged by agreement with the status published with the benchmark. Corresponds to FoR49 of the companion ScienceClaw-Eval benchmark."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR49 — SMT-COMP 2025 QF_NIA
+# SMT satisfiability (QF_NIA)
 
-Use this skill for the `FoR49` adapter. The task metric is **oracle-agreement accuracy**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for49_smt`.
+## Task
+- Inputs: a list of SMT-LIB scripts (comments and `set-info` metadata removed), optionally some labelled example scripts with their status.
+- Deliverable: a list of strings, same length and order, each `sat`, `unsat` or `unknown`.
 
-## Tool surface
+## Quality
+Accuracy: the fraction of scripts whose label equals the reference status. `unknown` never agrees, and a wrong definite answer (sat vs unsat) is the worst outcome, so report correct / wrong-definite / unknown counts separately. A baseline is the majority status of the labelled examples for every script.
 
-The adapter currently declares these tool references:
+## Tools
+- `scilib.logic.solve_all(queries, threads=2, timeout_s=10, rlimit=None, memory_mb=2048, params=None)` and `check(query, ...)`: Z3 Python API, one context per query; each result has `status`, `reason` (timeout, resource limit, out of memory, or `error: ...` for a rejected script or parameter) and `seconds`. Typed operator `smt_satisfiability_batch`.
+- `scilib.logic.decide(queries, train_status=None, fallback=None, budget_s=240, threads=2, first_rlimit=16_000_000, first_timeout_s=8, factor=4, max_rounds=4)`: escalating rounds (rlimit and wall limit grow by `factor`) over the still-undecided queries within one wall budget, returning `labels`, `status`, `stage`, `reason`, `n_decided`. Operator `smt_escalating_decide`. The node's own time limit must exceed `budget_s`.
+- Needs the `z3-solver` package (check with `scienceclaw_tools(operation=show, target=logic)`); no pretrained weights. The memory cap is process-wide, shared by parallel threads.
 
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `score_dev`
-- `z3_check`
+## Route
+1. Run `decide` with the budget the task allows (threads up to the CPU cores), or `solve_all` with a short limit and then rerun the undecided scripts with larger limits.
+2. A Z3 `sat` or `unsat` is final; never override it with a heuristic. A `reason` starting with `error:` means a bad parameter or unsupported syntax, not a hard instance: fix and rerun instead of guessing.
+3. For scripts still undecided, report `unknown`, or, if scored by agreement, use `fallback="majority"` with `train_status` and state clearly that these labels are guesses, not solver answers.
 
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR49.md` and call `scienceclaw_eval` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-   For the visible-dev solver route, start with
-   `z3_check(query_timeout_s=30, workers=8, memory_mb=4096)` and let
-   `score_dev` choose it against the 10-second baseline. This is the current
-   fast/high-recall default: on three local `val` dev episodes (seeds 900–902)
-   it produced accuracies 0.9375, 1.0000, and 0.8750 with no wrong definite
-   answers. The 120-second setting is an escalation for a difficult formal
-   episode when the episode wall budget allows it; it is not a scorer change.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+## Rules
+- Do not read `:status` annotations if any survive in a script; that is the label.
+- Only asserted formulas are solved (`check-sat` and `set-info` are ignored by the parser); keep `set-logic` as given.
+- Keep the output length, order and label vocabulary exactly as required.

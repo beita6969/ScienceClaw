@@ -1,45 +1,23 @@
 ---
 name: scienceclaw-benchmark-for39
-description: "Run and improve the FoR39 Eedi NeurIPS 2020 Task 4 benchmark route with the integrated ScienceClaw agent. Use when working on Education scores, tools, visible-dev selection, or formal evidence."
+description: "Use when a task asks to predict whether students answer held-out diagnostic multiple-choice questions correctly, from a large student-by-question correctness matrix and a small per-student budget of adaptively chosen revealed answers (about 10), delivered as a 0/1 prediction per target cell and judged by accuracy; Eedi / NeurIPS 2020 Education Challenge Task 4 adaptive testing with item response theory (FoR39 of the companion ScienceClaw-Eval benchmark)."
 metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
-# FoR39 — Eedi NeurIPS 2020 Task 4
+# Adaptive testing and student answer prediction
 
-Use this skill for the `FoR39` adapter. The task metric is **organizer 10-mask accuracy**;
-maximize is better. The adapter module is
-`scienceclaw.bench.tasks.for39_eedi`.
+## Task
+- Input: a training matrix `answers (n_train, Q)` (1 correct, 0 incorrect, -1 not answered; optional question subjects and student metadata); for the students to predict, `can_query (n, Q)` bool (cells that may be revealed) and `targets (n, Q)` bool (cells to predict). A querying tool declared by the task reveals a student's answers to chosen question ids, up to a per-student budget (10 in the companion benchmark).
+- Deliverable: int array `(n, Q)` with 0 or 1 on every target cell and -1 elsewhere.
+- Quality: accuracy over all target answers (the organiser averages over 10 query/target masks), higher is better. Reference: predict each question's most common training correctness.
 
-## Tool surface
+## Routes
+- Two-parameter IRT with `scilib.adaptive`: `fit_item_curves(answers)` (marginal-likelihood EM, seconds for thousands of students), `ability_posterior`, `predict_proba(model, revealed)`, `select_queries(model, can_query, revealed, k, budget, method="batch"|"bald")`, `predict(model, revealed, targets)`, `merge_revealed`. `model` may be the training matrix itself (the fit is cached per process). Typed operators: `irt_item_response_fit`, `irt_adaptive_question_selection`, `irt_correctness_prediction`.
+- Pattern: split the budget into a few rounds. Round 1 `select_queries(answers, can_query, [], k1)`; query; round 2 `select_queries(answers, can_query, [rev1], k2)`; query; finally `predict(answers, [rev1, rev2], targets)`. Selection is deterministic and the list for k is a prefix of the list for a larger k.
+- Before spending real queries, simulate the procedure on held-out training students (hide a random 20 percent of their answered cells as targets, query from the rest) to compare random, BALD and batch selection with the majority reference.
 
-The adapter currently declares these tool references:
-
-- `load_dev_inputs`
-- `load_eval_inputs`
-- `load_train`
-- `query_answers`
-- `query_dev_answers`
-- `score_dev`
-
-Treat the list as a capability inventory, not permission to call every tool.
-Select one frozen route plus a clearly named baseline, then record the exact
-provenance and configuration used.
-
-## Workflow
-
-1. Read `docs/tasks/FoR39.md` and call `scienceclaw_eval` with
-   `operation=catalog` before changing a route.
-2. Build the candidate from visible `load_train` data and use `score_dev` or the
-   documented visible split for selection. Keep the output shape, unit, and hard
-   constraints from the adapter unchanged.
-3. Prefer an existing frozen checkpoint or remote wrapper. Do not train new
-   weights, infer hidden targets, or use an evaluation item to choose a skill.
-4. For self-evolution, let the solver produce a replayable graph, attribute the
-   passing change to a skill/operator bundle, and validate it against the
-   incumbent before promotion.
-5. For formal work, use only an approved mutually exclusive launcher and record
-   the manifest tag. If capacity or a compliant asset is missing, record the
-   blocker instead of retrying an evaluated item.
-
-See `skills/scienceclaw-benchmark/references/protocol.md` for the shared
-promotion and evidence contract.
+## Pitfalls
+- Treat the budget as counting distinct revealed cells over the whole solve, including exploratory or later-discarded calls. Fix the number and size of rounds before querying: changing k or the round plan changes the cells later rounds ask for and can exceed the budget.
+- Only answered, non-target questions are queryable; never try to read target answers or labels of the students being predicted, and fit item curves on the training matrix only.
+- Each query call returns the `revealed` array for its own cells only (-1 not revealed, 0 incorrect, 1 correct). Keep every array and pass the list; do not pass `revealed_values` (chosen option 1-4), which is a different encoding.
+- Per-student evidence is only about 10 answers, so accuracy gains over the majority reference are modest and noisy on a few dozen students; report the gain together with its sample size.

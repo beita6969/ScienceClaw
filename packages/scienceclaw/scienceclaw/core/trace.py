@@ -65,7 +65,7 @@ class Evidence:
     graph_dict: dict
     y: Any
     trace: Trace
-    eval: Any            # bench.task.EvalResult
+    eval: Any            # scienceclaw.task.EvalResult
     passed: bool
     graph_fp: str = ""
 

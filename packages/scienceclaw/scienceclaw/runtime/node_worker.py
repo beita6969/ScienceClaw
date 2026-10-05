@@ -149,7 +149,7 @@ _PROC_FOREIGN = re.compile(r"^/proc/(\d+)/(?:environ|mem|maps|cmdline|fd|cwd|roo
 def _install_audit_guard(deny: list[str], allow: list[str]) -> None:
     """Enforce, below the language level, what the static scan only suggests (PEP 578 audit hooks cannot be removed).
 
-    Node code may not touch ``deny`` locations (the benchmark data, evaluator payloads, engine state, credential stores) unless
+    Node code may not touch ``deny`` locations (protected data roots, evaluator payloads, engine state, credential stores) unless
     they lie under ``allow`` (its own work directory), open or bind non-loopback sockets (this also closes the ``_socket``
     route around the patched ``socket`` module), start any program other than this interpreter, load native libraries from
     outside the Python installation, or import the ScienceClaw package. This is defence in depth for a process that runs as

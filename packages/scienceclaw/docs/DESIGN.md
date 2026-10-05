@@ -1,52 +1,55 @@
-# ScienceClaw rebuild — design contract
+# ScienceClaw engine — design contract
 
-This document is the single source of truth for the rebuilt ScienceClaw code base.
-Every module implements the interfaces below. Paper references are to
-"ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents
-Across the Natural and Social Sciences" (KDD'27 submission #358).
+This document is the design contract of the ScienceClaw engine (`packages/scienceclaw`): typed workflow
+(canvas) orchestration of scientific tasks, the scientific tool library `scilib`, the versioned
+Skill/Operator program and its replay-verified self-evolution, the code-node sandbox, and the line-delimited
+JSON-RPC service used by the OpenClaw gateway plugin (`extensions/scienceclaw`). Every module implements the
+interfaces below. Paper references are to "ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science
+Agents Across the Natural and Social Sciences" (KDD'27 submission #358), which defines the method (Eq. 1–13) this
+engine implements.
 
-Status of results: everything produced by this code is a **rebuild experiment**.
-It never overwrites or back-fills numbers of the submitted paper. Every reported
-number must come from a run receipt (run dir with config, program snapshot,
-per-episode outputs, metrics, token/cost accounting).
+This repository is the agent system only. The companion benchmark, ScienceClaw-Eval (23 disciplines,
+FoR30–FoR52), is released separately; its evaluation data is hosted on Hugging Face
+(<https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>). The engine package contains no evaluation
+harness, datasets or tests.
 
 ---------------------------------------------------------------------------
 ## 0. Map from paper to code
 
 | Paper object | Code |
 |---|---|
-| Task D_t = (D_T, D_V, D_E) | `bench.task.Episode` (objective/required output = D_T; constraints + evaluator + acceptance = D_V; tools + data + budget = D_E) |
-| Editable program A_r = (S_r, O_r) | `core.program.AgentProgram` (`skills: dict[str, Skill]`, `operators: dict[str, OperatorSpec]`) |
+| Task D_t = (D_T, D_V, D_E) | `task.Episode` (objective/required output = D_T; constraints + evaluator + acceptance = D_V; tools + data + budget = D_E); a live task declaration becomes an `Episode` through `canvas.live.build_live_episode` |
+| Editable program A_r = (S_r, O_r) | `core.program.AgentProgram` (`skills: dict[str, Skill]`, `operators: dict[str, OperatorSpec]`), stored versioned by `program.store.ProgramStore` |
 | Θ0 fixed foundation model | `llm.client.LLMClient` role `policy` (same model also used for `patch` and, by default, `executor`) — never trained |
-| Eq.1 Solve_Θ0(D_t \| A_r) → Z_t = (G*_t, y_t, τ_t) | `agent.solver.Solver.solve(episode, program, mode)` → `SolveResult` |
+| Eq.1 Solve_Θ0(D_t \| A_r) → Z_t = (G*_t, y_t, τ_t) | `agent.solver.Solver.solve(episode, program, mode)` → `SolveResult`; in the gateway the same loop is driven from outside by `canvas.session.CanvasSession` |
 | Eq.5 typed workflow graph, Γ = (type, shape, unit, provenance), Compat | `core.schema.PortSchema`, `core.schema.compat`, `core.graph.WorkflowGraph` |
-| Eq.6 policy π_Θ0 samples (a_{t,k}, ν_{t,k}) | `agent.policy.Policy.propose(...)` → `core.actions.Action` (has `uses` = ν) |
+| Eq.6 policy π_Θ0 samples (a_{t,k}, ν_{t,k}) | `agent.policy.Policy.propose(...)` → `core.actions.Action` (has `uses` = ν); in the gateway the acting agent is the policy |
 | Retrieve(D_t; S_r), Retrieve(D_t; O_r) | `core.retrieval.Retriever` (BM25 + tag match, top-k) |
 | Eq.7 Execute_{D_E}(G, χ, a) → (G', χ', f) | `runtime.executor.Executor.apply(graph, checkpoint, action)` |
-| Eq.8 Replay + Eval → e_{t,k} = (D_t, G, y, τ, q, h, c), Pass | `runtime.replay.replay(graph, episode)`, `episode.evaluate(y, trace)` → `EvalResult`; `bench.task.passes(...)` |
+| Eq.8 Replay + Eval → e_{t,k} = (D_t, G, y, τ, q, h, c), Pass | `runtime.replay.replay(graph, episode, ...)`, `episode.evaluate(y, trace)` → `EvalResult`; `task.passes(...)` |
 | Eq.9 evolution instance, e⁻, e⁺, δ_i | `evolution.attribution.extract_instances(trajectory)` → `EvolutionInstance` |
 | Eq.10 Π_ctrl, Π_exec, CC_Γ | `evolution.split.split_edits(instance, program)` → `(control_edits, exec_components)` |
 | Eq.11 Patch_Θ0 Skill candidate | `evolution.skill_patch.make_skill_candidates(...)` |
 | Eq.12 Operator candidate ô = (G⁺[U], Γ_∂U, κ, ρ) + BReplay | `evolution.operator_abstraction.make_operator_candidate(...)`, `boundary_replay(...)` |
-| Bundle B_i, Apply, version ids ω | `evolution.bundle.Bundle`, `AgentProgram.apply(bundle)` |
+| Bundle B_i, Apply, version ids ω | `core.program.Bundle`, `evolution.bundle.build_bundle`, `AgentProgram.apply(bundle)` |
 | Eq.13 R_src = Pass ∧ Use | `evolution.validation.source_replay_check(...)` |
 | Eq.2 feasibility (R_src, H_val, C_val ⪯ B) + argmax Q_val | `evolution.validation.ValidationGate` |
-| Eq.3 strict-improvement update, Θ fixed | `evolution.evolver.Evolver` |
-| Eq.4 MacroSR, z_i | `bench.metrics.macro_sr`, `EvalResult.z` |
-| D_src, D_val, D_ID, D_OOD, D_rep | `bench.splits.SplitPlan` |
+| Eq.3 strict-improvement update, Θ fixed | `evolution.evolver.Evolver` (batch stream) and `evolution.live.LiveEvolution` (gateway) |
+| Eq.4 MacroSR, z_i | `EvalResult.z`; MacroSR is Q_val over the validation tasks (`evolution.validation`) |
+| D_src, D_val | the source stream of an `Evolver` plan; in the gateway, finished live sessions (D_src) and the validation tasks the user registered (D_val) |
 
 ---------------------------------------------------------------------------
 ## 1. Decisions the paper leaves open (fixed here, all configurable)
 
-1. **Round / update schedule.** A round r processes one source episode per
-   discipline in the fixed source order (23 episodes/round → 7 rounds = 161
-   source episodes, matching "161 candidates"). Default
+1. **Round / update schedule.** The batch `Evolver` walks the source stream of its plan
+   (`plan.source_stream()`: `(round, episode)` pairs, round-major, in a fixed order). Default
    `update_schedule = "per_candidate"`: every candidate that passes R_src is
    validated immediately against the *current incumbent* and accepted iff
    Eq.2–3 hold; the next source episode already uses the updated program.
    Snapshots A_0..A_R are taken at round ends. Alternative
    `"per_round_argmax"` pools candidates of a round and applies one argmax
-   (literal Eq.2–3 reading).
+   (literal Eq.2–3 reading). In the gateway the source stream is the user's own work: each finished,
+   replay-verified live session is a source episode and its candidates are gated one at a time (§7).
 2. **Q_val.** Paper: MacroSR on D_val. Default `qval = "macrosr_then_score"`:
    lexicographic (MacroSR, mean normalized score on D_val); strict improvement
    means MacroSR ↑, or MacroSR equal and normalized score ↑ by ≥ `qval_eps`.
@@ -66,12 +69,13 @@ per-episode outputs, metrics, token/cost accounting).
    `pass_requires_acceptance = True` (a replay-verified "success" is a solved
    episode in the z sense). `reproducible` = clean replay output equals the
    executor output within the episode tolerance.
-5. **Feedback visibility.** The policy NEVER sees hidden-label scores, in any
+5. **Feedback visibility.** The policy NEVER sees hidden-evaluator scores, in any
    mode. It sees: action validation errors, node execution status/errors,
    output summaries (type/shape/unit/finite/range), constraint-check results,
-   and the *visible dev score* (adapter-provided dev split carved from visible
-   data). Hidden evaluator results are used only by the evolution machinery
-   (Pass/z) and by reporting.
+   and the *visible dev score* (a task-provided score computed on visible data,
+   shown unless `show_dev_score` is off). Hidden evaluator results (labels,
+   evaluator-only constraints) are used only by the evolution machinery
+   (Pass/z).
 6. **Replay schedule.** A clean replay (Eq.8) is run whenever an executed graph
    produces a submit output whose fingerprint differs from the last replayed
    one. Replay results give the evidence sequence e_{t,k}.
@@ -100,16 +104,19 @@ per-episode outputs, metrics, token/cost accounting).
    records `val_resolved` (episodes re-solved) and `val_reused` per candidate in
    `candidates.jsonl` (and `ValReport.n_resolved / n_reused`).
    `lazy_revalidation: false` re-solves every val episode.
-9. **Empty initial library.** A_0 has no Skills and no learned Operators; D_E
-   tools are always available. The system prompt contains only (A) what each
-   action/tool/node kind does, (B) the deliverable format, (C) interface rules.
-   It never contains how-to procedures or task strategies — those must be
-   learned as Skills/Operators.
-10. **PI.** Reported with an explicit formula and an explicit reference:
-    `PI_d(A) = 100·s_d(A)/s_d(ref)` (higher-better) and
-    `100·s_d(ref)/s_d(A)` (lower-better); `PI = mean_d PI_d`. Default
-    ref = frozen A_0 (so A_0 = 100). The paper-style reference (final method
-    snapshot) is available as `pi_reference="method_final"`.
+9. **Initial library.** `AgentProgram()` starts empty; D_E tools are always available. The gateway's
+   seed program A0 (`program.seed.seed_program`) holds the `scienceclaw-*` Skills parsed from the `skills/`
+   directory plus the typed library operators of `program/library_ops.py` (provenance `source == "library"`).
+   The system prompt contains only (A) what each action/tool/node kind does, (B) the deliverable format, (C)
+   interface rules. It never contains how-to procedures or task strategies — those come from Skills and
+   learned Operators.
+10. **Gateway gate.** `evolution.live.LIVE_GATE` applies Eq.2–3 as written: `hval_mode = "absolute"` (every
+    hard constraint holds on every validation task) and `qval = "macrosr"`. A candidate needs at least
+    `max(min_val_tasks (2), min_improved_episodes)` registered validation tasks; D_src and D_val are
+    disjoint (the task key hashes the objective and the resolved input files, and the gate refuses a
+    validation task whose files changed since registration); a candidate derived from an older program is
+    refused when a component it changes has moved on. An admitted candidate is `ready`; promotion is the
+    user's decision, unless the plugin enables `autoPromote`.
 11. **Budget B.** The paper's `C_val ⪯ B` is made concrete as two conditions
     that must BOTH hold on the summed D_val cost: (a) an absolute cap that
     scales with the validation set, `B_abs = budget_tokens_per_val_episode ×
@@ -124,8 +131,7 @@ per-episode outputs, metrics, token/cost accounting).
     `within_budget_abs / _rel / _wall` and the violated ones (`budget_violated`).
 12. **Noise guard on Eq. 3 (deliberate deviation, switchable).** Eq. 3 admits a
     candidate on any strict Q_val improvement. With one stochastic draw per val
-    episode and a small D_val (2 episodes per discipline in the default
-    benchmark) a single lucky episode is enough, so the incumbent drifts on
+    episode and a small D_val a single lucky episode is enough, so the incumbent drifts on
     noise. `evolution.min_improved_episodes` (default 2) additionally requires
     the Q_val gain to be supported by at least that many D_val episodes that
     *individually* improved (z 0 → 1, or the same z with a normalized-score
@@ -156,54 +162,63 @@ per-episode outputs, metrics, token/cost accounting).
 
 ```
 scienceclaw/
-  config.py                 RunConfig and sub-configs (dataclasses, YAML load/dump)
+  config.py                 RunConfig and sub-configs (LLMConfig, SolverConfig, EvolutionConfig; YAML load/dump)
+  task.py                   Episode, ToolSpec, ConstraintSpec, Budget, EvalResult, passes (the neutral task abstraction)
+  bootstrap.py              first-install setup (Python packages, pretrained weights, upstream sources) and its gate
   core/
     schema.py               PortSchema, compat, UnitRegistry, summarize_value
     graph.py                Node, Edge, WorkflowGraph
+    actions.py              Action, parse_action, apply_action (the atomic canvas edits)
     skills.py               Skill
     operators.py            OperatorSpec, Contract
-    program.py              AgentProgram (+ save/load, apply)
+    program.py              AgentProgram (+ save/load, apply), Bundle
     retrieval.py            Retriever (BM25 + tags)
+    trace.py                NodeRecord, Trace, Evidence
   llm/
     client.py               LLMClient (OpenAI-compatible, cache, retries, accounting)
+    interface.py            ChatModel protocol, register_backend / build_chat_model
+    command.py              backend that runs a local program on the prompt
   runtime/
-    sandbox.py              run_code_node(...) in a subprocess worker
+    sandbox.py              run_code_node(...) in an isolated subprocess worker
     node_worker.py          subprocess entry point
     executor.py             Executor (Eq.7), Checkpoint
     replay.py               replay (Eq.8)
-    integrity.py            static leakage scan for generated code
+    integrity.py            static scan of generated code
+    values.py               value (de)serialisation and output comparison
   agent/
-    actions.py              Action, parse_action, validate_action
     prompts.py              system/user prompt builders (A/B/C only)
     policy.py               Policy (Eq.6)
     solver.py               Solver (Eq.1 via Eq.6–8), Trajectory, StepRecord, SolveResult
+  canvas/
+    live.py                 live task declarations -> Episode (input tools, constraints, input-root checks)
+    session.py              CanvasSession: one atomic edit per call, replay, finish
   evolution/
     attribution.py          Eq.9
     split.py                Eq.10
     skill_patch.py          Eq.11
     operator_abstraction.py Eq.12 + boundary replay
-    bundle.py               Bundle
+    bundle.py               build_bundle
     validation.py           Eq.13 + Eq.2 gate
-    evolver.py              stream loop + Eq.3
-    variants.py             ablation variants (frozen, workflow_only, skill_only, operator_only, unlinked, full)
-  bench/
-    task.py                 Episode, ToolSpec, ConstraintSpec, Budget, EvalResult, TaskAdapter
-    registry.py             23 ANZSRC disciplines, families, adapter registry
-    splits.py               SplitPlan (src/val/id/ood/rep), frozen manifests
-    metrics.py              MacroSR, pooled task metrics, PI, ranks, FWT/BWT/forgetting/NT, bootstrap
-    tasks/forXX_*.py        one adapter per discipline
-  experiments/
-    run_stream.py           evolve A_0 → A_R over D_src (with snapshots)
-    evaluate.py             evaluate snapshots on D_ID/D_OOD/D_rep
-    report.py               tables/figures from run receipts
-  cli.py                    `python -m scienceclaw.cli ...`
-tests/
-configs/
+    evolver.py              batch stream loop + Eq.3
+    live.py                 LiveEvolution: propose / gate / promote from finished live sessions
+    variants.py             variants (frozen, workflow_only, skill_only, operator_only, unlinked, full)
+  program/
+    store.py                ProgramStore: versioned snapshots, HEAD, receipts, rollback
+    seed.py                 seed program A0 (Skills from skills/ + library operators)
+    library_ops.py          typed operators wrapping the main scilib entry points (specs/)
+    check.py                check_operator: run one operator through the real canvas
+  tools/
+    registry.py             static catalog of scilib tools, BM25 search, availability probes
+    weights.py, weights.json  registry of pretrained weights and upstream sources
+  rpc.py                    line-delimited JSON-RPC service used by the gateway plugin
+  cli.py                    `python -m scienceclaw.cli ...` (tools, weights, setup, doctor, live)
+scilib/                     the scientific tool library (classical toolkits and pretrained-model wrappers)
+configs/default.yaml        RunConfig defaults made explicit
 docs/
 ```
 
 ---------------------------------------------------------------------------
-## 3. Core data model (implemented in core/*, bench/task.py — do not change
+## 3. Core data model (implemented in core/*, task.py — do not change
 signatures without updating this file)
 
 ### 3.1 PortSchema Γ (core/schema.py)
@@ -303,7 +318,7 @@ or ndarray/list; `any`: everything), `unit` compares the unit that actually arri
 incoming edge; `None` = unspecified upstream, compatible with every unit as in `schema.compat`) with the required one.
 Neither check compares the declared schema with itself. Violations are diagnostics, not crashes.
 
-### 3.4 Task / episode (bench/task.py)
+### 3.4 Task / episode (task.py)
 ```python
 @dataclass
 class Budget:
@@ -319,6 +334,7 @@ class ConstraintSpec:
     name: str; description: str
     check: Callable[[Any, "Trace"], tuple[bool, str]]   # on final output y (+ trace)
     visible: bool = True        # visible checks are also reported to the policy
+    grade: Callable[[Any], float] | None = None          # optional graded share in [0, 1] of the criterion
 @dataclass
 class EvalResult:
     metrics: dict[str, float]; primary: float | None; direction: str   # "max"|"min"
@@ -327,46 +343,29 @@ class EvalResult:
     completed: bool; reproducible: bool | None; within_budget: bool
     details: dict
 @dataclass
-class Episode:
-    id: str; discipline: str; family: str; split: str      # "src"|"val"|"id"|"ood"|"rep"
-    task_type: str; tags: list[str]
+class Episode:                                  # selected fields
+    id: str; discipline: str; task_type: str; tags: list[str]
     objective: str                          # D_T: objective, inputs, initial conditions, target outputs
     required_output: PortSchema             # schema of y
     tools: list[ToolSpec]                   # D_E
     constraints: list[ConstraintSpec]       # D_V hard constraints
     budget: Budget
-    lineage: dict                           # dataset, version, item ids, seed
+    lineage: dict                           # provenance of the task's data
     acceptance: str                         # human-readable acceptance rule
     tolerance: dict                         # {"rtol":..., "atol":...} for reproducibility / boundary replay
-    _evaluate: Callable[[Any, "Trace"], EvalResult]     # hidden-label evaluator (never exposed to policy/sandbox)
+    _evaluate: Callable[[Any, "Trace"], EvalResult]     # evaluator (never exposed to policy/sandbox)
     _dev_evaluate: Callable[[Any], dict] | None          # visible dev scoring on visible data
     def evaluate(self, y, trace) -> EvalResult
-class TaskAdapter(Protocol):
-    discipline: str        # "FoR34"
-    name: str; family: str; metric: str; direction: str; task_type: str
-    def available(self) -> tuple[bool, str]                  # data present?
-    def build_episodes(self, split: str, n: int, seed: int) -> list[Episode]
+    def public_view(self) -> dict                        # what the policy may see: no evaluator, no hidden data
+def passes(ev: EvalResult, require_acceptance: bool = True) -> bool    # Pass: completed, hard constraints, within budget,
+                                                                       # reproducible (and accepted, if required)
 ```
-Hidden labels live only in the evaluator closure (parent process). Visible data
-is materialized by tools into the run dir; code nodes may only read their
-inputs (the integrity scan flags absolute paths, `..`, dataset roots, network).
+Hidden data live only in the evaluator closure (parent process). Visible data is materialized by tools
+into the run dir; code nodes may only read their inputs (the integrity scan flags absolute paths, `..`,
+protected roots, network). `evaluate(None | malformed y)` returns z = 0 with the failure recorded in
+`details`; `EvalResult.hard_ok()` is true when every entry of `h` holds.
 
-Additive extensions (review LEAK-1 / LEAK-5; the signatures above are unchanged):
-* `Probe(name, overrides, check)` + `Episode._probes: y -> list[Probe]`, `Episode.probe_specs(y)` and
-  `Episode.run_probes(y, trace, runner)`: a hidden re-run of the *same graph* on a derived episode
-  (`dataclasses.replace(ep, **overrides)`) for properties that cannot be read off `y` (FoR42 causality: the graph is
-  re-run on stays cut at hidden hours). `runner(derived_ep, name) -> (y', trace')`; the verdicts are stored in
-  `trace.probes = {name: {"ok", "msg"}}` (serialised only when non-empty) and read by the adapter's hidden
-  constraints, so `run_probes` must run **before** `evaluate`. Solver wiring (`agent/solver.py::_replay_eval`, not done
-  by the benchmark side): `y_rep, trace = self.s.replay(...)`, then
-  `ep.run_probes(y_rep, trace, lambda dep, name: self.s.replay(graph, dep, self.program, rdir.with_name(f"{rdir.name}_probe_{name}")))`;
-  the probe run dir is a *sibling* of the replay dir, not a subdirectory, because the FoR39 receipt ledger walks
-  `<run_dir>/exec` and `<run_dir>/replay/kNNN`. Until wired the constraint reports "not probed" and passes.
-* `Episode.failure_result(msg, trace)` and `evaluate(None | malformed y)`: an episode without a usable output returns
-  z = 0, `details["failed"] = True`, `norm_score = 0` and the adapter's uniform *failure payload* (its reference /
-  inaction payload) in `details["pooled_payload"]` (see §7 "Failure semantics").
-
-### 3.5 Trace τ and evidence e (runtime/replay.py, agent/solver.py)
+### 3.5 Trace τ and evidence e (core/trace.py)
 ```python
 @dataclass
 class NodeRecord:
@@ -374,12 +373,13 @@ class NodeRecord:
     wall_s: float; error: str | None; stdout_tail: str
     outputs_summary: dict[str, dict]; contract_violations: list[str]
     input_refs: dict[str, str]; output_refs: dict[str, str]   # paths of pickled values (for boundary replay)
+    llm_usage: dict; kind: str; cached: bool
 @dataclass
 class Trace:
-    records: dict[str, NodeRecord]; order: list[str]; llm_usage: dict; wall_s: float
+    records: dict[str, NodeRecord]; order: list[str]; llm_usage: dict; wall_s: float; run_dir: str
 @dataclass
 class Evidence:          # e_{t,k}
-    step: int; graph: WorkflowGraph; y: Any; trace: Trace; eval: EvalResult; passed: bool
+    step: int; graph_dict: dict; y: Any; trace: Trace; eval: EvalResult; passed: bool; graph_fp: str
 ```
 
 ---------------------------------------------------------------------------
@@ -388,7 +388,7 @@ class Evidence:          # e_{t,k}
 * Every node runs with a timeout. `code` nodes run in a subprocess
   (`runtime/node_worker.py`) with cwd = episode run dir, inputs/outputs
   exchanged as pickles, stdout/stderr captured. `tool` nodes run in the parent
-  (trusted adapter code). `llm` nodes run in the parent through `LLMClient`
+  (trusted tool code). `llm` nodes run in the parent through `LLMClient`
   (role `executor`), mapping the prompt template over `inputs["items"]` (list of
   dicts or strings), returning `{"outputs": [parsed per item]}`; `config`
   keys: `parse` ("text"|"json"|"number"|"choice"), `choices`, `max_tokens`.
@@ -405,7 +405,7 @@ class Evidence:          # e_{t,k}
   empty checkpoint → (y, trace). Reproducibility = replay y ≈ executor y within
   `episode.tolerance`.
 
-Hardening rules (runtime/executor.py; each has a regression test in `tests/test_runtime_hardening.py`):
+Hardening rules (runtime/executor.py):
 
 * **Transient nodes taint their descendants.** Fingerprints hash the node *spec* and its upstream specs, not
   values. A node whose outcome is not reproducible (partial LLM failure, API error, first timeout) is `transient`:
@@ -415,7 +415,7 @@ Hardening rules (runtime/executor.py; each has a regression test in `tests/test_
   run in a daemon thread that is abandoned on timeout. The first timeout of a fingerprint is transient (machine
   load, retried on the next execution); a repeat of the same spec is cached as an ordinary error. An `operator`
   node as a whole has `2 × max_node_s`, and nodes inside it stop at that deadline. Tool calls run under one tool
-  lock (adapter code need not be thread-safe); an abandoned tool call keeps the lock until it really ends, and a
+  lock (tool code need not be thread-safe); an abandoned tool call keeps the lock until it really ends, and a
   new tool call is then refused at once with a transient error instead of running concurrently.
 * **llm nodes.** Placeholders are checked before any request is sent: attribute / index access is an error;
   when more than one item is mapped and the template uses neither `{item}` nor a key of the items, the node
@@ -432,12 +432,17 @@ Hardening rules (runtime/executor.py; each has a regression test in `tests/test_
   `scrub_volatile` to every free-text field *before* `_clip_tail` / the final cut and once more to the assembled
   text (decision 8): a cut can never split an absolute run path or a `work/<node>-<uid>` suffix and leave a
   half-scrubbed, run-specific fragment in the policy context.
-* **Sandbox is best-effort.** `code` nodes run as a separate process in their own working directory with a
-  time limit; `runtime/integrity.py` scans the source for the leakage patterns listed in §8.3. This is a static
-  filter plus a process boundary, not an OS-level sandbox: it does not stop deliberately obfuscated code from
-  reading files the process user can read. Leakage protection therefore rests on the hidden data never being
-  in the run environment (adapters keep hidden labels inside the evaluator) and on the integrity check
-  (H_val (a)); hardening beyond that (containers, seccomp) is a documented limitation, not a guarantee.
+* **Code-node sandbox.** `code` nodes run as a separate process (`runtime/sandbox.py`) in their own working
+  directory with a time limit, an allow-listed environment (no keys, tokens or credentials), data and model hubs
+  in offline mode and, where `unshare` works, in new user, network and pid namespaces
+  (`SCIENCECLAW_SANDBOX_ISOLATION=auto|off|require`). A runtime audit guard in the worker
+  (`runtime/node_worker.py`) denies protected locations (engine state, run receipts, credential stores,
+  protected data roots), sockets, programs other than the interpreter, native libraries and the engine's own
+  sources; `runtime/integrity.py` additionally scans generated source statically for these patterns
+  (H_val (a)). This is defence in depth, not a guarantee against deliberately obfuscated code: leakage
+  protection rests on hidden data never being in the run environment (evaluators keep hidden data in the
+  parent process; the held-out file of a live `metric` constraint is never loaded by the workflow), and
+  untrusted workloads should run in a container as well.
 
 ## 5. Agent (Eq.1, Eq.6)
 
@@ -471,7 +476,7 @@ output schema, tool signatures (with the description of every port), retrieved
 Skills (full text) and Operators (signature + description + contract), budget,
 the feedback of the last step, compact history. Forbidden: any strategy/how-to
 text not coming from a Skill (`find_strategy_phrases` scans every built-in
-variant; `tests/test_agent_prompts.py`, `tests/test_prompts_review.py`).
+prompt variant).
 
 Interface facts the prompt states (all of them descriptions of what the runtime does, none of them advice):
 
@@ -479,12 +484,10 @@ Interface facts the prompt states (all of them descriptions of what the runtime 
   *probed in the running interpreter* (`prompts.available_packages()`, `importlib.util.find_spec` over a fixed
   candidate list), never hard-coded, because code nodes run as `sys.executable -m scienceclaw.runtime.node_worker`.
 * **Acceptance (uniform disclosure).** A short `# Acceptance` section generated from one template for every task
-  and every orchestration: the deliverable counts as solved when, on the hidden evaluation items, the task metric
-  beats the task's reference predictor by a fixed margin, all constraints hold (including ones that are not
-  listed), and the final workflow replays reproducibly within the budget. It names neither the metric values, the
-  reference method nor any adapter-specific recipe; adapters must not put such text into their objective or tool
-  strings either (`tests/test_public_view_no_reference_recipe.py`, xfail until the FoR33/35/37/38/41 objective
-  strings are stripped).
+  and every orchestration: the deliverable counts as solved when the evaluator accepts it, all constraints
+  hold (including ones that are not listed), and the final workflow replays reproducibly within the budget.
+  It names neither metric values, a reference method nor any task-specific recipe; a task's objective and
+  tool strings must not contain such text either.
 * **What `finish` and budget exhaustion select** — exactly the rule of decision 7 (`prompts._FINISH`), so the
   policy is not told that the current canvas is the deliverable when it is not.
 * **Orchestration-specific components.** `single_operator` and `fixed_workflow` list neither `operator` / `llm`
@@ -546,73 +549,101 @@ counted, "+N cached ok"). Every free-text fragment goes through `scrub_volatile`
 * Gate (Eq.2): H_val, C_val ⪯ B (decision 11), Q_val strict improvement over
   the incumbent (Eq.3) with the noise guard (decision 12); outages
   (decision 13).
-* Variants: `frozen` (no evolution), `workflow_only` (persist the whole G⁺ as a
+* Variants (`evolution.variants`): `frozen` (no evolution), `workflow_only` (persist the whole G⁺ as a
   retrievable workflow exemplar Skill, no abstraction), `skill_only`,
   `operator_only`, `unlinked` (ΔS and ΔO gated independently), `full` (linked
-  bundle). Orchestration ablations (solver): `single_turn` (policy must emit
+  bundle). Solver orchestration modes: `single_turn` (policy must emit
   the complete graph in one action list, no repair), `single_operator` (graph
   limited to one code node + submit), `fixed_workflow` (a fixed tool→code→submit
   template; only code/config edits allowed).
 
-## 7. Benchmark protocol (Sec.4)
+---------------------------------------------------------------------------
+## 7. Live tasks, canvas sessions, program store, tool library
 
-* 23 disciplines = ANZSRC 2020 FoR divisions 30–52 (`bench/registry.py`), five
-  families for the transfer matrix (mapping in registry, documented).
-* Per discipline: a pool of items from the IID source dataset and an OOD
-  (different-dataset, same-discipline) pool. Episodes contain `items_per_episode`
-  evaluation items (default 16) plus visible training/context data.
-  Lineage-disjoint splits: src (R episodes), val (default 2), id (4 × 16 = 64
-  items), ood (4 × 16 = 64 items); rep = frozen copies of src episodes already
-  seen. Split manifests (item ids, seeds) are frozen to JSON and hashed.
-* Snapshot evaluation: freeze A_r, clear transient state, solve each held-out
-  episode once (mode "eval"), compute z, pooled task-native metric per
-  discipline, MacroSR, PI (explicit reference), plus cost.
-* All runs write receipts: `runs/<run_id>/{config.yaml, programs/A_r/, episodes/<id>/{trajectory.jsonl, final_graph.json, y.pkl, eval.json}, metrics.jsonl, usage.json}`.
-  Since the integrity review the run dir also holds the append-only `usage.jsonl` (ledger, one record per process
-  segment and phase; `usage.json` stays the last-segment snapshot) and `eval/eval_log.jsonl` (provenance receipt +
-  usage delta per evaluation phase); see §8.6 "receipts".
-* **Failure semantics (LEAK-5).** A held-out episode never silently drops out of the pooled metric. An episode whose
-  solve produced no output, an invalid output or a crashed evaluator still yields *one* pooled payload: the adapter's
-  failure payload, i.e. its reference / inaction payload (`evaluate(None, trace)` in every adapter; the generic
-  fallback is `Episode._mark_failed`). A failed episode therefore counts as reference-level (never better) in the
-  pooled score, has z = 0, `norm_score = 0` and `details["failed"] = True`; `results.jsonl` rows record
-  `failed` and `payload_source` (`solve` / `failure_fallback` / `none`). Coverage is checked, not assumed:
-  `metrics.pooled_coverage` / `expected_coverage` compare the payloads present with the episodes the split promises,
-  and `performance_index(..., coverage=)` excludes an incomplete discipline (and lists it in `PIResult.incomplete`)
-  instead of comparing methods on different episode sets. Infrastructure failures are *not* task failures (M2): a solve
-  that ends with `stop_reason == "policy_error"` raises `experiments.evaluate.InfraError`, is written to `errors.jsonl`
-  (with its usage and wall time) and not to `results.jsonl`, so a resumed evaluation retries it (see decision 13 for the
-  evolution side).
-* **Draw-time integrity (LEAK-1 / 4 / 6 / 7; adapters, docs/tasks/FoR*.md have the numbers).**
-  * Items of one episode are scored together and all their inputs are visible, so an item's input must not be a
-    near-future observation of another item's label. Forecasting adapters enforce a minimum spacing *when the episode
-    is drawn* (`_forecast_common.draw_episodes(..., lanes=True, conflict=...)`, `time_spacing_conflict`, a final
-    pairwise re-check): FoR37 episodes are lanes of 16 initialisations exactly `MIN_SPACING_H = 120` h apart (ranges of
-    32 usable + 4 guard slots; capacity src 8 / val 4 / id 4 / ood 16 at 16 items; larger episodes raise
-    `PoolExhausted`); FoR33 windows of one building are at least `MIN_DELAY_H = 144` h apart (target end to the other
-    context start). The residual oracle gain from the other items (3.4-4.1 % FoR37, 3.7-4.5 % FoR33 beyond the
-    spacing) is documented per task; it cannot be removed with the available record and is comparable to the
-    acceptance margin.
-  * FoR42: the acceptance floor is `max(reference, 0) + margin`, the visible `not_positional_only` constraint and
-    the hidden `causal_prefix` probe (§3.4) check that the hourly labels are causal.
-  * FoR38: everything the policy sees is opaque (economy ids `E000..`, series kinds `T1/T2/C1/C2`, periods relative to
-    the origin); hidden payloads and item ids keep the real names. FoR39: the `query_budget` constraint unions the
-    signed receipts of the whole solve (`<run_dir>/exec` and `<run_dir>/replay/kNNN`), not only the final trace, and
-    fails closed when that layout is not found. The solver must keep this layout.
-* **Policy-visible text (F5, adapter half).** The objective, tool / port descriptions, visible constraints and tags of
-  an episode never state the acceptance rule or the reference method (previous-day persistence, seasonal naive,
-  climatology, random walk ...). The reference recipe and value live in `EvalResult.details` and docs/tasks/*.md;
-  the generic prompt only says that the task metric has to beat the task's reference by a fixed margin.
-  `tests/test_adapter_visible_text.py` scans the FoR33/35/37/38/41 episodes.
+### 7.1 Live tasks (`canvas/live.py`)
+A *live task* comes from a user request: the gateway agent declares a plain JSON document
+`{objective, inputs:[{name, path, format?, description?}], required_output:{type, shape?, unit?},
+constraints:[{check, value?}]}` and `build_live_episode` turns it into the same `task.Episode` the engine
+orchestrates, executes, replays and verifies:
+
+* every input file becomes a read-only `load_<name>` tool of D_E; paths must lie under the configured input
+  roots (symlinks are resolved; the engine's state directory and credential stores are always denied; a root
+  that is the filesystem root or the home directory is refused; files over 512 MB are refused);
+* the declared constraints become the hard constraints of D_V. `check` is one of `finite`, `shape`, `type`,
+  `range`, `nonempty`, `len_eq_input` or `metric` (`{target, column?, metric, direction, value}`: an
+  evaluator-only quality bar against a held-out file the workflow never loads; the metric is one of
+  `mae`, `mse`, `rmse`, `smape`, `r2`, `accuracy`, `f1_macro`, `auc`);
+* verification is Pass for a task without hidden labels: the replayed workflow reproduces its output from a
+  reset state, completes within budget and satisfies every hard constraint.
+
+### 7.2 Canvas sessions (`canvas/session.py`)
+In the batch solver the engine owns the loop; in a gateway the policy is the agent that is already talking
+to the user, so the loop is inverted: the agent *acts* on a `CanvasSession`, one atomic edit per call
+(`act`), and receives the visible execution feedback. Everything below that boundary is the engine
+unchanged: typed graph and atomic edits (`core.actions`), incremental execution against a checkpoint
+(`runtime.executor`, Eq.7), reset replay with the reproducibility check and the constraint verdict
+(`replay`, Eq.8) and the solver's bookkeeping (steps, uses ν, evidence stream, budgets), so a finished
+session yields a `SolveResult` the evolution engine can learn from. `finish` selects the final solution G*
+by decision 7, replays it if needed and writes the receipts (`trajectory.jsonl`, `graph.json`,
+`session.json`) under the session's run directory.
+
+### 7.3 Program store (`program/store.py`)
+`ProgramStore` keeps immutable snapshots `<root>/snapshots/<version>/` (written to a scratch directory,
+read back and compared by fingerprint, then renamed into place), the active version in `<root>/HEAD`
+(replaced atomically) and one JSON receipt per promotion, rollback or seed in `<root>/receipts/`. Writers
+take an exclusive file lock; `commit(..., expected_parent=...)` raises `StaleHead` unless that version is
+still the head, so two promotions derived from the same program cannot overwrite each other. `rollback`
+makes an earlier snapshot the head again and records the change. On first use `open()` creates the seed
+program (decision 9) as the first snapshot.
+
+### 7.4 Evolution from live sessions (`evolution/live.py`)
+`LiveEvolution` drives the method of §6 with the user's own work: `val_add|val_list|val_remove` maintain
+D_val; `propose(session, variant)` builds the linked Skill/Operator bundle of a finished, replay-verified
+live session and stores it as a `pending` candidate (nothing about the active program changes); `gate(id)`
+runs R_src, evaluates the incumbent and the candidate on D_val with `ValidationGate` and settles the
+candidate as `ready` (admitted), `rejected` or `pending` (blocked: too few validation tasks, the source
+task is itself a validation task, a validation task changed, the program moved on, or the model was
+unavailable); `promote(id)` commits an admitted candidate to the store with a receipt, after checking that
+the active program is still the one it was validated on and that the resulting program has the validated
+fingerprint. `propose`, `gate` and `run` are background jobs (one at a time) polled with `status`.
+Candidate records, bundles, gate reports and cached validation reports live under
+`<home>/evolution/`.
+
+### 7.5 Tool library and weights (`scilib/`, `tools/`, `bootstrap.py`)
+`scilib` holds classical scientific toolkits and wrappers of pretrained models, imported inside code nodes
+(`from scilib import ...`). `tools.registry` parses every module statically (nothing heavy is imported) into
+`ToolEntry` records, ranks them with the same BM25 index the Skill/Operator retriever uses (`search`) and
+asks a module whether it can run here (`probe`, `status_table`). `tools/weights.json` is the single source of
+truth for pretrained checkpoints and upstream sources: `weights status|plan|verify` inspect the local model
+root (`SCIENCECLAW_MODELS`) and print the commands that stage an asset, so weights always arrive through an
+explicit, reviewable step. `bootstrap.setup` installs the optional dependency stack, stages every
+non-optional asset and verifies it (profiles `full` and `light`), recording the result in
+`$SCIENCECLAW_HOME/setup.json`; the engine refuses `canvas.open` and the evolution methods until that setup
+is complete (`bootstrap.require`).
+
+### 7.6 Gateway plugin boundary (`rpc.py`, `extensions/scienceclaw`)
+The plugin keeps one long-lived `python -m scienceclaw.rpc` process (one JSON request per line, one JSON
+response per line; library output on stdout is redirected to stderr). The methods are `ping`, `setup.status`,
+`setup.start`, `canvas.open|act|render|replay|finish|status|list`, `tools.search|show|status`,
+`weights.status|plan`, `program.summary|skills|operators|show|history|rollback` and
+`evolve.val_add|val_list|val_remove|propose|gate|run|status|candidates|candidate`. They back the optional
+agent tools `scienceclaw_canvas`, `scienceclaw_tools`, `scienceclaw_program` and `scienceclaw_evolve`.
+Deployment settings (state directory, input roots, model root, config file, LLM endpoint) are plugin
+configuration, never tool parameters; gateway and provider credentials are not forwarded to the engine.
+
+### 7.7 Companion benchmark
+ScienceClaw-Eval, the benchmark that accompanies the paper (23 disciplines, FoR30–FoR52; sequential task
+streams and independent reset evaluation), is released separately and is not part of this repository. Its
+evaluation data is hosted on Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>.
 
 ---------------------------------------------------------------------------
 ## 8. Cross-module API (exact names — code against these)
 
-Layering: core ← llm ← runtime ← agent ← evolution ← experiments; bench.task
-and bench.registry depend only on core. `core/actions.py` (moved from agent/)
-holds the action model because the executor applies actions.
+Layering: core ← llm ← runtime ← agent ← evolution; `canvas`, `program`, `tools` and `rpc` sit on top of the
+engine (`evolution.live` uses `canvas.live` and `program.store`); `task.py` depends only on `core`.
+`core/actions.py` holds the action model because the executor applies actions.
 
-### 8.1 llm/client.py, llm/fake.py
+### 8.1 llm/client.py, llm/interface.py
 ```python
 @dataclass
 class LLMResponse:
@@ -625,8 +656,6 @@ class LLMClient:
     def chat_many(self, role: str, batch: list[list[dict]], **kw) -> list[LLMResponse]   # concurrent, order-preserving
     def usage(self) -> dict                    # {"total":{...}, "by_role":{...}, "by_tag":{...}} (thread-safe)
 def extract_json(text: str) -> dict | None     # tolerant: code fences, leading prose, trailing commas
-class FakeLLM:                                  # same public API as LLMClient, for tests
-    def __init__(self, responder)               # list[str] (consumed in order) or Callable[[role, messages], str]
 ```
 Rules: role ∈ {"policy","executor","patch"} maps to `cfg.<role>`; reasoning models (name contains "gpt-5", "o3", "o4")
 get `max_completion_tokens` + `reasoning_effort`, others `max_tokens` + `temperature`; requests MUST send a
@@ -748,51 +777,39 @@ class Evolver:
     def run(self, program0: AgentProgram) -> list[AgentProgram]      # snapshots A_0..A_R; writes candidates.jsonl
 ```
 
-### 8.6 bench/*, experiments/*
-Adapters fill `EvalResult.details` with `"reference"` (score of the adapter's deterministic reference
-baseline on the same episode), `"norm_score"` (primary/reference for "max", reference/primary for "min",
-clipped to [0, 10]) and `"pooled_payload"` (whatever `pooled_metric` needs, e.g. y_true/y_pred lists).
-`accepted` = primary beats the reference by the adapter's documented margin.
+### 8.6 canvas/*, program/*, evolution/live.py, rpc.py
 ```python
-class SplitPlan:
-    @classmethod
-    def build(cls, bench_cfg, adapters: dict[str, TaskAdapter]) -> "SplitPlan"
-    episodes: dict[str, dict[str, list[Episode]]]          # split -> discipline -> episodes
-    def source_stream(self) -> list[tuple[int, Episode]]   # (round, episode): round-major, fixed discipline order
-    def manifest(self) -> dict; def save(self, path) -> None
-# bench/metrics.py
-def macro_sr(z_by_discipline: dict[str, list[int]]) -> float
-def pooled_scores(results_by_discipline: dict[str, list[dict]], adapters) -> dict[str, float]
-def performance_index(scores: dict[str, dict[str, float]], reference: str, directions: dict[str, str]) -> dict[str, float]
-def average_ranks(scores: dict[str, dict[str, float]], directions: dict[str, str]) -> dict[str, float]
-def transfer_metrics(matrix: "np.ndarray") -> dict        # FWT (off-diagonal and all-cell, both named), BWT, forgetting, NT
-def bootstrap_ci(values, n: int = 2000, alpha: float = 0.05, seed: int = 0) -> tuple[float, float]
+# canvas/live.py
+class SpecError(ValueError)                    # the task declaration is invalid; the message says what to change
+def build_live_episode(spec: dict, *, task_id: str, input_roots: list[Path]) -> Episode
+# canvas/session.py
+class CanvasSession:
+    def __init__(self, episode, program, run_dir, *, llm=None, cfg=None, session_id=None, reveal_verdict=True,
+                 kind="live", spec=None)
+    def context(self) -> str                   # protocol, task, tools, retrieved Skills/Operators
+    def act(self, action: str | dict) -> dict  # one atomic edit; execution feedback
+    def render(self) -> str; def replay(self) -> dict; def finish(self) -> dict; def status(self) -> dict
+    result: SolveResult | None                 # set by finish(); what evolution learns from
+# program/store.py
+class StaleHead(RuntimeError)
+class ProgramStore:
+    def __init__(self, root=None)
+    def head(self) -> str | None; def versions(self) -> list[str]; def load(self, version=None) -> AgentProgram | None
+    def history(self) -> list[dict]            # receipts
+    def commit(self, program, receipt=None, *, activate=True, expected_parent=None) -> str
+    def rollback(self, version: str) -> str
+    def open(self, **seed_kw) -> AgentProgram  # the active program; creates the seed program on first use
+# evolution/live.py
+LIVE_GATE = {"hval_mode": "absolute", "qval": "macrosr"}
+class LiveEvolution:
+    def __init__(self, store, home, llm, cfg, input_roots, *, auto_promote=False, min_val_tasks=2)
+    def val_add(self, spec, vid=None) -> dict; def val_list(self) -> list[dict]; def val_remove(self, vid) -> dict
+    def propose(self, session, variant=None) -> dict      # pending candidates from a finished live session
+    def gate(self, cid) -> dict                           # R_src, then D_val gate; ready | rejected | pending
+    def promote(self, cid) -> dict                        # the user's decision
+    def candidates(self) -> list[dict]; def candidate(self, cid) -> dict
+    def run(self, session, variant=None) -> dict          # propose + gate every candidate
+    def start_job(self, kind, fn) -> dict; def job(self, jid=None, wait_s=0.0) -> dict   # background jobs
 ```
-Experiments pipeline (`experiments/evaluate.py`, `provenance.py`, `report.py`; integrity / cost review M2, M5, M6, m2, m3, m4):
-```python
-# experiments/evaluate.py
-class InfraError(RuntimeError)            # usage / wall_s / stop_reason / receipt_dir; recorded in errors.jsonl, retried on resume
-def run_jobs(jobs, programs, solver_factory, eval_dir, workers=8, progress=None, dedup=True) -> dict
-    # counts {"done", "skipped", "failed", "aliased", "deferred"}
-def eval_provenance(run_dir, cfg, phase, llm, programs, workers, extra=None) -> dict
-# experiments/provenance.py
-def provenance(cfg, phase, *, llm=None, extra=None) -> dict      # code (commit, dirty, diff sha256), config sha256, dataset manifest sha256, LLM settings (no credentials), bench seed
-class UsageLedger(run_dir, phase, llm=None, prov=None, extra=None)   # context manager -> appends to <run_dir>/usage.jsonl
-def read_ledger(path) -> list[dict]; def sum_ledger(records) -> dict    # llm tree, wall_s, by_phase, unclosed, failed
-```
-* **Alias rows (M5).** Snapshots with an equal `AgentProgram.fingerprint()` are solved once per (split, episode); the
-  other snapshots get a row with `alias_of` (copied outcome and payload path, empty `usage`, the original spend in
-  `alias_usage`). Aliases wait for an in-flight solve of the same key and are not written when the owner fails
-  (`deferred`); a resume retries the key. **Not done:** keying alias rows by the *retrieval slice hash* (programs that
-  differ only in components that retrieval never selects for an episode would also be identical for that episode);
-  that needs `core/retrieval.py`, so aliasing is by whole-program fingerprint only.
-* **Cost accounting (M6, m3, m4).** `usage.jsonl` is append-only (a resumed run adds segments, a killed process leaves a
-  `started` marker without a closing record, reported as `unclosed`: the totals are then a lower bound); `usage.json` is
-  no longer the only record. Reports show `logical_tokens` (prompt + completion irrespective of the response cache; alias
-  rows at their root's cost; comparable between a cold run and a re-run) next to `billed_tokens` (actually spent at the
-  gateway; cache hits and alias rows count 0). Compare programs by `logical_tokens`.
-* **Concurrency (m2).** `eval_workers` solves share the LLM client's `llm.concurrency` slots; with more workers than
-  slots the surplus solves queue in the client while their per-episode wall clock (budget `z`) keeps running. The
-  provenance receipt records `eval_workers` and `llm_concurrency`, and the evaluation phase warns when `eval_workers >
-  llm.concurrency`. The queue time is not excluded from the wall budget: the wall measurement is in `agent/solver.py`
-  and the worker settings are in `config.py` / `evolution.val_workers`, outside the benchmark side (open item).
+`rpc.Service.handle(line)` maps one JSON request to `{"id", "ok": true, "result"}` or
+`{"id", "ok": false, "error": {"type", "message"}}`; every failure becomes a structured answer.

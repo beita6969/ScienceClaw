@@ -21,12 +21,6 @@
           "type": "string"
         }
       },
-      "runRoot": {
-        "type": "string"
-      },
-      "dataRoot": {
-        "type": "string"
-      },
       "modelRoot": {
         "type": "string"
       },
@@ -87,14 +81,6 @@
     "inputRoots": {
       "label": "Allowed input roots",
       "help": "Task input files must live under one of these directories"
-    },
-    "runRoot": {
-      "label": "Run directory",
-      "advanced": true
-    },
-    "dataRoot": {
-      "label": "Dataset root",
-      "advanced": true
     },
     "modelRoot": {
       "label": "Model weights root",

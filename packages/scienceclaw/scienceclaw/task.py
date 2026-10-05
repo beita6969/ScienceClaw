@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any, Callable, Protocol
+from typing import Any, Callable
 
-from ..core.schema import PortSchema
-from ..core.trace import Trace
+from .core.schema import PortSchema
+from .core.trace import Trace
 
 SPLITS = ("src", "val", "id", "ood", "rep")
 
@@ -258,18 +258,3 @@ def passes(ev: EvalResult, require_acceptance: bool = True) -> bool:
     """Pass_t(e) — convergence/validity/reproducibility within budget (+ acceptance if required)."""
     ok = ev.completed and ev.hard_ok() and ev.within_budget and (ev.reproducible is not False)
     return bool(ok and (ev.accepted or not require_acceptance))
-
-
-class TaskAdapter(Protocol):
-    discipline: str          # e.g. "FoR34"
-    name: str                # e.g. "ogbg-molhiv"
-    family: str              # one of registry.FAMILIES
-    metric: str
-    direction: str           # "max" | "min"
-    task_type: str
-
-    def available(self) -> tuple[bool, str]: ...
-
-    def build_episodes(self, split: str, n: int, seed: int, items_per_episode: int = 16) -> list[Episode]: ...
-
-    def pooled_metric(self, per_episode: list[dict]) -> float | None: ...

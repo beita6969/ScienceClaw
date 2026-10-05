@@ -5,7 +5,7 @@ Code nodes may only compute on their ``inputs`` and write inside their working d
 
 * absolute filesystem paths, ``..`` traversal, home directories (``~``, ``Path.home()``,
   ``expanduser``) and ``os.chdir`` -- i.e. reading or writing outside the working directory;
-* references to the benchmark dataset root (hidden labels live there) and to the ScienceClaw
+* references to the protected data root (the deployment's datasets) and to the ScienceClaw
   package itself (adapters / evaluators);
 * network modules (socket, urllib, requests, http, httpx, ftplib, ...), process spawning
   (subprocess, os.system, os.popen, os.exec*/spawn*, pty, ctypes);
@@ -106,7 +106,7 @@ def _string_violation(s: str, *, leading: bool = True, docstring: bool = False) 
     low = s.lower()
     for m in _dataset_markers():
         if m in low:
-            return f"reference to the benchmark dataset root ({s[:80]!r})"
+            return f"reference to the protected data root ({s[:80]!r})"
     for m in _CREDENTIAL_MARKERS:
         if m in low:
             return f"reference to credentials / key material ({s[:80]!r})"
@@ -293,7 +293,7 @@ def scan_code(code: str) -> list[str]:
     for m in _dataset_markers():
         if m in low:
             line = low[: low.index(m)].count("\n") + 1
-            viol.append(f"line {line}: reference to the benchmark dataset root is not allowed")
+            viol.append(f"line {line}: reference to the protected data root is not allowed")
             break
     try:
         tree = ast.parse(code)
@@ -302,7 +302,7 @@ def scan_code(code: str) -> list[str]:
     sc = _Scanner()
     sc.visit(tree)
     for v in sc.viol:
-        if viol and "benchmark dataset root" in v:
+        if viol and "protected data root" in v:
             continue   # already reported once by the raw-text check
         if v not in viol:
             viol.append(v)

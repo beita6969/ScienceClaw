@@ -121,7 +121,7 @@ LLM agents increasingly solve scientific tasks by connecting reasoning to data, 
 
 Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 64 OOD instances per discipline, one fixed foundation model, and the same tools, source stream, validation data and update budget throughout. OOD means an independently sourced dataset of the same discipline; OOD results never generate or select updates.
 
-- **Consistent gains.** ScienceClaw improves on the frozen agent in every discipline: **+16.45 %** on average out-of-distribution (+11.57 % to +23.34 %) and +12.25 % in-distribution,. Its OOD score falls 11.73 % below its IID score on average, against 16.06 % for the frozen agent.
+- **Consistent gains.** ScienceClaw improves on the frozen agent in every discipline: **+16.45 %** on average out-of-distribution (+11.57 % to +23.34 %) and +12.25 % in-distribution. Its OOD score falls 11.73 % below its IID score on average, against 16.06 % for the frozen agent.
 - **It keeps improving.** The OOD macro success rate rises from **77.83 to 91.30** over seven rounds (+13.47 pp). 70 of 161 submitted candidates are promoted (43.48 %), so the gate is selective without stalling.
 - **It transfers and retains.** 18 of 20 cross-family pairs transfer positively (mean +1.57 pp, against +14.68 pp within a family). Average forgetting is 0.13 pp (maximum 0.51 pp), with 11.89 % negative transfer.
 - **It is reliable.** Hard constraints pass on **98.23 %** of instances and only 1.23 % of promotions are erroneous.

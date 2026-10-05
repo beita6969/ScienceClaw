@@ -74,6 +74,9 @@ Reported trajectories are final snapshots, not uncertainty estimates over source
 
 Task-native scores, compared only within a discipline (metrics differ in units and direction). ScienceClaw is best in every discipline; arrows give the direction of "better".
 
+<details>
+<summary>Cross-dataset (OOD) results of every compared system in all 23 disciplines</summary>
+
 | Discipline (metric) | Frozen | SkillOpt | TTE | AHE | EvoMaster | EvoScientist | **ScienceClaw** |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Agricultural sci. (PQ+) ↑ | 64.6829 | 66.7649 | 72.0626 | 72.0490 | 73.1862 | 73.2184 | **75.7629** |
@@ -99,6 +102,8 @@ Task-native scores, compared only within a discipline (metrics differ in units a
 | History (cMER-micro) ↓ | 0.0296 | 0.0271 | 0.0268 | 0.0264 | 0.0261 | 0.0268 | **0.0251** |
 | Human society (nRMSE) ↓ | 0.0213 | 0.0201 | 0.0192 | 0.0191 | 0.0192 | 0.0191 | **0.0181** |
 | Physical sci. (MAE) ↓ | 44.6757 | 41.9077 | 39.0907 | 39.7923 | 38.2995 | 39.0137 | **37.1306** |
+
+</details>
 
 <details>
 <summary>Same-dataset (IID) results</summary>
@@ -135,6 +140,9 @@ Task-native scores, compared only within a discipline (metrics differ in units a
 
 OOD macro success rate (%) of each snapshot after round *r*, with the gain over the initial program and the candidates promoted / rejected out of 161. Selected systems are shown.
 
+<details>
+<summary>OOD macro success rate by round, with promoted and rejected candidates</summary>
+
 | Method | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | Gain (pp) | Promoted | Rejected | Rate (%) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Frozen | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 0.00 | 0 | 0 | – |
@@ -144,6 +152,8 @@ OOD macro success rate (%) of each snapshot after round *r*, with the gain over 
 | **ScienceClaw** | **77.83** | **80.47** | **82.74** | **82.51** | **86.15** | **87.58** | **89.76** | **91.30** | **13.47** | **70** | **91** | **43.48** |
 
 *RuleEvo is a ScienceClaw variant whose evolution uses deterministic trace projection alone, with no generative evolution roles.*
+
+</details>
 
 <p align="center"><img src="assets/paper/per_round_lead.png" alt="Lead over the best baseline per round" width="55%"></p>
 <p align="center"><sub><i>Lead of ScienceClaw over the best other system after each evolution round (pp). Round 3 is the only round in which another system leads, by 0.36 pp.</i></sub></p>
@@ -157,6 +167,9 @@ OOD macro success rate (%) of each snapshot after round *r*, with the gain over 
 <p align="center"><sub><i>(f) Gain over the frozen agent (%) of the linked-mechanism variants on Commerce (MASE) and Law (mAP). (g) Workflow mechanics: planner rounds, distinct Operators, Operator diversity, feedback repair, checkpoint recovery and clean replay.</i></sub></p>
 
 ## From the paper to this repository
+
+<details>
+<summary>Module map: every paper object and where it lives in the code</summary>
 
 | Paper | Code (`packages/scienceclaw/`) |
 | --- | --- |
@@ -173,6 +186,8 @@ OOD macro success rate (%) of each snapshot after round *r*, with the gain over 
 | Strict-improvement update | `evolution/evolver.py` (batch), `evolution/live.py` (gateway, user-promoted) |
 | Scientific tools | `scilib/` (42 modules), a catalog of 292 tool functions, 28 pretrained-weight assets (`scienceclaw/tools/weights.json`) |
 | Gateway integration | `extensions/scienceclaw/` plugin and `python -m scienceclaw.rpc` |
+
+</details>
 
 The full contract, including the decisions the paper leaves open, is in [`packages/scienceclaw/docs/DESIGN.md`](packages/scienceclaw/docs/DESIGN.md); the gateway, plugin, skill and evolution map is in [`packages/scienceclaw/docs/INTEGRATION.md`](packages/scienceclaw/docs/INTEGRATION.md).
 
@@ -269,6 +284,9 @@ An instance counts as solved only if execution completes within budget, the task
 
 The evaluation data (64 IID and 64 OOD records for each discipline) is on Hugging Face: **[`beita6969/scienceclaw-64-samples`](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples)**. This repository does not contain the data, an evaluation harness, or its tests.
 
+<details>
+<summary>The 23 disciplines, their tasks and metrics</summary>
+
 | Code | Discipline (ANZSRC division) | Task | Metric |
 | --- | --- | --- | --- |
 | FoR30 | Agricultural, veterinary and food sciences | plant and leaf panoptic segmentation | PQ+ ↑ |
@@ -294,6 +312,8 @@ The evaluation data (64 IID and 64 OOD records for each discipline) is on Huggin
 | FoR50 | Philosophy and religious studies | human-value detection | F1 ↑ |
 | FoR51 | Physical sciences | phonon property prediction | MAE ↓ |
 | FoR52 | Psychology | human choice prediction | micro accuracy ↑ |
+
+</details>
 
 ## Project structure
 

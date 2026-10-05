@@ -7,6 +7,13 @@ from scienceclaw.program.specs._common import p
 
 # id, tool, description, inputs, outputs, body of run(), pre, post, applicability tags
 SPECS: list[dict[str, Any]] = [
+    dict(id="text_query_embedding_bge", tool="textenc.embed",
+         description="L2-normalised embeddings of search queries from the pretrained BGE-large English encoder with its retrieval instruction prepended (queries are embedded this way, passages without it, cosine = dot product).",
+         inputs={"queries": p("list", "list of query strings (at most 512 tokens each)")},
+         outputs={"embeddings": p("array", "unit-norm query embeddings", shape=("n_queries", 1024), dtype="float")},
+         code="from scilib import textenc\nreturn {'embeddings': textenc.embed(inputs['queries'], model='bge_large_en', query=True)}",
+         pre=[{"port": "queries", "check": "nonempty"}], post=[{"port": "embeddings", "check": "finite"}],
+         tags=["text", "embedding", "retrieval", "query", "pretrained", "bge"]),
     dict(id="caption_chrf_score", tool="captions.mean_chrf",
          description="Sentence-level chrF++ (character 1-6-grams and word 1-2-grams, beta 2, the sacrebleu CHRF(word_order=2) definition) of candidate captions against a pool of reference captions of one language; the score of a candidate is its mean over the references.",
          inputs={"hypotheses": p("list", "candidate caption strings"),

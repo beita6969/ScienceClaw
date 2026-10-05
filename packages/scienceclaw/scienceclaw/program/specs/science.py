@@ -46,7 +46,8 @@ SPECS: list[dict[str, Any]] = [
     dict(id="dms_cross_validated_spearman", tool="proteinfit.cross_validate",
          description=("Estimate how well the supervised variant-effect model (ridge, LightGBM, extra trees on sequence and position "
                       "features) ranks unseen substitutions of one protein: 5-fold cross-validation over the labelled variants of a "
-                      "deep mutational scanning assay, Spearman rank correlation per fold; hold out random variants or whole positions."),
+                      "deep mutational scanning assay, Spearman rank correlation per fold; hold out random variants or whole positions "
+                      "(whole positions is the stricter estimate for variants at unseen sites)."),
          inputs={"train": p("table", _LABELLED), "wild_type": p("text", "wild-type amino-acid sequence of the assay (single-letter codes)"),
                  "by": p("text", "what the folds hold out: 'variant' (random substitutions) or 'position' (whole sequence positions)")},
          outputs={"spearman": p("number", "mean Spearman rank correlation of predicted and measured fitness over the folds", unit="1"),
@@ -90,7 +91,8 @@ SPECS: list[dict[str, Any]] = [
          description=("Zero-shot effect of single amino-acid substitutions from the pretrained ESM-2 650M protein language model: "
                       "log-likelihood ratio of the mutant against the wild-type residue (masked marginal and wild-type marginal), the two "
                       "log-probabilities, the entropy of the site and the mean log-ratio of all substitutions at the site. Higher log-ratio = "
-                      "the mutation is better tolerated. CPU cost grows with sequence length (one masked forward pass per mutated position)."),
+                      "the mutation is better tolerated. On a CPU the cost grows with the square of the sequence length (about 25 s for 40 residues, "
+                      "80 s for 76 residues on one thread; sequences beyond roughly 120 residues exceed the 300 s node limit)."),
          inputs={"variants": p("table", _VARIANTS), "wild_type": p("text", "wild-type amino-acid sequence (single-letter codes)")},
          outputs={"features": p("table", "columns " + ", ".join(_ESM_COLUMNS) + ", one row per variant (natural-log units)",
                                 shape=("n_variants", len(_ESM_COLUMNS)))},
@@ -151,7 +153,8 @@ SPECS: list[dict[str, Any]] = [
          description=("Harmonic phonon-spectrum feature matrix of crystal structures from a pretrained universal interatomic potential "
                       "(SevenNet-l3i5 or CHGNet) with phonopy: frequency percentiles, highest-branch statistics, density-of-states peaks, "
                       "zone-centre maximum and fraction of imaginary modes, all in cm^-1; structures are used unrelaxed, rows of failed "
-                      "structures are NaN. Universal potentials soften frequencies, so use the columns as regression inputs."),
+                      "structures are NaN. Universal potentials soften frequencies, so use the columns as regression inputs. SevenNet runs on a CPU repeat "
+                      "only to about 1e-5 relative, so an exact replay needs the frozen feature cache (SCIENCECLAW_MLIP_CACHE)."),
          inputs={"structures": p("list", "crystal structures, each a dict with lattice (3x3 rows, angstrom), species (element symbols) and frac_coords"),
                  "model": p("text", "'sevennet' (SevenNet-l3i5) or 'chgnet' (CHGNet 0.3.0)")},
          outputs={"X": p("array", "phonon features per structure (frequencies in cm^-1, shares dimensionless); NaN for failed structures",

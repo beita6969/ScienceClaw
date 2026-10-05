@@ -41,7 +41,7 @@ ScienceClaw is an agent system for scientific work that **gets better the more i
 
 ## ✨ Highlights
 
-| | |
+| Idea | In practice |
 | --- | --- |
 | **A fixed model and an evolving program** | The model is never updated. What evolves is a versioned program of **Skills** (decomposition, workflow construction, recovery) and typed **Operators** with explicit input, output and domain contracts. |
 | **Typed, executable workflows** | Ports carry a schema of type, shape, unit and provenance. Nodes are fingerprinted, so an edit reruns only what it affects. |
@@ -212,7 +212,7 @@ The same engine speaks line-delimited JSON on `python -m scienceclaw.rpc` if you
 
 ## 🧰 Skills and tools
 
-| | |
+| Component | What it provides |
 | --- | --- |
 | **300+ skills** | [`skills/`](skills) holds the skill library. The 36 `scienceclaw-*` skills form the seed program: 12 general ones (canvas orchestration, evolution, and task patterns such as retrieval, prediction and verification) and the discipline skills below. Evolved Skills are written back as versioned records of the same program. |
 | **Discipline skills** | `scienceclaw-benchmark-for30` … `for52`, indexed by `scienceclaw-benchmark`, describe the task family of each benchmark discipline: inputs, deliverable, how quality is judged, and the tools and weights that fit. They are retrieved like any other skill when a task matches. |

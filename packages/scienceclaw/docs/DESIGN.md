@@ -10,7 +10,7 @@ engine implements.
 
 This repository is the agent system only. The companion benchmark, ScienceClaw-Eval (23 disciplines,
 FoR30–FoR52), is released separately; its evaluation data is hosted on Hugging Face
-(<https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>). The engine package contains no evaluation
+(<https://huggingface.co/datasets/beita6969/scienceclaw-eval>). The engine package contains no evaluation
 harness, datasets or tests.
 
 ---------------------------------------------------------------------------
@@ -634,7 +634,7 @@ configuration, never tool parameters; gateway and provider credentials are not f
 ### 7.7 Companion benchmark
 ScienceClaw-Eval, the benchmark that accompanies the paper (23 disciplines, FoR30–FoR52; sequential task
 streams and independent reset evaluation), is released separately and is not part of this repository. Its
-evaluation data is hosted on Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>.
+evaluation data is hosted on Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>.
 
 ---------------------------------------------------------------------------
 ## 8. Cross-module API (exact names — code against these)

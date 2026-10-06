@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="ScienceClaw" width="760">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+  <img src="assets/banner.svg" alt="ScienceClaw" width="640">
+</picture>
 
 <p><b>Skills and Operators that grow from replay-verified executions.</b></p>
 

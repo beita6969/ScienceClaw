@@ -91,11 +91,6 @@ code { font-family: var(--mono); font-size: .86em; background: rgba(42,157,143,.
 .figure img { margin: 0 auto; border-radius: 6px; }
 .figure figcaption { margin-top: 12px; font-size: .86rem; color: var(--muted); text-align: center; max-width: 900px; margin-inline: auto; }
 .zoom { display: block; width: 100%; background: none; border: 0; cursor: zoom-in; padding: 0; }
-.duo-row { display: flex; justify-content: center; align-items: center; gap: 4%; }
-.duo-row .zoom { width: auto; }
-.duo-row .zoom:first-child { flex: 0 0 34%; }
-.duo-row .zoom:last-child { flex: 0 0 29%; }
-.figure.duo { max-width: 1040px; }
 
 /* Method */
 .question { max-width: 820px; margin: 0 auto 52px; padding: 22px 28px; border-left: 4px solid var(--teal); background: #fff; border-radius: 0 var(--radius) var(--radius) 0; box-shadow: var(--shadow); font-family: var(--serif); font-size: 1.28rem; line-height: 1.5; color: var(--navy); }
@@ -228,8 +223,6 @@ details.more summary::-webkit-details-marker { display: none; }
   .dbars { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
 }
 @media (max-width: 720px) {
-  .duo-row { flex-direction: column; gap: 14px; }
-  .duo-row .zoom:first-child, .duo-row .zoom:last-child { flex: none; width: 82%; }
   .nav-toggle { display: block; }
   .nav-links { position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; background: rgba(13,27,42,.98); padding: 8px 24px 18px; display: none; }
   .nav-links.open { display: flex; }

@@ -31,7 +31,7 @@
     <td align="center" width="25%"><h3>23</h3><sub>disciplines across the<br>natural and social sciences</sub></td>
     <td align="center" width="25%"><h3>+16.45 %</h3><sub>mean out-of-distribution gain<br>over the frozen agent</sub></td>
     <td align="center" width="25%"><h3>98.23 %</h3><sub>of instances pass every<br>scientific hard constraint</sub></td>
-    <td align="center" width="25%"><h3>91.30</h3><sub>OOD macro success rate<br>after seven rounds (from 77.83)</sub></td>
+    <td align="center" width="25%"><h3>91.30</h3><sub>OOD macro success rate<br>after seven rounds (from 77.72)</sub></td>
   </tr>
 </table>
 
@@ -125,10 +125,10 @@ LLM agents increasingly solve scientific tasks by connecting reasoning to data, 
 Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 64 OOD instances per discipline, one fixed foundation model, and the same tools, source stream, validation data and update budget throughout. OOD means an independently sourced dataset of the same discipline; OOD results never generate or select updates.
 
 - **Consistent gains.** ScienceClaw improves on the frozen agent in every discipline: **+16.45 %** on average out-of-distribution (+11.57 % to +23.34 %) and +12.25 % in-distribution. Its OOD score falls 11.73 % below its IID score on average, against 16.06 % for the frozen agent.
-- **It keeps improving.** The OOD macro success rate rises from **77.83 to 91.30** over seven rounds (+13.47 pp). 70 of 161 submitted candidates are promoted (43.48 %), so the gate is selective without stalling.
-- **It transfers and retains.** 18 of 20 cross-family pairs transfer positively (mean +1.57 pp, against +14.68 pp within a family). Average forgetting is 0.13 pp (maximum 0.51 pp), with 11.89 % negative transfer.
+- **It keeps improving.** The OOD macro success rate rises from **77.72 to 91.30** over seven rounds (+13.59 pp). 70 of 161 submitted candidates are promoted (43.48 %), so the gate is selective without stalling.
+- **It transfers and retains.** 18 of 20 cross-family pairs transfer positively (mean +1.58 pp, against +14.69 pp within a family). Average forgetting is 0.13 pp (maximum 0.51 pp), with 11.89 % negative transfer.
 - **It is reliable.** Hard constraints pass on **98.23 %** of instances and only 1.23 % of promotions are erroneous.
-- **The linkage and the gate are what matter.** Committing Skills and Operators separately keeps only 60 % of the gain; Skill-only and Operator-only evolution keep 40 % and 57 %. Without independent IID selection only 15 % remains; without scientific constraints, source replay or the independent validator, 46 %, 55 % and 59 %.
+- **The linkage and the gate are what matter.** Committing Skills and Operators separately keeps only 60 % of the gain; removing Operator evolution keeps 59 %. Without independent IID selection only 15 % remains; without scientific constraints, source replay or the independent validator, 46 %, 55 % and 59 %.
 - **Execution structure is the base.** The full system runs 4.84 planner rounds and 4.24 distinct Operators per task, repairs 71 % of failures from feedback, recovers 89 % after interruption and replays 96 % cleanly (a single-turn agent: 0 %, 31 %, 78 %).
 
 <p align="center"><img src="assets/paper/ablation_heatmap.png" alt="Ablation heatmap across 23 disciplines"></p>
@@ -176,9 +176,9 @@ OOD macro success rate (%) of each snapshot after round *r*, with the gain over 
 
 | Method | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | Gain (pp) | Promoted | Rejected | Rate (%) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Frozen | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 77.83 | 0.00 | 0 | 0 | – |
-| RuleEvo | 77.83 | 78.42 | 79.18 | 78.89 | 79.59 | 80.28 | 79.99 | 81.22 | 3.39 | 37 | 124 | 22.98 |
-| **ScienceClaw** | **77.83** | **80.47** | **82.74** | **82.51** | **86.15** | **87.58** | **89.76** | **91.30** | **13.47** | **70** | **91** | **43.48** |
+| Frozen | 77.72 | 77.72 | 77.72 | 77.72 | 77.72 | 77.72 | 77.72 | 77.72 | 0.00 | 0 | 0 | – |
+| RuleEvo | 77.72 | 78.40 | 79.21 | 78.87 | 79.62 | 80.37 | 80.03 | 81.32 | 3.60 | 37 | 124 | 22.98 |
+| **ScienceClaw** | **77.72** | **80.43** | **82.68** | **82.47** | **86.14** | **87.57** | **89.81** | **91.30** | **13.59** | **70** | **91** | **43.48** |
 </details>
 
 Reported trajectories are final snapshots, not uncertainty estimates over source orders or model configurations, and cost comparisons are relative to the protocol, not absolute. The paper has the full tables, ablations and the limitations discussion.

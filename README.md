@@ -8,6 +8,7 @@
 <p><b>Skills and Operators that grow from replay-verified executions.</b></p>
 
 <p>
+  <a href="paper/ScienceClaw.pdf"><img src="https://img.shields.io/badge/paper-PDF-dc2626?style=flat-square&logo=googlescholar&logoColor=white" alt="Paper (PDF)"></a>
   <a href="https://scienceclaw.science"><img src="https://img.shields.io/badge/website-scienceclaw.science-0891b2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website"></a>
   <a href="https://huggingface.co/datasets/beita6969/scienceclaw-eval"><img src="https://img.shields.io/badge/benchmark%20data-Hugging%20Face-f59e0b?style=flat-square&logo=huggingface&logoColor=white" alt="Benchmark data on Hugging Face"></a>
   <a href="https://github.com/beita6969/ScienceClaw/stargazers"><img src="https://img.shields.io/github/stars/beita6969/ScienceClaw?style=flat-square&logo=github&color=4f46e5" alt="GitHub stars"></a>
@@ -20,6 +21,7 @@
   <a href="#results">Results</a> &nbsp;·&nbsp;
   <a href="#use-it-from-the-gateway">Gateway</a> &nbsp;·&nbsp;
   <a href="#scienceclaw-eval">Benchmark</a> &nbsp;·&nbsp;
+  <a href="paper/ScienceClaw.pdf">Paper</a> &nbsp;·&nbsp;
   <a href="packages/scienceclaw/docs/DESIGN.md">Design</a>
 </p>
 

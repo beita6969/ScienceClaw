@@ -1,7 +1,7 @@
 from __future__ import annotations
 import math
 from collections import defaultdict
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Tuple, Union
 import numpy as np
 import torch
 

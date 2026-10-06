@@ -365,7 +365,6 @@ class UPOSTagger:
         return out
 
     def _matrix(self, sents: Sequence[Any], grow: bool):
-        from scipy.sparse import csr_matrix
         cache = self._cache
         indptr, indices = [0], []
         for s in sents:
@@ -775,7 +774,6 @@ class _Labeller:
         return F
 
     def fit(self, sents: list[_Sent], heads: list[np.ndarray], rels: list[list[str]], n_tags: int) -> "_Labeller":
-        from scipy.sparse import csr_matrix
         from sklearn.svm import LinearSVC
         self.n_tags = n_tags
         cols = [self.features(a, h, n_tags).T for a, h in zip(sents, heads)]

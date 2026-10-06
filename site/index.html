@@ -7,7 +7,7 @@
 <meta name="description" content="ScienceClaw is an AI-for-Science agent that gets better from replay-verified executions: Skills and typed Operators evolve, the foundation model never does. Evaluated across 23 disciplines.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="ScienceClaw — Verifiable Program-Level Self-Evolution">
-<meta property="og:description" content="Skills and Operators that grow from replay-verified executions. The model is never updated.">
+<meta property="og:description" content="Skills and Operators that grow from replay-verified executions.">
 <meta property="og:url" content="https://scienceclaw.science/">
 <meta property="og:image" content="https://scienceclaw.science/img/overview.webp">
 <meta name="twitter:card" content="summary_large_image">
@@ -42,7 +42,7 @@
   <div class="container hero-content">
     <div class="hero-badge">Open source · Verifiable program-level self-evolution</div>
     <h1>Science<span class="accent">Claw</span></h1>
-    <p class="hero-subtitle">An AI-for-Science agent that improves from verified execution — and never touches the model.</p>
+    <p class="hero-subtitle">An AI-for-Science agent that improves from verified execution.</p>
     <p class="hero-desc">Each task is solved as a typed, executable workflow. When a repair is reproduced under a clean replay, it becomes a linked <strong>Skill</strong> and <strong>Operator</strong>, and is kept only if independent validation tasks improve.</p>
     <div class="hero-buttons">
       <a href="https://github.com/beita6969/ScienceClaw" class="btn btn-primary" target="_blank" rel="noopener">
@@ -59,7 +59,7 @@
       <div class="stat-divider"></div>
       <div class="stat"><span class="stat-number" data-count="98.23" data-dec="2" data-suffix="%">98.23%</span><span class="stat-label">Hard-constraint pass rate</span></div>
       <div class="stat-divider"></div>
-      <div class="stat"><span class="stat-number">0</span><span class="stat-label">Model parameters updated</span></div>
+      <div class="stat"><span class="stat-number" data-count="91.30" data-dec="2">91.30</span><span class="stat-label">OOD macro success rate after seven rounds</span></div>
     </div>
   </div>
 </header>
@@ -79,7 +79,7 @@
   <div class="container">
     <div class="section-header reveal">
       <span class="eyebrow">Method</span>
-      <h2>Persistent improvement, without training the model</h2>
+      <h2>Persistent improvement from verified execution</h2>
       <p>A repair that works once rarely survives: it lives in a transient context, or in a single tool or prompt. ScienceClaw asks a sharper question.</p>
     </div>
 
@@ -88,8 +88,8 @@
     <div class="steps">
       <article class="step reveal">
         <span class="step-n">01</span>
-        <h3>A fixed model, an evolving program</h3>
-        <p>The model is frozen. What evolves is a versioned program of <b>Skills</b> (decomposition, workflow construction, recovery) and typed <b>Operators</b> with explicit input, output and domain contracts.</p>
+        <h3>An evolving program</h3>
+        <p>What evolves is a versioned program of <b>Skills</b> (decomposition, workflow construction, recovery) and typed <b>Operators</b> with explicit input, output and domain contracts.</p>
       </article>
       <article class="step reveal">
         <span class="step-n">02</span>

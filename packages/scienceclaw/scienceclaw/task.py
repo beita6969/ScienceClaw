@@ -13,7 +13,7 @@ SPLITS = ("src", "val", "id", "ood", "rep")
 
 @dataclass
 class Budget:
-    max_steps: int = 12
+    max_steps: int = 24
     max_policy_tokens: int = 200_000
     max_wall_s: float = 1800.0
     max_node_s: float = 300.0

@@ -8,10 +8,11 @@ llm:
   credentials_file: ~/.config/scienceclaw/credentials.json
   policy:
     model: ""                     # empty: taken from SCIENCECLAW_<ROLE>_MODEL, then SCIENCECLAW_MODEL
-    max_tokens: 6000
+    max_tokens: 8000
     temperature: 0.0
     reasoning_effort: low
     json_mode: true
+    # extra_body: {chat_template_kwargs: {enable_thinking: false}}   # e.g. vLLM: switch thinking off for a reasoning model
   executor:
     model: ""                     # empty: taken from SCIENCECLAW_<ROLE>_MODEL, then SCIENCECLAW_MODEL
     max_tokens: 2000
@@ -30,14 +31,14 @@ llm:
   cache_path: cache/llm_cache.sqlite
   use_cache: true
 solver:
-  max_steps: 12
+  max_steps: 24
   history_window: 6
   orchestration: canvas
   replay_on_new_submit: true
   show_dev_score: true
   retrieve_skills_k: 4
   retrieve_ops_k: 6
-  stop_on_first_pass: false
+  stop_on_first_pass: true
 evolution:
   variant: full
   update_schedule: per_candidate

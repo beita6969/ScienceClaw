@@ -252,31 +252,33 @@ The evaluation data (64 IID and 64 OOD records for each discipline) is on Huggin
 <details open>
 <summary>The 23 disciplines, their tasks and metrics</summary>
 
-| Code | Discipline (ANZSRC division) | Task | Metric |
-| --- | --- | --- | --- |
-| FoR30 | Agricultural, veterinary and food sciences | plant and leaf panoptic segmentation | PQ+ ↑ |
-| FoR31 | Biological sciences | protein variant fitness ranking | Spearman ↑ |
-| FoR32 | Biomedical and clinical sciences | hippocampus segmentation in MRI | DSC ↑ |
-| FoR33 | Built environment and design | building load forecasting | NRMSE (%) ↓ |
-| FoR34 | Chemical sciences | molecular activity classification | ROC-AUC ↑ |
-| FoR35 | Commerce, management, tourism and services | tourism series forecasting | MASE ↓ |
-| FoR36 | Creative arts and writing | music source separation | SDR (dB) ↑ |
-| FoR37 | Earth sciences | 2 m temperature forecasting | RMSE (K) ↓ |
-| FoR38 | Economics | macroeconomic forecasting | sMAPE (%) ↓ |
-| FoR39 | Education | adaptive educational testing | 10-mask accuracy ↑ |
-| FoR40 | Engineering | anomalous sound detection | DCASE score ↑ |
-| FoR41 | Environmental sciences | probabilistic aquatic forecasting | CRPS ↓ |
-| FoR42 | Health sciences | sepsis early warning | clinical utility ↑ |
-| FoR43 | History, heritage and archaeology | OCR post-correction | cMER-micro ↓ |
-| FoR44 | Human society | causal treatment-effect estimation | nRMSE ↓ |
-| FoR45 | Indigenous studies | Indigenous-language captioning | chrF++ ↑ |
-| FoR46 | Information and computing sciences | code generation | pass@1 ↑ |
-| FoR47 | Language, communication and culture | dependency parsing | LAS ↑ |
-| FoR48 | Law and legal studies | contract evidence retrieval | mAP ↑ |
-| FoR49 | Mathematical sciences | SMT satisfiability prediction | oracle-agreement accuracy ↑ |
-| FoR50 | Philosophy and religious studies | human-value detection | F1 ↑ |
-| FoR51 | Physical sciences | phonon property prediction | MAE ↓ |
-| FoR52 | Psychology | human choice prediction | micro accuracy ↑ |
+| Code | Discipline (ANZSRC division) | Task | Metric | IID source | OOD source |
+| --- | --- | --- | --- | --- | --- |
+| FoR30 | Agricultural, veterinary and food sciences | plant and leaf panoptic segmentation | PQ+ ↑ | PhenoBench | CropAndWeedAndLeaf |
+| FoR31 | Biological sciences | protein variant fitness ranking | Spearman ↑ | ProteinGym | TAPE fluorescence |
+| FoR32 | Biomedical and clinical sciences | hippocampus segmentation in MRI | DSC ↑ | MSD Task04 | UCL/Dryad hippocampus |
+| FoR33 | Built environment and design | building load forecasting | NRMSE (%) ↓ | BuildingsBench | EULP |
+| FoR34 | Chemical sciences | molecular activity classification | ROC-AUC ↑ | OGB ogbg-molhiv | BACE |
+| FoR35 | Commerce, management, tourism and services | tourism series forecasting | MASE ↓ | Monash Tourism Monthly | Monash Tourism Quarterly |
+| FoR36 | Creative arts and writing | music source separation | SDR (dB) ↑ | MUSDB18 | MoisesDB |
+| FoR37 | Earth sciences | 2 m temperature forecasting | RMSE (K) ↓ | WeatherBench 2 (ERA5, 2019) | WeatherBench 2 (ERA5, 2020) |
+| FoR38 | Economics | macroeconomic forecasting | sMAPE (%) ↓ | World Bank WDI | World Bank WDI |
+| FoR39 | Education | adaptive educational testing | 10-mask accuracy ↑ | Eedi Task 4 | EdNet-KT1 |
+| FoR40 | Engineering | anomalous sound detection | DCASE score ↑ | DCASE 2024 Task 2 | DCASE 2023 Task 2 ToyNscale |
+| FoR41 | Environmental sciences | probabilistic aquatic forecasting | CRPS ↓ | NEON aquatics | USGS river metabolism |
+| FoR42 | Health sciences | sepsis early warning | clinical utility ↑ | PhysioNet/CinC 2019 | SepsisExp |
+| FoR43 | History, heritage and archaeology | OCR post-correction | cMER-micro ↓ | HIPE-OCRepair-2026 | ICDAR 2019 POCR |
+| FoR44 | Human society | causal treatment-effect estimation | nRMSE ↓ | ACIC 2016 | IHDP |
+| FoR45 | Indigenous studies | Indigenous-language captioning | chrF++ ↑ | AmericasNLP 2026 | Bloom Captioning (Mam) |
+| FoR46 | Information and computing sciences | code generation | pass@1 ↑ | HumanEval | SWE-bench Verified |
+| FoR47 | Language, communication and culture | dependency parsing | LAS ↑ | UD: Marathi, Italian, Arabic, Croatian | UD: Indonesian, Swedish Sign Language, French, Hindi |
+| FoR48 | Law and legal studies | contract evidence retrieval | mAP ↑ | ContractNLI | ACORD |
+| FoR49 | Mathematical sciences | SMT satisfiability prediction | oracle-agreement accuracy ↑ | SMT-LIB 2025 | SMT-LIB 2024 |
+| FoR50 | Philosophy and religious studies | human-value detection | F1 ↑ | Touché23-ValueEval | ETHICS |
+| FoR51 | Physical sciences | phonon property prediction | MAE ↓ | Matbench phonons | Kyoto PhononDB |
+| FoR52 | Psychology | human choice prediction | micro accuracy ↑ | Psych-201 | Psych-101 |
+
+Every row of the dataset records its own source, license and URL; the dataset card on Hugging Face has the details.
 </details>
 
 ## 🗂️ Repository

@@ -60,5 +60,5 @@ full profile) in the background and the engine refuses tasks until that is done.
 (run `python -m scienceclaw.cli setup` yourself), `setupProfile: "light"` skips the assets larger than 1.5 GB.
 
 This plugin is the agent system only. The ScienceClaw-Eval benchmark is released separately
-(evaluation data: <https://huggingface.co/datasets/beita6969/scienceclaw-64-samples>) and is not
+(evaluation data: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>) and is not
 reachable through these tools.

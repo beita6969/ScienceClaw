@@ -6,7 +6,7 @@
 
 <p>
   <a href="https://scienceclaw.science"><img src="https://img.shields.io/badge/website-scienceclaw.science-0891b2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website"></a>
-  <a href="https://huggingface.co/datasets/beita6969/scienceclaw-64-samples"><img src="https://img.shields.io/badge/benchmark%20data-Hugging%20Face-f59e0b?style=flat-square&logo=huggingface&logoColor=white" alt="Benchmark data on Hugging Face"></a>
+  <a href="https://huggingface.co/datasets/beita6969/scienceclaw-eval"><img src="https://img.shields.io/badge/benchmark%20data-Hugging%20Face-f59e0b?style=flat-square&logo=huggingface&logoColor=white" alt="Benchmark data on Hugging Face"></a>
   <a href="https://github.com/beita6969/ScienceClaw/stargazers"><img src="https://img.shields.io/github/stars/beita6969/ScienceClaw?style=flat-square&logo=github&color=4f46e5" alt="GitHub stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/beita6969/ScienceClaw?style=flat-square&color=64748b" alt="License"></a>
 </p>
@@ -37,7 +37,7 @@
 ScienceClaw is an agent system for scientific work that **gets better the more it is used, without training the model**. It solves each task as a typed, executable workflow. When a repair is reproduced under a clean replay, it becomes a linked **Skill** (strategy) and **Operator** (a typed, executable capability), and it is kept only if it still solves its source task and improves independent validation tasks.
 
 > [!NOTE]
-> This repository is the **agent system**, built on the [OpenClaw](https://github.com/openclaw/openclaw) gateway. The companion benchmark, **ScienceClaw-Eval**, is released separately and its evaluation data lives on [Hugging Face](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples).
+> This repository is the **agent system**, built on the [OpenClaw](https://github.com/openclaw/openclaw) gateway. The companion benchmark, **ScienceClaw-Eval**, is released separately and its evaluation data lives on [Hugging Face](https://huggingface.co/datasets/beita6969/scienceclaw-eval).
 
 ## ✨ Highlights
 
@@ -247,7 +247,7 @@ An instance counts as solved only if execution completes within budget, the task
 <p align="center"><img src="assets/paper/benchmark_construction.png" alt="Construction of ScienceClaw-Eval"></p>
 <p align="center"><sub><i>Construction of ScienceClaw-Eval: scientific-task collection, executable instantiation, validation and reproduction, and lineage-aware evaluation splits.</i></sub></p>
 
-The evaluation data (64 IID and 64 OOD records for each discipline) is on Hugging Face: **[`beita6969/scienceclaw-64-samples`](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples)**. This repository does not contain the data, an evaluation harness, or its tests.
+The evaluation data (64 IID and 64 OOD records for each discipline) is on Hugging Face: **[`beita6969/scienceclaw-eval`](https://huggingface.co/datasets/beita6969/scienceclaw-eval)**. This repository does not contain the data, an evaluation harness, or its tests.
 
 <details open>
 <summary>The 23 disciplines, their tasks and metrics</summary>

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -182,16 +182,28 @@
       <div id="discChart" class="dbars"></div>
     </div>
 
-    <div class="grid-2 figs">
+    <div class="grid-2 panels">
       <figure class="figure reveal">
-        <button class="zoom" data-src="img/ablation_heatmap.webp" aria-label="Enlarge figure"><img src="img/ablation_heatmap.webp" alt="Ablation heatmap across 23 disciplines" width="2000" height="615" loading="lazy"></button>
-        <figcaption>Task-native scores of the ablation variants across 23 disciplines; colours are normalised within each discipline (darker is better).</figcaption>
+        <button class="zoom" data-src="img/panel_transfer.webp" aria-label="Enlarge figure"><img src="img/panel_transfer.webp" alt="Cross-family forward transfer matrix" width="1125" height="1135" loading="lazy"></button>
+        <figcaption>Forward transfer between five discipline families, in percentage points. 18 of 20 cross-family pairs are positive.</figcaption>
       </figure>
       <figure class="figure reveal">
-        <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="1400" height="753" loading="lazy"></button>
-        <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay.</figcaption>
+        <button class="zoom" data-src="img/panel_promotion.webp" aria-label="Enlarge figure"><img src="img/panel_promotion.webp" alt="Promoted candidates" width="917" height="690" loading="lazy"></button>
+        <figcaption>Of 161 submitted candidates, the gate promotes 70 (43.48%); the rule-only variant promotes 37 (22.98%).</figcaption>
       </figure>
     </div>
+
+    <figure class="figure reveal">
+      <button class="zoom" data-src="img/ablation_heatmap.webp" aria-label="Enlarge figure"><img src="img/ablation_heatmap.webp" alt="Ablation heatmap across 23 disciplines" width="2000" height="615" loading="lazy"></button>
+      <figcaption>Task-native scores of the ablation variants across 23 disciplines; colours are normalised within each discipline (darker is better).</figcaption>
+    </figure>
+
+    <figure class="figure mid reveal">
+      <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="1400" height="753" loading="lazy"></button>
+      <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay.</figcaption>
+    </figure>
+
+    <p class="note reveal">The transfer and promotion panels are re-plotted from the numbers reported in the paper.</p>
 
     <p class="note reveal">Reported trajectories are final snapshots, not uncertainty estimates over source orders or model configurations, and cost comparisons are relative to the protocol, not absolute.</p>
   </div>

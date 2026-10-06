@@ -249,7 +249,7 @@ An instance counts as solved only if execution completes within budget, the task
 
 The evaluation data (64 IID and 64 OOD records for each discipline) is on Hugging Face: **[`beita6969/scienceclaw-64-samples`](https://huggingface.co/datasets/beita6969/scienceclaw-64-samples)**. This repository does not contain the data, an evaluation harness, or its tests.
 
-<details>
+<details open>
 <summary>The 23 disciplines, their tasks and metrics</summary>
 
 | Code | Discipline (ANZSRC division) | Task | Metric |

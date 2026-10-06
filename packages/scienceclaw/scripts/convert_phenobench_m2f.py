@@ -7,7 +7,6 @@ drops its detectron2-only imports and adds the ResNet-50 backbone mapping (detec
 Every source key must map; the unused ones are printed.
 """
 import hashlib
-import re
 import sys
 import types
 import urllib.request

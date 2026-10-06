@@ -78,7 +78,6 @@ def _normalise(x: np.ndarray) -> np.ndarray:
 
 
 def _network():
-    import torch
     import torch.nn as nn
 
     class Basic(nn.Module):

@@ -19,7 +19,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
 
 
 def _print_table(rows: list[dict], cols: list[str]) -> None:

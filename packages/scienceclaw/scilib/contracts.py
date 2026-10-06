@@ -57,7 +57,6 @@ from __future__ import annotations
 
 import collections
 import re
-import warnings
 
 import numpy as np
 

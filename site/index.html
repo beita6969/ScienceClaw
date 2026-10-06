@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -191,16 +191,10 @@
       <figcaption>Task-native scores of the ablation variants across 23 disciplines; colours are normalised within each discipline (darker is better).</figcaption>
     </figure>
 
-    <figure class="figure mid reveal">
-      <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="2000" height="1126" loading="lazy"></button>
-      <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay.</figcaption>
+    <figure class="figure reveal">
+      <button class="zoom" data-src="img/mechanisms.webp" aria-label="Enlarge figure"><img src="img/mechanisms.webp" alt="Linked mechanism, workflow mechanics, reliability and cost, and promoted candidates" width="2600" height="741" loading="lazy"></button>
+      <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay. (h) Hard-constraint pass rate against cost per OOD gain (ScienceClaw = 1), coloured by planner wall-time share. (i) Promoted candidates and promotion rate.</figcaption>
     </figure>
-
-    <figure class="figure mid reveal">
-      <button class="zoom" data-src="img/paper_hi.webp" aria-label="Enlarge figure"><img src="img/paper_hi.webp" alt="Reliability and cost, and promoted candidates" width="2000" height="1152" loading="lazy"></button>
-      <figcaption>(h) Hard-constraint pass rate against cost per OOD gain (ScienceClaw = 1), coloured by planner wall-time share. (i) Promoted candidates and promotion rate.</figcaption>
-    </figure>
-
 
     <p class="note reveal">Reported trajectories are final snapshots, not uncertainty estimates over source orders or model configurations, and cost comparisons are relative to the protocol, not absolute.</p>
   </div>

@@ -94,7 +94,6 @@ code { font-family: var(--mono); font-size: .86em; background: rgba(42,157,143,.
 .grid-2.panels .figure { margin-top: 0; display: flex; flex-direction: column; }
 .grid-2.panels .zoom { flex: 1; display: flex; align-items: center; justify-content: center; }
 .grid-2.panels .zoom img { width: auto; max-width: 100%; max-height: 430px; }
-.figure.mid { max-width: 900px; }
 
 /* Method */
 .question { max-width: 820px; margin: 0 auto 52px; padding: 22px 28px; border-left: 4px solid var(--teal); background: #fff; border-radius: 0 var(--radius) var(--radius) 0; box-shadow: var(--shadow); font-family: var(--serif); font-size: 1.28rem; line-height: 1.5; color: var(--navy); }

@@ -93,8 +93,8 @@
   (function () {
     var host = $('#retainChart'); if (!host) return;
     var rows = [
-      ['Full system', 100, true], ['Committed separately (unlinked)', 60], ['w/o independent validator', 59], ['Operator only', 57],
-      ['w/o source replay', 55], ['w/o scientific constraints', 46], ['Skill only', 40], ['w/o independent IID selection', 15]
+      ['Full system', 100, true], ['Committed separately (unlinked)', 60], ['w/o independent validator', 59], ['w/o Operator evolution', 59],
+      ['w/o source replay', 55], ['w/o scientific constraints', 46], ['w/o independent IID selection', 15]
     ];
     host.innerHTML = rows.map(function (r) {
       return '<div class="bar-row' + (r[2] ? ' full' : '') + '"><label>' + r[0] + '</label><div class="bar-track"><div class="bar-fill" data-w="' + r[1] + '"></div></div><b>' + r[1] + '%</b></div>';

@@ -129,8 +129,8 @@ Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 6
 - **Execution structure is the base.** The full system runs 4.84 planner rounds and 4.24 distinct Operators per task, repairs 71 % of failures from feedback, recovers 89 % after interruption and replays 96 % cleanly (a single-turn agent: 0 %, 31 %, 78 %).
 
 <p align="center">
-  <img src="assets/paper/ood_over_rounds.png" alt="OOD score over rounds" width="50%" align="middle">
-  <img src="assets/paper/lead_over_rounds.png" alt="Lead over the best other system" width="43%" align="middle">
+  <img src="assets/paper/ood_over_rounds.png" alt="OOD score over rounds" width="34%" align="middle">
+  <img src="assets/paper/lead_over_rounds.png" alt="Lead over the best other system" width="29%" align="middle">
 </p>
 <p align="center"><sub><i>(d) OOD macro score by round. (e) Lead of ScienceClaw over the best other system (pp).</i></sub></p>
 

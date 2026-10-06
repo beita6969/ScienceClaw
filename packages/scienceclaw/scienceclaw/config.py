@@ -32,7 +32,7 @@ class LLMConfig:
     endpoints: list[str] = field(default_factory=list)
     # {"base_url","api_key"}; never copied anywhere. $SCIENCECLAW_API_BASE_URL / $SCIENCECLAW_API_KEY take precedence.
     credentials_file: str = "~/.config/scienceclaw/credentials.json"
-    policy: ModelRole = field(default_factory=lambda: ModelRole(json_mode=True))
+    policy: ModelRole = field(default_factory=lambda: ModelRole(json_mode=True, max_tokens=8000))
     executor: ModelRole = field(default_factory=lambda: ModelRole(max_tokens=2000))
     patch: ModelRole = field(default_factory=lambda: ModelRole(max_tokens=4000))
     concurrency: int = 16
@@ -44,14 +44,14 @@ class LLMConfig:
 
 @dataclass
 class SolverConfig:
-    max_steps: int = 12
+    max_steps: int = 24
     history_window: int = 6                 # last k steps shown in full; older ones summarized
     orchestration: str = "canvas"          # canvas | single_turn | single_operator | fixed_workflow
     replay_on_new_submit: bool = True
     show_dev_score: bool = True
     retrieve_skills_k: int = 4
     retrieve_ops_k: int = 6
-    stop_on_first_pass: bool = False        # source mode: stop once a replay-verified pass exists
+    stop_on_first_pass: bool = True         # source mode: stop at the first replay-verified pass
 
 
 @dataclass

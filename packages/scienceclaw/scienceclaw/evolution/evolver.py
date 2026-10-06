@@ -37,7 +37,7 @@ from ..core.program import AgentProgram, Bundle
 from ..runtime.sandbox import protect
 from .attribution import extract_instances
 from .bundle import build_bundle, bundle_summary
-from .validation import (ValidationGate, ValReport, _fresh_dir, _numeric_usage, _safe, infra_error_of, qval_key,
+from .validation import (ValidationGate, ValReport, _fresh_dir, _numeric_usage, _safe, _sum_costs, infra_error_of, qval_key,
                          source_pass, source_replay_check, use_check)
 from .variants import bundles_for_variant, check_variant
 
@@ -174,6 +174,7 @@ class Evolver:
         """
         self.run_dir.mkdir(parents=True, exist_ok=True)
         protect(self.run_dir)
+        self._write_config_receipt()
         stream = list(self.plan.source_stream())
         rounds: list[Any] = []
         by_round: dict[str, list[Any]] = {}
@@ -238,7 +239,39 @@ class Evolver:
                 _write_json_atomic(self.run_dir / "llm_usage_evolver.json", usage())
             except (TypeError, ValueError, OSError) as ex:
                 log.warning("could not write LLM usage receipt: %s", ex)
+        self._write_ledger()
         return [AgentProgram.load(self._snapshot_dir(i)) for i in range(len(rounds) + 1)]
+
+    # ------------------------------------------------------------------------------- receipts
+    def _write_config_receipt(self) -> None:
+        """The resolved configuration of the run (written once; a resumed run keeps the original)."""
+        path = self.run_dir / "config.yaml"
+        if path.exists():
+            return
+        try:
+            self.cfg.dump(path)
+        except (AttributeError, OSError, TypeError, ValueError) as ex:
+            log.warning("could not write the resolved configuration: %s", ex)
+
+    def _write_ledger(self) -> None:
+        """Tokens and wall time per phase: source solves, candidate construction / source replay / validation."""
+        try:
+            stream = _read_jsonl(self.run_dir / "stream.jsonl")
+            cands = _read_jsonl(self.run_dir / "candidates.jsonl")
+            led = {
+                "source": {"episodes": len(stream),
+                           "usage": _sum_costs(_numeric_usage((e.get("solve") or {}).get("usage")) for e in stream)},
+                "candidates": {
+                    "n": len(cands),
+                    "timings_s": _sum_costs(_numeric_usage(c.get("timings")) for c in cands),
+                    "source_replay_usage": _sum_costs(_numeric_usage((c.get("cost") or {}).get("source_replay")) for c in cands),
+                    "validation_usage_incurred": _sum_costs(_numeric_usage((c.get("cost") or {}).get("val_incurred")) for c in cands),
+                },
+                "evolution_llm": "see llm_usage_evolver.json",
+            }
+            _write_json_atomic(self.run_dir / "ledger.json", led)
+        except (OSError, TypeError, ValueError) as ex:
+            log.warning("could not write the ledger: %s", ex)
 
     # ------------------------------------------------------------------------------ one episode
     def _solve_source(self, ep: Any, program: AgentProgram, ep_dir: Path) -> tuple[Any, int, str | None]:

@@ -322,7 +322,7 @@ Neither check compares the declared schema with itself. Violations are diagnosti
 ```python
 @dataclass
 class Budget:
-    max_steps: int = 12; max_policy_tokens: int = 200_000; max_wall_s: float = 1800
+    max_steps: int = 24; max_policy_tokens: int = 200_000; max_wall_s: float = 1800
     max_node_s: float = 300; max_llm_items: int = 256
 @dataclass
 class ToolSpec:

@@ -495,6 +495,11 @@ class ValidationGate:
             raise ValueError("validation episodes must have unique ids")
         self.run_dir = Path(run_dir)
         self.max_workers = max(1, int(max_workers))
+        m = int(getattr(evo_cfg, "min_improved_episodes", 1) or 1)
+        if self.val_episodes and m > len(self.val_episodes):
+            log.warning("min_improved_episodes=%d exceeds the %d validation episodes: the noise guard can never be satisfied, so no "
+                        "candidate will be admitted (use at most %d, or 1 for the literal strict-improvement rule)",
+                        m, len(self.val_episodes), len(self.val_episodes))
         self._retriever_factory = retriever_factory
         self._lock = threading.Lock()
         self._sleep: Callable[[float], None] = time.sleep   # replaced in tests

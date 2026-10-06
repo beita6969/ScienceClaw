@@ -30,9 +30,9 @@ from typing import Any
 from ..core.graph import Edge, Node, WorkflowGraph
 from ..core.program import AgentProgram
 from ..core.schema import PortSchema
-from .attribution import EvolutionInstance, to_action
+from .attribution import EvolutionInstance
 
-__all__ = ["split_edits", "split_details", "SplitResult", "expand_actions", "apply_structural",
+__all__ = ["split_edits", "split_details", "SplitResult", "apply_structural",
            "is_registered_operator_node", "EXEC_KINDS", "convex_components", "is_convex", "reentrant_nodes"]
 
 log = logging.getLogger(__name__)
@@ -58,33 +58,6 @@ class SplitResult:
                 "exec_nodes": sorted(self.exec_nodes), "components": [sorted(c) for c in self.components],
                 "touched_nodes": sorted(self.touched_nodes), "excluded_exec": sorted(self.excluded),
                 "convex_splits": list(self.convex_splits), "notes": list(self.notes)}
-
-
-def expand_actions(action: Any) -> list[Any]:
-    """Flatten a ``batch`` action (single-turn orchestration) into its atomic sub-actions."""
-    if getattr(action, "type", None) != "batch":
-        return [action]
-    out: list[Any] = []
-    for sub in (getattr(action, "payload", None) or {}).get("actions", []) or []:
-        a = _coerce_sub_action(sub, uses=list(getattr(action, "uses", []) or []))
-        if a is not None:
-            out.extend(expand_actions(a))
-    return out
-
-
-def _coerce_sub_action(sub: Any, uses: list[str]) -> Any | None:
-    if not isinstance(sub, dict):
-        return to_action(sub)
-    from ..core.actions import Action
-
-    if "payload" in sub:
-        return Action.from_dict(sub)
-    inner = sub.get("action", sub)
-    if not isinstance(inner, dict) or "type" not in inner:
-        log.warning("split: ignoring malformed batch sub-action %r", str(sub)[:200])
-        return None
-    payload = {k: v for k, v in inner.items() if k != "type"}
-    return Action(type=inner["type"], payload=payload, uses=list(sub.get("uses", uses) or []))
 
 
 def _norm_op_id(ref: Any) -> str:
@@ -259,17 +232,16 @@ def split_details(inst: EvolutionInstance, program: AgentProgram) -> SplitResult
     touched: set[str] = set()
     notes: list[str] = []
     steps = list(inst.delta_steps) if len(inst.delta_steps) == len(inst.delta) else [-1] * len(inst.delta)
-    for step, action in zip(steps, inst.delta):
-        for a in expand_actions(action):
-            t = getattr(a, "type", None)
-            if t == "finish":
-                continue
-            if is_control_edit(a, g):
-                control.append(a)
-                control_steps.append(step)
-            if t in ("add_node", "modify_node"):
-                touched |= {str(n) for n in touched_nodes(a)}
-            g = apply_structural(g, a)
+    for step, a in zip(steps, inst.delta):
+        t = getattr(a, "type", None)
+        if t == "finish":
+            continue
+        if is_control_edit(a, g):
+            control.append(a)
+            control_steps.append(step)
+        if t in ("add_node", "modify_node"):
+            touched |= {str(n) for n in touched_nodes(a)}
+        g = apply_structural(g, a)
     g_plus = _graph_from(inst.e_plus)
     unregistered = {nid for nid, n in g_plus.nodes.items()
                     if n.kind in EXEC_KINDS and not is_registered_operator_node(n, program)}

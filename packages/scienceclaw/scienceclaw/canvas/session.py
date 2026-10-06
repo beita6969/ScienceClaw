@@ -22,7 +22,7 @@ from typing import Any
 
 from scienceclaw.agent import prompts
 from scienceclaw.agent.solver import (SolveResult, Solver, StepRecord, _SolveRun, _fb_dict, _render_feedback, _submitted_fp,
-                                      check_orchestration, normalize_uses, scrub_volatile)
+                                      normalize_uses, scrub_volatile)
 from scienceclaw.config import SolverConfig
 from scienceclaw.core.actions import parse_action
 from scienceclaw.core.graph import WorkflowGraph
@@ -116,7 +116,7 @@ class CanvasSession:
     # ------------------------------------------------------------------------------------------- context
     def context(self) -> str:
         """The protocol, the task, its tools and the retrieved Skills/Operators: everything the acting agent needs."""
-        return prompts.build_system_prompt(self.episode, self.skills, self.operators, "canvas", max_steps=self.run.max_steps,
+        return prompts.build_system_prompt(self.episode, self.skills, self.operators, max_steps=self.run.max_steps,
                                            show_dev_score=bool(self.cfg.show_dev_score))
 
     def render(self) -> str:
@@ -164,18 +164,6 @@ class CanvasSession:
                                              thought=thought, dropped_uses=dropped))
             self.k += 1
             return self.finish()
-
-        reason = check_orchestration(parsed, self.graph, "canvas", None)
-        if reason is not None:
-            r.rejected += 1
-            r._mark_budget(k)
-            text = f"Action rejected: {reason}" + (f"\n{note}" if note else "")
-            r._record(self._traj, StepRecord(k, adict, None, {"action_ok": False, "action_error": reason, "rejected_by": "orchestration", "text": text},
-                                             kept, empty_usage(), self.graph.graph_fingerprint(), None, 0.0, raw=raw,
-                                             thought=thought, dropped_uses=dropped))
-            r.history.append({"step": k, "action": prompts.summarize_action(adict), "thought": thought, "result": f"rejected: {reason}"})
-            self.k += 1
-            return self._reply(False, text, k)
 
         t1 = time.monotonic()
         try:

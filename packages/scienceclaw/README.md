@@ -18,9 +18,8 @@ laptop, a cluster or a container.
 
 The ScienceClaw-Eval benchmark (23 disciplines across the natural and social sciences, FoR30-FoR52)
 that accompanies the paper "ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents
-Across the Natural and Social Sciences" is released separately. Its evaluation data is hosted on
-Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>. This package is the
-agent system only; it contains no evaluation harness, datasets or tests.
+Across the Natural and Social Sciences" accompanies this engine. Its evaluation data is hosted on
+Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the design contract and
 [docs/INTEGRATION.md](docs/INTEGRATION.md) for the gateway, plugin, skill and self-evolution map.

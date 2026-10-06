@@ -28,7 +28,7 @@ the step that produced the graph), and recomputes ``z = completed ∧ all(h) ∧
 reproducible≠False`` so that z and Pass agree (DESIGN decision 4). The final output y_t is the output of
 the clean replay.
 
-Budgets. Steps: ``cfg.max_steps`` (fallback ``episode.budget.max_steps``) (``single_turn``: 1). Policy tokens are
+Budgets. Steps: ``cfg.max_steps`` (fallback ``episode.budget.max_steps``). Policy tokens are
 counted *logically* (spent + cached) so a cached rerun stops at the same step. Wall time counts the agent's
 own time (policy calls + executor), not the evaluation replays.
 
@@ -47,13 +47,12 @@ import math
 import pickle
 import re
 import time
-from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..task import EvalResult, passes
-from ..core.graph import Edge, Node, WorkflowGraph
+from ..core.graph import WorkflowGraph
 from ..core.retrieval import Retriever
 from ..core.trace import Evidence, Trace
 from . import prompts
@@ -63,18 +62,11 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from ..config import EvolutionConfig, SolverConfig
     from ..core.program import AgentProgram
 
-__all__ = ["MODES", "StepRecord", "SolveResult", "Solver", "build_fixed_workflow", "normalize_uses",
-           "check_orchestration", "scrub_volatile", "sanitize_eval", "FIXED_CODE_NODE", "FIXED_SUBMIT_NODE"]
+__all__ = ["MODES", "StepRecord", "SolveResult", "Solver", "normalize_uses", "scrub_volatile", "sanitize_eval"]
 
 log = logging.getLogger(__name__)
 
 MODES = ("source", "val", "eval")
-FIXED_CODE_NODE = "code"
-FIXED_SUBMIT_NODE = "submit"
-_FIXED_STUB = (
-    "def run(inputs: dict, config: dict) -> dict:\n"
-    "    raise NotImplementedError(\"node 'code' has no implementation yet\")\n"
-)
 _VERSION_SUFFIX = re.compile(r"@v\d+$")
 # Volatile, run-specific fragments of rendered feedback (see scrub_volatile).
 _WALL_RE = re.compile(r" \((?:\d+(?:\.\d+)?|\.\d+)s(, cached)?\)")
@@ -390,85 +382,6 @@ def _strip_prefix(ref: Any, prefixes: tuple[str, ...]) -> Any:
     return _VERSION_SUFFIX.sub("", ref)
 
 
-def _atomic_items(action: Any) -> list[tuple[str, dict]]:
-    """(type, payload) of an action, expanding a batch one level (dict or Action sub-items)."""
-    typ = getattr(action, "type", None)
-    payload = getattr(action, "payload", None) or {}
-    if typ != "batch":
-        return [(str(typ), payload)]
-    out: list[tuple[str, dict]] = []
-    for sub in payload.get("actions", None) or []:
-        if isinstance(sub, dict):
-            inner = sub.get("action") if isinstance(sub.get("action"), dict) else sub
-            sp = inner.get("payload") if isinstance(inner.get("payload"), dict) else inner
-            out.append((str(inner.get("type")), sp))
-        else:
-            out.append((str(getattr(sub, "type", None)), getattr(sub, "payload", None) or {}))
-    return out
-
-
-def check_orchestration(action: Any, graph: WorkflowGraph, orchestration: str,
-                        fixed_code_node: str | None = None) -> str | None:
-    """Return a rejection reason if ``action`` is not allowed under the orchestration, else None."""
-    typ = getattr(action, "type", None)
-    if typ == "batch" and orchestration != "single_turn":
-        return "a batch action is accepted only in single-turn orchestration; send one atomic action per reply"
-    if orchestration == "single_operator":
-        n_code = sum(1 for n in graph.nodes.values() if n.kind == "code")
-        for t, p in _atomic_items(action):
-            if t != "add_node":
-                continue
-            kind = (p.get("node") or {}).get("kind")
-            if kind in ("operator", "llm"):
-                return f"single-operator orchestration: {kind} nodes cannot be added (allowed: tool nodes, one code node, submit)"
-            if kind == "code":
-                if n_code >= 1:
-                    return "single-operator orchestration: the workflow already has a code node (at most one)"
-                n_code += 1
-    elif orchestration == "fixed_workflow":
-        code_id = fixed_code_node or FIXED_CODE_NODE
-        if typ == "finish":
-            return None
-        payload = getattr(action, "payload", None) or {}
-        patch = payload.get("patch") or {}
-        if typ != "modify_node" or payload.get("id") != code_id:
-            return f"fixed-workflow orchestration: only modify_node on node {code_id!r} and finish are accepted"
-        if not isinstance(patch, dict) or not patch or not set(patch) <= {"code", "code_edit", "config"}:
-            return (f"fixed-workflow orchestration: the patch may change only 'code', 'code_edit' and/or 'config' "
-                    f"of node {code_id!r}")
-    return None
-
-
-def build_fixed_workflow(episode: Any) -> tuple[WorkflowGraph, str]:
-    """Pre-built canvas for ``fixed_workflow``: every input-free tool -> one code node -> submit.
-
-    Tools that require inputs cannot be wired by a fixed template and are left out (they stay unused); the
-    prompt lists exactly the wired tools (``prompts.fixed_workflow_tools``).
-    Code-node input ports are named after the tool output ports ("<tool>__<port>" on collisions); its
-    single output "y" has the required output schema.
-    """
-    origin = {"step": -1, "uses": [], "generated": False, "from_operator": None, "template": "fixed_workflow"}
-    nodes: dict[str, Node] = {}
-    ports: list[tuple[str, str, str, Any]] = []
-    for t in prompts.fixed_workflow_tools(episode):
-        nid = "tool_" + re.sub(r"[^A-Za-z0-9_]+", "_", t.name)
-        nodes[nid] = Node(id=nid, kind="tool", ref=t.name, inputs={}, outputs=dict(t.outputs), origin=dict(origin))
-        ports.extend((nid, t.name, p, sch) for p, sch in t.outputs.items())
-    names = Counter(p for _, _, p, _ in ports)
-    code_inputs = {}
-    edges: list[Edge] = []
-    for nid, tname, p, sch in ports:
-        port = p if names[p] == 1 else f"{re.sub(r'[^A-Za-z0-9_]+', '_', tname)}__{p}"
-        code_inputs[port] = sch
-        edges.append(Edge.make(nid, p, FIXED_CODE_NODE, port))
-    nodes[FIXED_CODE_NODE] = Node(id=FIXED_CODE_NODE, kind="code", code=_FIXED_STUB, config={}, inputs=code_inputs,
-                                  outputs={"y": episode.required_output}, origin=dict(origin, generated=True))
-    nodes[FIXED_SUBMIT_NODE] = Node(id=FIXED_SUBMIT_NODE, kind="submit", inputs={"y": episode.required_output},
-                                    origin=dict(origin))
-    edges.append(Edge.make(FIXED_CODE_NODE, "y", FIXED_SUBMIT_NODE, "y"))
-    return WorkflowGraph(nodes, edges), FIXED_CODE_NODE
-
-
 def _submitted_fp(graph: WorkflowGraph) -> str | None:
     """Fingerprint of the submit node (+ ancestors) if the graph is a valid, submitted workflow.
 
@@ -506,8 +419,6 @@ class Solver:
                  outputs_match_fn: Callable[[Any, Any, dict], bool] | None = None,
                  parser: Callable[[str], Any] | None = None, replay_failed_submits: bool = True,
                  max_parallel_subprocs: int = 4) -> None:
-        if cfg.orchestration not in prompts.ORCHESTRATIONS:
-            raise ValueError(f"unknown orchestration {cfg.orchestration!r}; expected one of {prompts.ORCHESTRATIONS}")
         self.cfg = cfg
         self.llm = llm
         self.evo_cfg = evo_cfg
@@ -560,11 +471,10 @@ class _SolveRun:
         self.program = program
         self.mode = mode
         self.run_dir = run_dir
-        self.orch = self.cfg.orchestration
         # The experiment protocol (SolverConfig.max_steps) sets the step budget; adapters' Budget.max_steps
         # is only used when the solver config gives none.
         steps = int(self.cfg.max_steps) if int(self.cfg.max_steps or 0) > 0 else int(episode.budget.max_steps)
-        self.max_steps = 1 if self.orch == "single_turn" else max(0, steps)
+        self.max_steps = max(0, steps)
         # accounting
         self.policy_usage = empty_usage()
         self.last_reply_tokens = 0
@@ -575,7 +485,6 @@ class _SolveRun:
         self.node_runs = 0
         self.replays = 0
         self.parse_failures = 0
-        self.rejected = 0
         self.budget_at_step: dict[int, tuple[int, float]] = {}
         # trajectory
         self.steps: list[StepRecord] = []
@@ -607,16 +516,9 @@ class _SolveRun:
             "slice_hash": retriever.slice_hash(ep, cfg.retrieve_skills_k, cfg.retrieve_ops_k),
         }
 
-        fixed_code: str | None = None
         graph = WorkflowGraph()
-        if self.orch == "fixed_workflow":
-            graph, fixed_code = build_fixed_workflow(ep)
-            errs = graph.validate()
-            if errs:
-                self.notes.append(f"fixed workflow template has validation errors: {errs}")
-                log.warning("episode %s: fixed workflow template invalid: %s", ep.id, errs)
-        system = prompts.build_system_prompt(ep, skills, ops, self.orch, max_steps=self.max_steps,
-                                             fixed_code_node=fixed_code, show_dev_score=bool(cfg.show_dev_score))
+        system = prompts.build_system_prompt(ep, skills, ops, max_steps=self.max_steps,
+                                             show_dev_score=bool(cfg.show_dev_score))
         scrub = functools.partial(scrub_volatile, run_dir=self.run_dir)
         _write_text(self.run_dir / "system_prompt.txt", system)
 
@@ -698,22 +600,6 @@ class _SolveRun:
                     stop_reason = "finish"
                     break
 
-                reason = check_orchestration(action, graph, self.orch, fixed_code)
-                if reason is not None:
-                    self.rejected += 1
-                    self._mark_budget(k)
-                    text = f"Action rejected: {reason}" + (f"\n{note}" if note else "")
-                    fb = {"action_ok": False, "action_error": reason, "rejected_by": "orchestration", "text": text}
-                    self._record(traj_log, StepRecord(k, action_dict, None, fb, kept, pusage, graph.graph_fingerprint(),
-                                                      None, dt_pol, raw=raw, thought=thought, dropped_uses=dropped))
-                    self.history.append({"step": k, "action": prompts.summarize_action(action_dict),
-                                         "thought": thought, "result": f"rejected: {reason}"})
-                    feedback_text = text
-                    if self.orch == "single_turn":
-                        stop_reason = "single_turn"
-                        break
-                    continue
-
                 t1 = time.monotonic()
                 try:
                     graph2, ckpt2, fbo, y = executor.apply(graph, checkpoint, action, k)
@@ -732,9 +618,6 @@ class _SolveRun:
                     self.history.append({"step": k, "action": prompts.summarize_action(action_dict),
                                          "thought": thought, "result": err})
                     feedback_text = text
-                    if self.orch == "single_turn":
-                        stop_reason = "single_turn"
-                        break
                     continue
                 dt_ex = time.monotonic() - t1
                 self.agent_wall += dt_ex
@@ -773,9 +656,6 @@ class _SolveRun:
                                          _visible_feedback(fbo, bool(cfg.show_dev_score)), scrub=scrub)})
                 feedback_text = text
 
-                if self.orch == "single_turn":
-                    stop_reason = "single_turn"
-                    break
                 if (self.mode == "source" and cfg.stop_on_first_pass and ev_idx is not None
                         and self.evidence[ev_idx].passed):
                     stop_reason = "first_pass"
@@ -973,7 +853,6 @@ class _SolveRun:
             "policy_logical_tokens": logical_tokens(pu), "executor_logical_tokens": logical_tokens(xu),
             "logical_tokens": logical_tokens(pu) + logical_tokens(xu), "agent_wall_s": self.agent_wall,
             "replay_wall_s": self.replay_wall, "steps": len(self.steps), "parse_failures": self.parse_failures,
-            "rejected_actions": self.rejected,
         }
         return SolveResult(
             episode_id=str(ep.id), mode=self.mode, program_version=str(self.program.version),

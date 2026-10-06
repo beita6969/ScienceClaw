@@ -77,9 +77,9 @@ def cmd_live(args: argparse.Namespace) -> int:
     store = ProgramStore(home / "program")
     evo = LiveEvolution(store, home, None, RunConfig(), [])
     if args.action == "candidates":
-        rows = [{"id": c["id"], "status": c["status"], "variant": c["variant"], "decision": str(c["decision"])[:70]}
+        rows = [{"id": c["id"], "status": c["status"], "decision": str(c["decision"])[:70]}
                 for c in evo.candidates()]
-        _print_table(rows, ["id", "status", "variant", "decision"])
+        _print_table(rows, ["id", "status", "decision"])
         print(f"\nactive program: {store.head()}")
     elif args.action == "show":
         print(json.dumps(evo.candidate(args.target), indent=1, default=str))

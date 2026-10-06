@@ -59,6 +59,5 @@ On first start the plugin installs the whole tool library (Python packages, pret
 full profile) in the background and the engine refuses tasks until that is done. `autoSetup: false` turns the automatic start off
 (run `python -m scienceclaw.cli setup` yourself), `setupProfile: "light"` skips the assets larger than 1.5 GB.
 
-This plugin is the agent system only. The ScienceClaw-Eval benchmark is released separately
-(evaluation data: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>) and is not
-reachable through these tools.
+The ScienceClaw-Eval benchmark that accompanies the paper keeps its evaluation data on Hugging Face:
+<https://huggingface.co/datasets/beita6969/scienceclaw-eval>.

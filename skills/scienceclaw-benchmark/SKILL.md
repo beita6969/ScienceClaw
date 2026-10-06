@@ -9,7 +9,7 @@ metadata: { "openclaw": { "emoji": "🧪" } }
 Each `scienceclaw-benchmark-forNN` skill describes one scientific task family: its inputs, the deliverable, how
 quality is judged, and the scilib tools and pretrained weights that fit it. The 23 skills correspond to the 23
 disciplines of the companion ScienceClaw-Eval benchmark; its evaluation data is hosted on Hugging Face
-(<https://huggingface.co/datasets/beita6969/scienceclaw-eval>) and is not part of this repository.
+(<https://huggingface.co/datasets/beita6969/scienceclaw-eval>).
 
 ## How to use
 

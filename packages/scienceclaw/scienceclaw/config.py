@@ -46,7 +46,6 @@ class LLMConfig:
 class SolverConfig:
     max_steps: int = 24
     history_window: int = 6                 # last k steps shown in full; older ones summarized
-    orchestration: str = "canvas"          # canvas | single_turn | single_operator | fixed_workflow
     replay_on_new_submit: bool = True
     show_dev_score: bool = True
     retrieve_skills_k: int = 4
@@ -56,7 +55,6 @@ class SolverConfig:
 
 @dataclass
 class EvolutionConfig:
-    variant: str = "full"                  # frozen | workflow_only | skill_only | operator_only | unlinked | full
     update_schedule: str = "per_candidate" # per_candidate | per_round_argmax
     qval: str = "macrosr_then_score"       # macrosr | macrosr_then_score | score
     qval_eps: float = 0.02                 # min normalized-score gain when MacroSR ties (≥ LLM re-solve noise)

@@ -277,7 +277,7 @@ class Service:
         bootstrap.require()
         self._need(p, "session_id")
         s, evo = self._finished_live_session(p), self.evolution
-        return evo.start_job("propose", lambda: evo.propose(s, p.get("variant")))
+        return evo.start_job("propose", lambda: evo.propose(s))
 
     def evolve_gate(self, p: dict) -> dict:
         self._need(p, "candidate_id")
@@ -288,7 +288,7 @@ class Service:
     def evolve_run(self, p: dict) -> dict:
         self._need(p, "session_id")
         s, evo = self._finished_live_session(p), self.evolution
-        return evo.start_job("run", lambda: evo.run(s, p.get("variant")))
+        return evo.start_job("run", lambda: evo.run(s))
 
     def evolve_status(self, p: dict) -> dict:
         return self.evolution.job(p.get("job_id"), float(p.get("wait_s") or 0))

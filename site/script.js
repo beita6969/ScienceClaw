@@ -126,11 +126,12 @@
     render();
   })();
 
+  var SRCS = {"30":["PhenoBench","CropAndWeedAndLeaf"],"31":["ProteinGym","TAPE fluorescence"],"32":["MSD Task04","UCL/Dryad hippocampus"],"33":["BuildingsBench","EULP"],"34":["OGB ogbg-molhiv","BACE"],"35":["Monash Tourism Monthly","Monash Tourism Quarterly"],"36":["MUSDB18","MoisesDB"],"37":["WeatherBench 2 (ERA5, 2019)","WeatherBench 2 (ERA5, 2020)"],"38":["World Bank WDI","World Bank WDI"],"39":["Eedi Task 4","EdNet-KT1"],"40":["DCASE 2024 Task 2","DCASE 2023 Task 2 ToyNscale"],"41":["NEON aquatics","USGS river metabolism"],"42":["PhysioNet/CinC 2019","SepsisExp"],"43":["HIPE-OCRepair-2026","ICDAR 2019 POCR"],"44":["ACIC 2016","IHDP"],"45":["AmericasNLP 2026","Bloom Captioning (Mam)"],"46":["HumanEval","SWE-bench Verified"],"47":["UD: Marathi, Italian, Arabic, Croatian","UD: Indonesian, Swedish Sign Language, French, Hindi"],"48":["ContractNLI","ACORD"],"49":["SMT-LIB 2025","SMT-LIB 2024"],"50":["Touché23-ValueEval","ETHICS"],"51":["Matbench phonons","Kyoto PhononDB"],"52":["Psych-201","Psych-101"]};
   /* ---------- discipline chips ---------- */
   (function () {
     var host = $('#chips'), D = window.DISC; if (!host || !D) return;
     host.innerHTML = D.map(function (d) {
-      return '<span class="chip" title="' + d.task + ' · ' + d.metric + '"><i>FoR' + d.code + '</i>' + SHORT[d.code] + '</span>';
+      var sr = SRCS[d.code]; return '<span class="chip" title="' + d.task + ' · ' + d.metric + ' — IID: ' + sr[0] + ' · OOD: ' + sr[1] + '"><i>FoR' + d.code + '</i>' + SHORT[d.code] + '</span>';
     }).join('');
   })();
 })();

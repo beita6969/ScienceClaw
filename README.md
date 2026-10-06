@@ -128,12 +128,6 @@ Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 6
 - **The linkage and the gate are what matter.** Committing Skills and Operators separately keeps only 60 % of the gain; Skill-only and Operator-only evolution keep 40 % and 57 %. Without independent IID selection only 15 % remains; without scientific constraints, source replay or the independent validator, 46 %, 55 % and 59 %.
 - **Execution structure is the base.** The full system runs 4.84 planner rounds and 4.24 distinct Operators per task, repairs 71 % of failures from feedback, recovers 89 % after interruption and replays 96 % cleanly (a single-turn agent: 0 %, 31 %, 78 %).
 
-<p align="center">
-  <img src="assets/paper/ood_over_rounds.png" alt="OOD score over rounds" width="38%"><br>
-  <img src="assets/paper/lead_over_rounds.png" alt="Lead over the best other system" width="38%">
-</p>
-<p align="center"><sub><i>(d) OOD macro score by round. (e) Lead of ScienceClaw over the best other system (pp).</i></sub></p>
-
 <p align="center"><img src="assets/paper/ablation_heatmap.png" alt="Ablation heatmap across 23 disciplines"></p>
 <p align="center"><sub><i>Mean of IID and OOD task-native scores of the ablation variants across 23 disciplines. Colours are normalised within each discipline (darker is better); the two groups follow higher-is-better and lower-is-better metrics.</i></sub></p>
 

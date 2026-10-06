@@ -128,11 +128,20 @@ Seven evolution rounds over a common stream of 23 disciplines, with 64 IID and 6
 - **The linkage and the gate are what matter.** Committing Skills and Operators separately keeps only 60 % of the gain; Skill-only and Operator-only evolution keep 40 % and 57 %. Without independent IID selection only 15 % remains; without scientific constraints, source replay or the independent validator, 46 %, 55 % and 59 %.
 - **Execution structure is the base.** The full system runs 4.84 planner rounds and 4.24 distinct Operators per task, repairs 71 % of failures from feedback, recovers 89 % after interruption and replays 96 % cleanly (a single-turn agent: 0 %, 31 %, 78 %).
 
+<p align="center">
+  <img src="assets/paper/ood_over_rounds.png" alt="OOD score over rounds" width="44%" align="top">
+  <img src="assets/paper/lead_over_rounds.png" alt="Lead over the best other system" width="44%" align="top">
+</p>
+<p align="center"><sub><i>(d) OOD macro score by round. (e) Lead of ScienceClaw over the best other system (pp).</i></sub></p>
+
 <p align="center"><img src="assets/paper/ablation_heatmap.png" alt="Ablation heatmap across 23 disciplines"></p>
 <p align="center"><sub><i>Mean of IID and OOD task-native scores of the ablation variants across 23 disciplines. Colours are normalised within each discipline (darker is better); the two groups follow higher-is-better and lower-is-better metrics.</i></sub></p>
 
 <p align="center"><img src="assets/paper/linked_mechanism.png" alt="Linked mechanism and workflow mechanics" width="85%"></p>
 <p align="center"><sub><i>(f) Gain over the frozen agent (%) of the linked-mechanism variants on Commerce (MASE) and Law (mAP). (g) Workflow mechanics: planner rounds, distinct Operators, Operator diversity, feedback repair, checkpoint recovery and clean replay.</i></sub></p>
+
+<p align="center"><img src="assets/paper/reliability_promotion.png" alt="Reliability and cost, and promoted candidates" width="85%"></p>
+<p align="center"><sub><i>(h) Hard-constraint pass rate against cost per OOD gain (ScienceClaw = 1), coloured by planner wall-time share, with attainment and planner share annotated. (i) Promoted candidates and promotion rate.</i></sub></p>
 
 <details>
 <summary>Per-discipline scores: ScienceClaw against the frozen agent</summary>

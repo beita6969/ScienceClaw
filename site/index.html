@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -151,17 +151,21 @@
       <div class="kpi"><b>98.23%</b><span>of instances pass every hard constraint<br><i>1.23% erroneous promotions</i></span></div>
     </div>
 
-    <div class="grid-2">
-      <div class="card reveal">
-        <h3>OOD macro success rate by round</h3>
-        <p class="card-sub">Frozen agent, RuleEvo (a ScienceClaw variant that evolves by deterministic trace projection alone) and the full system.</p>
-        <div id="trajChart" class="chart" role="img" aria-label="Line chart of OOD macro success rate by round"></div>
-      </div>
-      <div class="card reveal">
-        <h3>What the gain depends on</h3>
-        <p class="card-sub">Share of the full system's gain that each ablation variant retains.</p>
-        <div id="retainChart" class="bars"></div>
-      </div>
+    <div class="grid-2 panels">
+      <figure class="figure reveal">
+        <button class="zoom" data-src="img/paper_d.webp" aria-label="Enlarge figure"><img src="img/paper_d.webp" alt="OOD score over rounds" width="2000" height="1944" loading="lazy"></button>
+        <figcaption>(d) OOD macro score by round.</figcaption>
+      </figure>
+      <figure class="figure reveal">
+        <button class="zoom" data-src="img/paper_e.webp" aria-label="Enlarge figure"><img src="img/paper_e.webp" alt="Lead over the best other system" width="1730" height="1074" loading="lazy"></button>
+        <figcaption>(e) Lead of ScienceClaw over the best other system (pp).</figcaption>
+      </figure>
+    </div>
+
+    <div class="card reveal wide-card">
+      <h3>What the gain depends on</h3>
+      <p class="card-sub">Share of the full system's gain that each ablation variant retains.</p>
+      <div id="retainChart" class="bars"></div>
     </div>
 
     <div class="card reveal wide-card">
@@ -188,8 +192,13 @@
     </figure>
 
     <figure class="figure mid reveal">
-      <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="1400" height="753" loading="lazy"></button>
+      <button class="zoom" data-src="img/linked_mechanism.webp" aria-label="Enlarge figure"><img src="img/linked_mechanism.webp" alt="Linked mechanism and workflow mechanics" width="2000" height="1126" loading="lazy"></button>
       <figcaption>(f) Gain of the linked-mechanism variants on Commerce and Law. (g) Workflow mechanics: planner rounds, distinct Operators, feedback repair, checkpoint recovery and clean replay.</figcaption>
+    </figure>
+
+    <figure class="figure mid reveal">
+      <button class="zoom" data-src="img/paper_hi.webp" aria-label="Enlarge figure"><img src="img/paper_hi.webp" alt="Reliability and cost, and promoted candidates" width="2000" height="1152" loading="lazy"></button>
+      <figcaption>(h) Hard-constraint pass rate against cost per OOD gain (ScienceClaw = 1), coloured by planner wall-time share. (i) Promoted candidates and promotion rate.</figcaption>
     </figure>
 
 

@@ -89,35 +89,6 @@
     });
   });
 
-  /* ---------- trajectory chart (paper numbers) ---------- */
-  (function () {
-    var host = $('#trajChart'); if (!host) return;
-    var series = [
-      { name: 'Frozen agent', c: '#9aa7b4', dash: '5 5', w: 2, v: [77.83, 77.83, 77.83, 77.83, 77.83, 77.83, 77.83, 77.83] },
-      { name: 'RuleEvo', c: '#d9a93f', w: 2.4, v: [77.83, 78.42, 79.18, 78.89, 79.59, 80.28, 79.99, 81.22] },
-      { name: 'ScienceClaw', c: '#2a9d8f', w: 3.4, v: [77.83, 80.47, 82.74, 82.51, 86.15, 87.58, 89.76, 91.30] }
-    ];
-    var W = 560, H = 330, L = 44, R = 96, T = 14, B = 38, y0 = 76, y1 = 92;
-    var x = function (i) { return L + (W - L - R) * i / 7; };
-    var y = function (v) { return T + (H - T - B) * (1 - (v - y0) / (y1 - y0)); };
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
-    for (var g = y0; g <= y1; g += 4) {
-      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="#e3e8ee"/>';
-      s += '<text x="' + (L - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end" font-size="11" fill="#5b6776">' + g + '</text>';
-    }
-    for (var i = 0; i <= 7; i++) s += '<text x="' + x(i) + '" y="' + (H - 16) + '" text-anchor="middle" font-size="11" fill="#5b6776">' + i + '</text>';
-    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="11" fill="#5b6776">Evolution round</text>';
-    series.forEach(function (se) {
-      var d = se.v.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
-      s += '<path d="' + d + '" fill="none" stroke="' + se.c + '" stroke-width="' + se.w + '" stroke-linecap="round" stroke-linejoin="round"' + (se.dash ? ' stroke-dasharray="' + se.dash + '"' : '') + '/>';
-      if (!se.dash) se.v.forEach(function (v, i) { s += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="' + (se.w > 3 ? 4 : 3) + '" fill="#fff" stroke="' + se.c + '" stroke-width="2"><title>' + se.name + ', round ' + i + ': ' + v.toFixed(2) + '</title></circle>'; });
-      var last = se.v[7], off = se.name === 'RuleEvo' ? 0 : (se.name === 'Frozen agent' ? 6 : 0);
-      s += '<text x="' + (x(7) + 10) + '" y="' + (y(last) + 4 + off) + '" font-size="12" font-weight="600" fill="' + se.c + '">' + se.name + '</text>';
-      s += '<text x="' + (x(7) + 10) + '" y="' + (y(last) + 18 + off) + '" font-size="11" fill="#5b6776">' + last.toFixed(2) + '</text>';
-    });
-    host.innerHTML = s + '</svg>';
-  })();
-
   /* ---------- ablation retention bars ---------- */
   (function () {
     var host = $('#retainChart'); if (!host) return;

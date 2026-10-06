@@ -2,7 +2,7 @@
 
 <img src="assets/banner.svg" alt="ScienceClaw" width="760">
 
-<p><b>Skills and Operators that grow from replay-verified executions. The model is never updated.</b></p>
+<p><b>Skills and Operators that grow from replay-verified executions.</b></p>
 
 <p>
   <a href="https://scienceclaw.science"><img src="https://img.shields.io/badge/website-scienceclaw.science-0891b2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website"></a>
@@ -28,13 +28,13 @@
     <td align="center" width="25%"><h3>23</h3><sub>disciplines across the<br>natural and social sciences</sub></td>
     <td align="center" width="25%"><h3>+16.45 %</h3><sub>mean out-of-distribution gain<br>over the frozen agent</sub></td>
     <td align="center" width="25%"><h3>98.23 %</h3><sub>of instances pass every<br>scientific hard constraint</sub></td>
-    <td align="center" width="25%"><h3>0</h3><sub>model parameters updated<br>at any round</sub></td>
+    <td align="center" width="25%"><h3>91.30</h3><sub>OOD macro success rate<br>after seven rounds (from 77.83)</sub></td>
   </tr>
 </table>
 
 </div>
 
-ScienceClaw is an agent system for scientific work that **gets better the more it is used, without training the model**. It solves each task as a typed, executable workflow. When a repair is reproduced under a clean replay, it becomes a linked **Skill** (strategy) and **Operator** (a typed, executable capability), and it is kept only if it still solves its source task and improves independent validation tasks.
+ScienceClaw is an agent system for scientific work that **gets better the more it is used**. It solves each task as a typed, executable workflow. When a repair is reproduced under a clean replay, it becomes a linked **Skill** (strategy) and **Operator** (a typed, executable capability), and it is kept only if it still solves its source task and improves independent validation tasks.
 
 > [!NOTE]
 > This repository is the **agent system**, built on the [OpenClaw](https://github.com/openclaw/openclaw) gateway. The companion benchmark, **ScienceClaw-Eval**, is released separately and its evaluation data lives on [Hugging Face](https://huggingface.co/datasets/beita6969/scienceclaw-eval).
@@ -43,7 +43,7 @@ ScienceClaw is an agent system for scientific work that **gets better the more i
 
 | Idea | In practice |
 | --- | --- |
-| **A fixed model and an evolving program** | The model is never updated. What evolves is a versioned program of **Skills** (decomposition, workflow construction, recovery) and typed **Operators** with explicit input, output and domain contracts. |
+| **An evolving program** | What evolves is a versioned program of **Skills** (decomposition, workflow construction, recovery) and typed **Operators** with explicit input, output and domain contracts. |
 | **Typed, executable workflows** | Ports carry a schema of type, shape, unit and provenance. Nodes are fingerprinted, so an edit reruns only what it affects. |
 | **Evidence you can replay** | Every result is regenerated from a reset environment and checked against the task's hard scientific constraints. |
 | **Linked Skill–Operator updates** | A reproduced repair becomes a strategy patch and a typed capability, committed together. No LLM judge is needed to form, rank or select candidates. |
@@ -224,7 +224,6 @@ The same engine speaks line-delimited JSON on `python -m scienceclaw.rpc` if you
 > [!WARNING]
 > Persistent executable updates can reuse errors and widen the attack surface. Code nodes run in a sandbox (separate process, scrubbed environment, static scan, runtime audit guard, and user/network/pid namespaces where the host supports them), but run untrusted workloads in a container as well.
 
-- **The model is never updated.** `Θ_{r+1} = Θ_r = Θ₀`.
 - **Nothing persists without evidence.** Source replay, validation, budget and strict improvement all have to hold, and the gate fails closed when the model is unavailable.
 - **Updates are your decision, and reversible.** Candidates wait as `ready` until promoted; every version is a snapshot with a receipt and can be rolled back.
 - **Provenance everywhere.** Ports record units and upstream transformations; operators record their source episode, steps and parent version.

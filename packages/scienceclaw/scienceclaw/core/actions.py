@@ -8,8 +8,7 @@ The policy emits exactly one JSON object per turn::
              | {"type": "modify_node", "id": "n3", "patch": {"code"|"code_edit"|"prompt"|"config"|"inputs"|"outputs"|"wire": ...}}
              | {"type": "add_edge", "edge": {"src", "src_port", "dst", "dst_port", "conversion"?}}
              | {"type": "remove_edge", "edge": {...}}
-             | {"type": "finish"}
-             | {"type": "batch", "actions": [<action>, ...]},      # single_turn orchestration only
+             | {"type": "finish"},
      "uses": ["skill:<id>", "op:<id>"]}                             # nu_{t,k}: contributing Skills/Operators
 
 ``parse_action`` turns policy text into an :class:`Action` (or a precise error string);
@@ -43,7 +42,7 @@ from typing import Any
 from .graph import NODE_KINDS, SUBMIT_PORT, Edge, Node, WorkflowGraph
 from .schema import PortSchema
 
-ACTION_TYPES = ("add_node", "remove_node", "modify_node", "add_edge", "remove_edge", "finish", "batch")
+ACTION_TYPES = ("add_node", "remove_node", "modify_node", "add_edge", "remove_edge", "finish")
 NODE_ID_RE = re.compile(r"[A-Za-z0-9_]{1,40}")
 PORT_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,63}")
 PATCH_KEYS = ("code", "code_edit", "prompt", "config", "inputs", "outputs", "wire")
@@ -110,8 +109,6 @@ class Action:
             src = e.get("src", "?") + (f".{e['src_port']}" if e.get("src_port") else "")
             dst = e.get("dst", "?") + (f".{e['dst_port']}" if e.get("dst_port") else "")
             return f"{self.type} {src} -> {dst}{conv}"
-        if self.type == "batch":
-            return f"batch of {len(p.get('actions', []))} actions"
         return self.type
 
 
@@ -372,28 +369,10 @@ def _normalize_payload(atype: str, act: dict) -> tuple[dict | None, str | None]:
         return {"edge": edge}, None
     if atype == "finish":
         return {}, None
-    if atype == "batch":
-        subs = payload.get("actions")
-        if not isinstance(subs, list) or not subs:
-            return None, "batch requires a non-empty \"actions\" list"
-        norm: list[dict] = []
-        for i, sub in enumerate(subs):
-            if isinstance(sub, dict) and isinstance(sub.get("action"), dict):
-                sub = sub["action"]
-            if not isinstance(sub, dict):
-                return None, f"batch action #{i}: must be an object"
-            st = sub.get("type")
-            if st not in ACTION_TYPES or st == "batch":
-                return None, f"batch action #{i}: type must be one of {[t for t in ACTION_TYPES if t != 'batch']}, got {st!r}"
-            p, err = _normalize_payload(st, sub)
-            if err:
-                return None, f"batch action #{i} ({st}): {err}"
-            norm.append({"type": st, **p})
-        return {"actions": norm}, None
     return None, f"unknown action type {atype!r}; expected one of {list(ACTION_TYPES)}"
 
 
-def parse_action(text: str, *, allow_batch: bool = True) -> tuple[Action | None, str | None]:
+def parse_action(text: str) -> tuple[Action | None, str | None]:
     """Parse policy output into an :class:`Action`.
 
     Returns ``(action, None)`` on success, or ``(None, error)`` with a precise, policy-facing message.
@@ -415,8 +394,6 @@ def parse_action(text: str, *, allow_batch: bool = True) -> tuple[Action | None,
     atype = act.get("type")
     if atype not in ACTION_TYPES:
         return None, f"action.type must be one of {list(ACTION_TYPES)}, got {atype!r}"
-    if atype == "batch" and not allow_batch:
-        return None, "action type \"batch\" is not allowed here: emit exactly one atomic edit per turn"
     payload, err = _normalize_payload(atype, act)
     if err:
         return None, err
@@ -694,14 +671,6 @@ def _apply_inplace(g: WorkflowGraph, atype: str, payload: dict, action: Action, 
         return _remove_edge(g, payload["edge"])
     if atype == "finish":
         return None
-    if atype == "batch":
-        for i, sub in enumerate(payload["actions"]):
-            st = sub["type"]
-            sp = {k: v for k, v in sub.items() if k != "type"}
-            err = _apply_inplace(g, st, sp, action, episode, program, step)
-            if err:
-                return f"batch action #{i} ({st}): {err}"
-        return None
     return f"unknown action type {atype!r}"
 
 
@@ -723,7 +692,7 @@ def apply_action_detailed(graph: WorkflowGraph, action: Action, episode: Any, pr
     verrs = g.validate()
     if verrs:
         return graph, ("graph invalid after edit (edit not applied): " + "; ".join(verrs)
-                       + " -- fix the offending edges in the same edit (a batch of remove_edge / add_edge / modify_node)"), verrs
+                       + " -- fix the offending edges in the same edit"), verrs
     return g, None, []
 
 
@@ -739,21 +708,9 @@ def apply_action(graph: WorkflowGraph, action: Action, episode: Any, program: An
 
 
 # -------------------------------------------------------------------------- edit classes
-def _sub_actions(action: Action) -> list[Action]:
-    subs = action.payload.get("actions") or []
-    out = []
-    for s in subs:
-        if isinstance(s, dict):
-            out.append(Action(str(s.get("type", "")), {k: v for k, v in s.items() if k != "type"}, list(action.uses)))
-    return out
-
-
 def is_control_edit(action: Action, graph_before: WorkflowGraph | None = None) -> bool:
     """Pi_ctrl membership: topology / routing / configuration edits that preserve executable payloads."""
     t = action.type
-    if t == "batch":
-        subs = _sub_actions(action)
-        return bool(subs) and all(is_control_edit(s, graph_before) for s in subs)
     if t in ("add_edge", "remove_edge", "remove_node", "finish"):
         return True
     if t == "add_node":
@@ -767,8 +724,6 @@ def is_control_edit(action: Action, graph_before: WorkflowGraph | None = None) -
 def is_exec_edit(action: Action, graph_before: WorkflowGraph | None = None) -> bool:
     """Pi_exec membership: edits that generate or repair executable payloads (code / llm prompt / ports)."""
     t = action.type
-    if t == "batch":
-        return any(is_exec_edit(s, graph_before) for s in _sub_actions(action))
     if t == "add_node":
         return (action.payload.get("node") or {}).get("kind") in EXEC_NODE_KINDS
     if t == "modify_node":
@@ -787,9 +742,4 @@ def touched_nodes(action: Action) -> set[str]:
     if t in ("add_edge", "remove_edge"):
         e = p.get("edge") or {}
         return {x for x in (e.get("src"), e.get("dst")) if isinstance(x, str)}
-    if t == "batch":
-        out: set[str] = set()
-        for s in _sub_actions(action):
-            out |= touched_nodes(s)
-        return out
     return set()

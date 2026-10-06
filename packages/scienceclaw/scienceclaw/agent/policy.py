@@ -75,13 +75,10 @@ def logical_tokens(usage: dict) -> int:
                + usage.get("cached_prompt_tokens", 0) + usage.get("cached_completion_tokens", 0))
 
 
-def _default_parser(allow_batch: bool) -> ParseFn:
+def _default_parser() -> ParseFn:
     from ..core.actions import parse_action  # lazy: core.actions is owned by another module
 
-    def parse(text: str) -> "tuple[Action | None, str | None]":
-        return parse_action(text, allow_batch=allow_batch)
-
-    return parse
+    return parse_action
 
 
 class Policy:
@@ -102,12 +99,9 @@ class Policy:
         self._parser = parser
         self.max_reasks = max(0, int(max_reasks))
         self.json_mode: bool | None = getattr(cfg, "policy_json_mode", None) if cfg is not None else None
-        # "batch" actions are part of the action language only in single-turn orchestration; elsewhere a
-        # batch is a parse error that is re-asked within the step.
-        self.allow_batch: bool = getattr(cfg, "orchestration", "canvas") == "single_turn"
 
     def _parse(self, text: str) -> tuple["Action | None", str | None]:
-        parser = self._parser or _default_parser(self.allow_batch)
+        parser = self._parser or _default_parser()
         try:
             action, err = parser(text)
         except Exception as ex:  # a parser crash is reported to the policy like any parse error

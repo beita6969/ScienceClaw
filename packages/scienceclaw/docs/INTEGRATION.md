@@ -101,6 +101,5 @@ automatically when it first starts (`autoSetup`, on by default; `setupProfile` s
 
 The ScienceClaw-Eval benchmark (23 disciplines, FoR30-FoR52; sequential task streams and independent reset
 evaluation) from the paper "ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents Across
-the Natural and Social Sciences" is released separately, and its evaluation data is hosted on Hugging Face:
-<https://huggingface.co/datasets/beita6969/scienceclaw-eval>. This package contains the agent system
-only: no evaluation harness, datasets or tests.
+the Natural and Social Sciences" accompanies this package, and its evaluation data is hosted on Hugging Face:
+<https://huggingface.co/datasets/beita6969/scienceclaw-eval>.

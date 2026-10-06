@@ -213,9 +213,6 @@ export function createEvolveTool(worker: EngineWorker) {
       task: Type.Optional(Obj),
       id: Type.Optional(Type.String({ pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$" })),
       candidateId: Type.Optional(Type.String({ pattern: "^c[0-9]{4,}$" })),
-      variant: Type.Optional(
-        enumOf(["full", "workflow_only", "skill_only", "operator_only", "unlinked"] as const, "which parts of the repair to learn"),
-      ),
       jobId: Type.Optional(Type.String({ pattern: "^[a-f0-9]{10}$" })),
       waitSeconds: Type.Optional(Type.Integer({ minimum: 0, maximum: 300 })),
     }),
@@ -236,7 +233,7 @@ export function createEvolveTool(worker: EngineWorker) {
           return result(pretty(await worker.call("evolve.val_remove", { id: required(params, "id") })), undefined);
         case "propose":
         case "run": {
-          const job = await worker.call(`evolve.${op}`, { session_id: required(params, "sessionId"), variant: params.variant });
+          const job = await worker.call(`evolve.${op}`, { session_id: required(params, "sessionId") });
           return result(`${pretty(job)}\nPoll with scienceclaw_evolve(operation=status, waitSeconds=120).`, job);
         }
         case "gate": {

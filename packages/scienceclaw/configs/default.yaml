@@ -33,14 +33,12 @@ llm:
 solver:
   max_steps: 24
   history_window: 6
-  orchestration: canvas
   replay_on_new_submit: true
   show_dev_score: true
   retrieve_skills_k: 4
   retrieve_ops_k: 6
   stop_on_first_pass: true
 evolution:
-  variant: full
   update_schedule: per_candidate
   qval: macrosr_then_score
   qval_eps: 0.02

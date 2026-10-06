@@ -39,7 +39,6 @@ from scienceclaw.evolution.attribution import extract_instances
 from scienceclaw.evolution.bundle import build_bundle, bundle_summary
 from scienceclaw.evolution.validation import (ValidationGate, ValReport, infra_error_of, source_pass, source_replay_check,
                                               use_check)
-from scienceclaw.evolution.variants import bundles_for_variant, check_variant
 from scienceclaw.llm.client import LLMError
 from scienceclaw.program.store import ProgramStore, StaleHead
 
@@ -177,8 +176,7 @@ class LiveEvolution:
         out = []
         for p in sorted(d.glob("c*/record.json")) if d.is_dir() else []:
             r = _read_json(p)
-            out.append({"id": r["id"], "status": r["status"], "variant": r.get("variant"), "part": r.get("part"),
-                        "bundle": r.get("bundle"), "created": r.get("created"),
+            out.append({"id": r["id"], "status": r["status"], "bundle": r.get("bundle"), "created": r.get("created"),
                         "decision": (r.get("decision") or {}).get("reason")})
         return out
 
@@ -191,16 +189,13 @@ class LiveEvolution:
     def _save(self, rec: dict[str, Any]) -> None:
         _write_json(self._cdir(rec["id"]) / "record.json", rec)
 
-    def propose(self, session: Any, variant: str | None = None) -> dict[str, Any]:
+    def propose(self, session: Any) -> dict[str, Any]:
         """Build candidate bundles from a finished live session (Eq. 9-12) and store them as pending."""
         if getattr(session, "kind", "") != "live":
             raise ValueError("only finished live sessions can be evolved here")
         if not session.closed or session.result is None:
             raise ValueError("finish the session first: evolution learns from its replay-verified result")
         evo = self.cfg.evolution
-        variant = check_variant(variant or evo.variant)
-        if variant == "frozen":
-            raise ValueError("variant 'frozen' learns nothing")
         res = session.result
         req = bool(getattr(evo, "pass_requires_acceptance", True))
         if not source_pass(res, req):
@@ -213,22 +208,21 @@ class LiveEvolution:
         notes: list[str] = []
         for j, inst in enumerate(instances):
             scratch = self.root / "scratch" / f"{session.id}_{j}"
-            bundle, blog = build_bundle(inst, session.program, self.llm, session.episode, scratch, variant,
+            bundle, blog = build_bundle(inst, session.program, self.llm, session.episode, scratch,
                                         repeats=int(evo.breplay_repeats))
-            parts = bundles_for_variant(bundle, variant)
-            if not parts:
+            if bundle.is_empty():
                 notes.append(f"instance {j}: empty bundle (no abstractable repair)")
-            for part in parts:
+            if not bundle.is_empty():
                 cid = self._new_id()
-                _write_json(self._cdir(cid) / "bundle.json", part.to_dict())
+                _write_json(self._cdir(cid) / "bundle.json", bundle.to_dict())
                 _write_json(self._cdir(cid) / "build_log.json", blog)
-                rec = {"id": cid, "status": "pending", "created": time.strftime("%Y-%m-%dT%H:%M:%S"), "variant": variant,
-                       "part": part.meta.get("part", "bundle"), "bundle": bundle_summary(part), "instance": inst.summary(),
+                rec = {"id": cid, "status": "pending", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                       "bundle": bundle_summary(bundle), "instance": inst.summary(),
                        "source": {"session_id": session.id, "task_key": key, "spec": session.spec,
                                   "program_version": session.program.version, "run_dir": str(session.run_dir)},
                        "decision": None}
                 self._save(rec)
-                made.append({"id": cid, "bundle": rec["bundle"], "part": rec["part"]})
+                made.append({"id": cid, "bundle": rec["bundle"]})
         status = "proposed" if made else "empty"
         return {"status": status, "candidates": made, "notes": notes,
                 "reason": None if made else "the repair did not yield a reusable Skill or Operator"}
@@ -431,8 +425,8 @@ class LiveEvolution:
             self._done[jid].wait(min(float(wait_s), 300.0))
         return dict(self.jobs[jid])
 
-    def run(self, session: Any, variant: str | None = None) -> dict[str, Any]:
+    def run(self, session: Any) -> dict[str, Any]:
         """Propose from a session and gate every candidate in turn."""
-        proposal = self.propose(session, variant)
+        proposal = self.propose(session)
         decisions = [self.gate(c["id"]) for c in proposal["candidates"]]
         return {"proposal": proposal, "decisions": decisions}

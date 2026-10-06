@@ -8,10 +8,9 @@ interfaces below. Paper references are to "ScienceClaw: Benchmarking Continual S
 Agents Across the Natural and Social Sciences" (KDD'27 submission #358), which defines the method (Eq. 1–13) this
 engine implements.
 
-This repository is the agent system only. The companion benchmark, ScienceClaw-Eval (23 disciplines,
-FoR30–FoR52), is released separately; its evaluation data is hosted on Hugging Face
-(<https://huggingface.co/datasets/beita6969/scienceclaw-eval>). The engine package contains no evaluation
-harness, datasets or tests.
+This repository is the agent system. The companion benchmark, ScienceClaw-Eval (23 disciplines,
+FoR30–FoR52), keeps its evaluation data on Hugging Face
+(<https://huggingface.co/datasets/beita6969/scienceclaw-eval>).
 
 ---------------------------------------------------------------------------
 ## 0. Map from paper to code
@@ -201,7 +200,6 @@ scienceclaw/
     validation.py           Eq.13 + Eq.2 gate
     evolver.py              batch stream loop + Eq.3
     live.py                 LiveEvolution: propose / gate / promote from finished live sessions
-    variants.py             variants (frozen, workflow_only, skill_only, operator_only, unlinked, full)
   program/
     store.py                ProgramStore: versioned snapshots, HEAD, receipts, rollback
     seed.py                 seed program A0 (Skills from skills/ + library operators)
@@ -466,7 +464,7 @@ resending it: it replaces the one exact occurrence of `find` (`core.actions.appl
 canvas unchanged, with a message that says which case — when `find` is empty, occurs zero or several times,
 when the node is not a `code` node, when it is combined with `code` in the same patch, or when the result is not
 valid Python source with a top-level `run`. It is documented in the prompt as an interface rule (not as advice) and
-is accepted by the `fixed_workflow` orchestration together with `code` and `config`. `add_node` /
+is an interface rule of the `modify_node` patch. `add_node` /
 `modify_node` reject any config value other than null on `operator` nodes (§3.2). A `config` patch is merged
 into the existing config (a null value deletes the key).
 
@@ -475,25 +473,21 @@ port schema syntax, action JSON syntax, the episode objective and required
 output schema, tool signatures (with the description of every port), retrieved
 Skills (full text) and Operators (signature + description + contract), budget,
 the feedback of the last step, compact history. Forbidden: any strategy/how-to
-text not coming from a Skill (`find_strategy_phrases` scans every built-in
-prompt variant).
+text not coming from a Skill (`find_strategy_phrases` scans the built-in
+prompt text).
 
 Interface facts the prompt states (all of them descriptions of what the runtime does, none of them advice):
 
 * **Python values per port type** (`value_has_type`, §3.3) and the list of importable packages. The package list is
   *probed in the running interpreter* (`prompts.available_packages()`, `importlib.util.find_spec` over a fixed
   candidate list), never hard-coded, because code nodes run as `sys.executable -m scienceclaw.runtime.node_worker`.
-* **Acceptance (uniform disclosure).** A short `# Acceptance` section generated from one template for every task
-  and every orchestration: the deliverable counts as solved when the evaluator accepts it, all constraints
+* **Acceptance (uniform disclosure).** A short `# Acceptance` section generated from one template for every task:
+  the deliverable counts as solved when the evaluator accepts it, all constraints
   hold (including ones that are not listed), and the final workflow replays reproducibly within the budget.
   It names neither metric values, a reference method nor any task-specific recipe; a task's objective and
   tool strings must not contain such text either.
 * **What `finish` and budget exhaustion select** — exactly the rule of decision 7 (`prompts._FINISH`), so the
   policy is not told that the current canvas is the deliverable when it is not.
-* **Orchestration-specific components.** `single_operator` and `fixed_workflow` list neither `operator` / `llm`
-  node kinds nor the operator library, nor the llm item budget; `fixed_workflow` additionally lists only the tools
-  that are wired into the pre-built canvas (input-free tools), and only the actions and patch keys it accepts
-  (`code`, `code_edit`, `config`).
 * **Feedback description** is built from what is really shown (`show_dev_score=False` removes the development
   score from the feedback text and from the history, `prompts._feedback_section`).
 
@@ -549,13 +543,6 @@ counted, "+N cached ok"). Every free-text fragment goes through `scrub_volatile`
 * Gate (Eq.2): H_val, C_val ⪯ B (decision 11), Q_val strict improvement over
   the incumbent (Eq.3) with the noise guard (decision 12); outages
   (decision 13).
-* Variants (`evolution.variants`): `frozen` (no evolution), `workflow_only` (persist the whole G⁺ as a
-  retrievable workflow exemplar Skill, no abstraction), `skill_only`,
-  `operator_only`, `unlinked` (ΔS and ΔO gated independently), `full` (linked
-  bundle). Solver orchestration modes: `single_turn` (policy must emit
-  the complete graph in one action list, no repair), `single_operator` (graph
-  limited to one code node + submit), `fixed_workflow` (a fixed tool→code→submit
-  template; only code/config edits allowed).
 
 ---------------------------------------------------------------------------
 ## 7. Live tasks, canvas sessions, program store, tool library
@@ -598,7 +585,7 @@ program (decision 9) as the first snapshot.
 
 ### 7.4 Evolution from live sessions (`evolution/live.py`)
 `LiveEvolution` drives the method of §6 with the user's own work: `val_add|val_list|val_remove` maintain
-D_val; `propose(session, variant)` builds the linked Skill/Operator bundle of a finished, replay-verified
+D_val; `propose(session)` builds the linked Skill/Operator bundle of a finished, replay-verified
 live session and stores it as a `pending` candidate (nothing about the active program changes); `gate(id)`
 runs R_src, evaluates the incumbent and the candidate on D_val with `ValidationGate` and settles the
 candidate as `ready` (admitted), `rejected` or `pending` (blocked: too few validation tasks, the source
@@ -633,7 +620,7 @@ configuration, never tool parameters; gateway and provider credentials are not f
 
 ### 7.7 Companion benchmark
 ScienceClaw-Eval, the benchmark that accompanies the paper (23 disciplines, FoR30–FoR52; sequential task
-streams and independent reset evaluation), is released separately and is not part of this repository. Its
+streams and independent reset evaluation), accompanies this system. Its
 evaluation data is hosted on Hugging Face: <https://huggingface.co/datasets/beita6969/scienceclaw-eval>.
 
 ---------------------------------------------------------------------------
@@ -665,7 +652,7 @@ params, cache_salt); retries with exponential backoff + jitter on 408/409/429/5x
 
 ### 8.2 core/actions.py
 ```python
-ACTION_TYPES = ("add_node", "remove_node", "modify_node", "add_edge", "remove_edge", "finish", "batch")
+ACTION_TYPES = ("add_node", "remove_node", "modify_node", "add_edge", "remove_edge", "finish")
 @dataclass
 class Action:
     type: str; payload: dict; uses: list[str] = []; thought: str = ""; raw: str = ""
@@ -677,8 +664,7 @@ def is_exec_edit(action, graph_before) -> bool                            # Π_e
 def touched_nodes(action) -> set[str]
 ```
 apply_action fills ports automatically: tool nodes from the episode ToolSpec, operator nodes from the program
-OperatorSpec, submit node inputs = {"y": episode.required_output}. `batch` (payload {"actions":[...]}) is only
-accepted when the solver runs `single_turn` orchestration.
+OperatorSpec, submit node inputs = {"y": episode.required_output}. One atomic edit per reply.
 
 ### 8.3 runtime/*
 ```python
@@ -743,7 +729,7 @@ mode only the final graph is replayed and evaluated. The policy never sees hidde
 Prompt-side determinism (decision 8): the solver pre-scrubs feedback text (`_render_feedback`, `scrub_volatile`:
 run-dir paths, `work/<node>-<8hex>` uids, wall times) *before* any truncation, and old history lines are scrubbed
 before they are clipped; `_visible_feedback` drops the development score from feedback and history when
-`show_dev_score` is off. `prompts.fixed_workflow_tools` lists the input-free tools a fixed-workflow prompt may name.
+`show_dev_score` is off.
 
 ### 8.5 evolution/*
 ```python
@@ -756,7 +742,7 @@ def split_edits(inst, program) -> tuple[list[Action], list[set[str]]]           
 def make_skill_candidates(inst, control_edits, program, llm, episode) -> list[Skill]                    # Eq.11
 def make_operator_candidate(inst, component, program, llm, episode) -> OperatorSpec | None              # Eq.12
 def boundary_replay(op, inst, component, program, llm, episode, run_dir, repeats: int = 1) -> tuple[bool, dict]
-def build_bundle(inst, program, llm, episode, run_dir, variant: str) -> tuple[Bundle, dict]
+def build_bundle(inst, program, llm, episode, run_dir, *, repeats: int = 1, round_idx: int | None = None) -> tuple[Bundle, dict]
 def source_replay_check(candidate, omega: list[str], episode, solver, run_dir, *, retries: int = 0,
                         backoff_s: float = 0.0) -> tuple[bool, SolveResult]                          # Eq.13
 def use_check(omega: list[str], result) -> tuple[bool, list[str]]      # Use(ω) on the passing evidence e_src (§6)
@@ -804,11 +790,11 @@ LIVE_GATE = {"hval_mode": "absolute", "qval": "macrosr"}
 class LiveEvolution:
     def __init__(self, store, home, llm, cfg, input_roots, *, auto_promote=False, min_val_tasks=2)
     def val_add(self, spec, vid=None) -> dict; def val_list(self) -> list[dict]; def val_remove(self, vid) -> dict
-    def propose(self, session, variant=None) -> dict      # pending candidates from a finished live session
+    def propose(self, session) -> dict      # pending candidates from a finished live session
     def gate(self, cid) -> dict                           # R_src, then D_val gate; ready | rejected | pending
     def promote(self, cid) -> dict                        # the user's decision
     def candidates(self) -> list[dict]; def candidate(self, cid) -> dict
-    def run(self, session, variant=None) -> dict          # propose + gate every candidate
+    def run(self, session) -> dict          # propose + gate every candidate
     def start_job(self, kind, fn) -> dict; def job(self, jid=None, wait_s=0.0) -> dict   # background jobs
 ```
 `rpc.Service.handle(line)` maps one JSON request to `{"id", "ok": true, "result"}` or

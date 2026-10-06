@@ -53,9 +53,6 @@ a set of tasks the user registered as representative.
    are versioned, leave receipts and are reversible with `scienceclaw_program(operation=rollback)`
    or `scienceclaw live rollback <version>`.
 
-`variant` selects what is learned: `full` (linked Skill + Operator bundle, the default),
-`workflow_only`, `skill_only`, `operator_only` or `unlinked` (Skill and Operator gated independently).
-
 The concrete order is:
 
 `finished session → evolution instance (e⁻, e⁺, δ) → split control/executable edits → skill patch

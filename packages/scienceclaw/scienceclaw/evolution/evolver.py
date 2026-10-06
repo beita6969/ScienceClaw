@@ -3,7 +3,7 @@
 For every source episode of ``plan.source_stream()`` (round-major, fixed discipline order):
 
     solve (mode "source") -> extract_instances (Eq. 9) -> build_bundle (Eq. 10-12 + BReplay)
-    -> for each gated bundle (variants.bundles_for_variant):
+    -> the linked bundle is gated atomically:
          A~, omega = A.apply(B)                   (atomic application, version ids omega)
          R_src = source_replay_check(A~, omega)   (Eq. 13)
          report = gate.evaluate(A~, reuse_from=incumbent report)   (lazy re-validation)
@@ -11,7 +11,7 @@ For every source episode of ``plan.source_stream()`` (round-major, fixed discipl
          per_round_argmax:  pool feasible candidates; at the round end accept argmax Q_val iff strictly better
 
 The foundation model is never updated (Theta_{r+1} = Theta_0); only the program A_r = (Skills, Operators)
-changes. Variant ``frozen`` solves the source stream (for comparable cost accounting) but never evolves.
+changes.
 
 Receipts written under ``run_dir``:
 
@@ -39,7 +39,6 @@ from .attribution import extract_instances
 from .bundle import build_bundle, bundle_summary
 from .validation import (ValidationGate, ValReport, _fresh_dir, _numeric_usage, _safe, _sum_costs, infra_error_of, qval_key,
                          source_pass, source_replay_check, use_check)
-from .variants import bundles_for_variant, check_variant
 
 __all__ = ["Evolver", "UPDATE_SCHEDULES", "STATE_SCHEMA"]
 
@@ -89,7 +88,6 @@ class Evolver:
                  retriever_factory: Any = None, val_workers: int = 6) -> None:
         self.cfg = cfg
         self.evo = cfg.evolution
-        check_variant(self.evo.variant)
         if self.evo.update_schedule not in UPDATE_SCHEDULES:
             raise ValueError(f"unknown update_schedule {self.evo.update_schedule!r}; expected one of {UPDATE_SCHEDULES}")
         self.llm = llm
@@ -103,7 +101,7 @@ class Evolver:
         val = (getattr(plan, "episodes", None) or {}).get("val", {})
         self.gate = ValidationGate(self.evo, cfg.solver, solver, val, self.run_dir / "val",
                                    max_workers=val_workers, retriever_factory=retriever_factory)
-        if not self.gate.val_episodes and self.evo.variant != "frozen":
+        if not self.gate.val_episodes:
             log.warning("no validation episodes: Q_val is constant, so no candidate can strictly improve")
         self.program: AgentProgram | None = None
         self.incumbent_report: ValReport | None = None
@@ -129,7 +127,7 @@ class Evolver:
                                                  **(extra or {})})
 
     def _run_meta(self, program0: AgentProgram) -> dict:
-        return {"variant": self.evo.variant, "update_schedule": self.evo.update_schedule, "qval": self.evo.qval,
+        return {"update_schedule": self.evo.update_schedule, "qval": self.evo.qval,
                 "hval_mode": self.evo.hval_mode, "program0_fingerprint": program0.fingerprint()}
 
     def _commit(self, state: dict, program: AgentProgram, inc: ValReport | None) -> None:
@@ -184,7 +182,6 @@ class Evolver:
                 rounds.append(r)
                 by_round[k] = []
             by_round[k].append(ep)
-        frozen = self.evo.variant == "frozen"
 
         state = self._load_state(program0)
         if state is None:
@@ -192,11 +189,9 @@ class Evolver:
             if (a0 / "program.json").exists() and AgentProgram.load(a0).fingerprint() != program0.fingerprint():
                 raise ValueError(f"{a0} holds a different A_0; use a new run_dir")
             program = program0
-            inc = None
-            if not frozen:
-                inc = self.gate.evaluate(program0)
-                self._save_report(inc)
-            self._save_snapshot(0, program0, None, {"incumbent": inc.summary() if inc else None})
+            inc = self.gate.evaluate(program0)
+            self._save_report(inc)
+            self._save_snapshot(0, program0, None, {"incumbent": inc.summary()})
             state = {"schema": STATE_SCHEMA, "meta": self._run_meta(program0), "completed": [], "rounds_done": [],
                      "cand_seq": 0, "n_accepted": 0, "pool": []}
             self._commit(state, program, inc)
@@ -297,7 +292,7 @@ class Evolver:
         ep_dir = self.run_dir / "source" / f"{_safe(str(r))}_{_safe(ep.id)}"
         entry: dict[str, Any] = {"key": key, "round": r, "round_no": round_no, "episode": ep.id,
                                  "discipline": getattr(ep, "discipline", ""), "program_version": program.version,
-                                 "program_fingerprint": program.fingerprint(), "variant": self.evo.variant,
+                                 "program_fingerprint": program.fingerprint(),
                                  "instances": [], "candidates": [], "accepted": [], "error": None, "timings": {}}
         try:
             res, attempts, infra = self._solve_source(ep, program, ep_dir)
@@ -322,24 +317,20 @@ class Evolver:
                           "final_z": int(getattr(getattr(res, "eval", None), "z", 0) or 0),
                           "usage": _numeric_usage(getattr(res, "usage", {})),
                           "retrieved": getattr(res, "retrieved", {})}
-        if self.evo.variant == "frozen":
-            entry["program_version_after"] = program.version
-            return program, inc, entry
-
         instances = extract_instances(res, int(self.evo.instances_per_episode))
         if not instances:
             entry["note"] = "no replay-verified success: no evolution instance"
         for j, inst in enumerate(instances):
             tb = time.monotonic()
             try:
-                bundle, blog = build_bundle(inst, program, self.llm, ep, ep_dir / f"inst{j}", self.evo.variant,
+                bundle, blog = build_bundle(inst, program, self.llm, ep, ep_dir / f"inst{j}",
                                             repeats=int(self.evo.breplay_repeats), round_idx=r)
             except Exception as ex:  # a failing abstraction must not stop the stream; it is recorded
                 log.exception("bundle construction for %s instance %d failed", ep.id, j)
                 entry["instances"].append({"summary": inst.summary(),
                                            "error": f"{type(ex).__name__}: {ex}"[:800]})
                 continue
-            parts = bundles_for_variant(bundle, self.evo.variant)
+            parts = [] if bundle.is_empty() else [bundle]
             entry["instances"].append({"summary": inst.summary(), "n_skills": len(bundle.skills),
                                        "n_operators": len(bundle.operators), "n_gated_bundles": len(parts),
                                        "bundle_s": round(time.monotonic() - tb, 3),
@@ -362,8 +353,8 @@ class Evolver:
         cand, omega = program.apply(bundle, new_version=f"r{round_no}-{cid}")
         rec: dict[str, Any] = {
             "cand_id": cid, "round": r, "round_no": round_no, "source_episode": ep.id, "source_key": key,
-            "discipline": getattr(ep, "discipline", ""), "variant": self.evo.variant,
-            "part": bundle.meta.get("part", "bundle"), "schedule": self.evo.update_schedule,
+            "discipline": getattr(ep, "discipline", ""),
+            "schedule": self.evo.update_schedule,
             "parent_version": program.version, "cand_version": cand.version, "omega": omega,
             "bundle": bundle_summary(bundle),
             "breplay": [{"op_id": (o.get("candidate") or {}).get("op_id"),
@@ -405,7 +396,7 @@ class Evolver:
             _append_jsonl(self.run_dir / "candidates.jsonl", rec)
             return program, inc
 
-        if inc is None:  # only the frozen variant has no incumbent report, and it never gates
+        if inc is None:  # the incumbent report is created with A_0 and restored on resume
             raise RuntimeError("gating a candidate requires an incumbent validation report")
         t1 = time.monotonic()
         inc = self._refresh_incumbent(program, inc, rec)

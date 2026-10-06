@@ -15,9 +15,6 @@ Determinism: prompts depend only on the episode's public view, the retrieved com
 Python packages installed in the interpreter that runs code nodes, and execution feedback. No wall-clock
 readings are rendered and free text is scrubbed of run-specific fragments *before* it is shortened, so
 identical contexts give identical prompts (the LLM response cache relies on this).
-
-Orchestration variants (``single_operator``, ``fixed_workflow``) describe only the node kinds, actions and tools
-they accept; components they reject are neither described nor listed.
 """
 from __future__ import annotations
 
@@ -30,21 +27,16 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 from ..runtime.executor import format_summary
 
 __all__ = [
-    "ORCHESTRATIONS",
     "STRATEGY_PATTERNS",
     "PARSE_RETRY_TEMPLATE",
     "find_strategy_phrases",
     "available_packages",
-    "fixed_workflow_tools",
     "build_system_prompt",
     "build_step_message",
     "summarize_action",
     "summarize_feedback",
     "uses_note",
 ]
-
-ORCHESTRATIONS = ("canvas", "single_turn", "single_operator", "fixed_workflow")
-_OPERATOR_ORCHESTRATIONS = ("canvas", "single_turn")       # the orchestrations that accept operator / llm nodes
 
 # Imperative strategy / advice phrasing that must never appear in the built-in prompt text.
 STRATEGY_PATTERNS: tuple[str, ...] = (
@@ -103,15 +95,6 @@ def available_packages() -> tuple[str, ...]:
     return tuple(found)
 
 
-def fixed_workflow_tools(episode: Any) -> list[Any]:
-    """Tools wired into the pre-built ``fixed_workflow`` canvas: the tools that need no input.
-
-    A fixed template cannot wire a tool that requires inputs, so such tools stay unused; the prompt lists exactly
-    this set and :func:`scienceclaw.agent.solver.build_fixed_workflow` builds exactly this set.
-    """
-    return [t for t in (getattr(episode, "tools", None) or []) if not t.inputs]
-
-
 # ----------------------------------------------------------------------------------------- system prompt
 _CANVAS = """\
 # Workflow Canvas
@@ -136,23 +119,16 @@ _KINDS: dict[str, tuple[str, str]] = {
         '- submit: the single terminal node. Its one input port "y" carries the required output schema (see "Deliverable") and is filled in automatically; the value arriving at "y" is the deliverable of the task.',
         'Node: {"id": "<id>", "kind": "submit"}.'),
 }
-_ORCH_KINDS = {
-    "canvas": ("tool", "operator", "code", "llm", "submit"),
-    "single_turn": ("tool", "operator", "code", "llm", "submit"),
-    "single_operator": ("tool", "code", "submit"),
-    "fixed_workflow": ("tool", "code", "submit"),
-}
 
 
-def _node_kinds(orchestration: str, max_node_s: float, max_llm_items: int) -> str:
-    """The "Node kinds" section: only the kinds the orchestration accepts (fixed_workflow: no node JSON forms)."""
+def _node_kinds(max_node_s: float, max_llm_items: int) -> str:
+    """The "Node kinds" section."""
     pk = list(available_packages())
     packages = ("the Python standard library is available" if not pk else
                 "the Python packages " + ", ".join(pk) + " and the standard library are available") + "."
-    lines = ["# Node kinds" if orchestration != "fixed_workflow" else "# Node kinds (the canvas is pre-built)"]
-    for kind in _ORCH_KINDS[orchestration]:
-        desc, node_json = _KINDS[kind]
-        line = desc if orchestration == "fixed_workflow" else desc + " " + node_json
+    lines = ["# Node kinds"]
+    for desc, node_json in _KINDS.values():
+        line = desc + " " + node_json
         lines.append(line.replace("@MAX_NODE_S@", f"{float(max_node_s):g}").replace("@MAX_LLM_ITEMS@", str(int(max_llm_items)))
                      .replace("@PACKAGES@", packages))
     return "\n".join(lines)
@@ -194,24 +170,10 @@ _CODE_EDIT_RULE = ('"code_edit" is {"find": "<text>", "replace": "<text>"} and r
 _CONFIG_RULE = '"config" is merged into the current config (a null value deletes that key)'
 
 
-def _patch_rules(orchestration: str) -> str:
-    """Semantics of the modify_node patch keys the orchestration accepts."""
-    if orchestration == "fixed_workflow":
-        return f'"code" replaces the current source; {_CODE_EDIT_RULE}; {_CONFIG_RULE}.'
-    if orchestration in _OPERATOR_ORCHESTRATIONS:
-        return (f'"code" and "prompt" replace the current value; {_CODE_EDIT_RULE}; {_CONFIG_RULE}; "inputs" / '
+_PATCH_RULES = (f'"code" and "prompt" replace the current value; {_CODE_EDIT_RULE}; {_CONFIG_RULE}; "inputs" / '
                 '"outputs" replace the declared ports of a code or llm node (edges into an input port that is '
                 'no longer declared are dropped; ports of tool, operator and submit nodes are fixed by their specification).')
-    return (f'"code" replaces the current source; {_CODE_EDIT_RULE}; {_CONFIG_RULE}; "inputs" / "outputs" replace '
-            'the declared ports of the code node (edges into an input port that is no longer declared are dropped; '
-            'ports of tool and submit nodes are fixed by their specification).')
-
-
-_PATCH_KEYS = {
-    "canvas": '"code" | "code_edit" | "prompt" | "config" | "inputs" | "outputs" | "wire"',
-    "single_operator": '"code" | "code_edit" | "config" | "inputs" | "outputs" | "wire"',
-}
-_PATCH_KEYS["single_turn"] = _PATCH_KEYS["canvas"]
+_PATCH_KEYS = '"code" | "code_edit" | "prompt" | "config" | "inputs" | "outputs" | "wire"'
 
 _ACTIONS_CANVAS = """\
 # Actions
@@ -227,23 +189,12 @@ Each reply is exactly one JSON object and nothing else:
 In modify_node, @PATCH_RULES@ "wire" (optional) connects input ports of the added / modified node to output ports of existing nodes in the same action; each entry is equivalent to one add_edge into that node (a value may also be {"from": "<src node>.<src port>", "conversion": {...}}); in modify_node, a wired port replaces the port's current incoming edge. In add_edge, "src_port" / "dst_port" may be omitted when that node has exactly one output / input port. An action that fails validation is not applied and the canvas stays unchanged. @FINISH@
 @USES@"""
 
-_ACTIONS_FIXED = """\
-# Actions
-Each reply is exactly one JSON object and nothing else:
-{"thought": "<at most 3 sentences>", "action": <ACTION>, "uses": [@USES_IDS@]}
-<ACTION> is one of:
-  {"type": "modify_node", "id": "<code node id>", "patch": {"code" | "code_edit" | "config": <new value>, ...}}
-  {"type": "finish"}
-@PATCH_RULES@ An action that fails validation is not applied and the canvas stays unchanged. @FINISH@
-@USES@"""
-
-def _feedback_section(with_operators: bool, show_dev_score: bool) -> str:
+def _feedback_section(show_dev_score: bool) -> str:
     items = ["whether the action was applied (or the reason it was rejected)", "graph validation errors",
              "the status of every node (ok, error, pending, skipped) with error messages and the tail of its stdout",
              "summaries of node outputs (type, shape, dtype, unit, finite fraction, min/max/mean, column or key "
              "names, head)"]
-    if with_operators:
-        items.append("operator contract violations")
+    items.append("operator contract violations")
     items.append("the results of the visible constraint checks on the submit input")
     if show_dev_score:
         items.append("a development score on visible data when the task provides one")
@@ -264,22 +215,9 @@ The deliverable counts as solved when all of the following hold:
   on held-out data the workflow never loads; its value is not shown to you);
 - the final workflow, replayed from its stored specification, reproduces the deliverable within the budget."""
 
-_ORCH = {
-    "canvas": """\
+_ORCH = """\
 # Orchestration: canvas
-One action per reply. Each action is applied and the canvas is executed before your next reply.""",
-    "single_turn": """\
-# Orchestration: single turn
-You have exactly one reply. Its action has type "batch" and lists all edits that build the complete workflow, including the submit node:
-  {"type": "batch", "actions": [<ACTION>, <ACTION>, ...]}
-The edits are applied in the given order, the workflow is executed once, and the episode ends. There is no further reply.""",
-    "single_operator": """\
-# Orchestration: single operator
-One action per reply. Each action is applied and the canvas is executed before your next reply. The workflow may contain tool nodes, at most one code node, and the submit node; adding any other node is rejected.""",
-    "fixed_workflow": """\
-# Orchestration: fixed workflow
-The canvas is pre-built: tool nodes -> one code node "{code_node}" -> submit node. The only accepted actions are modify_node on node "{code_node}" with a patch of "code", "code_edit" and/or "config", and finish. Other actions are rejected. Each action is applied and the canvas is executed before your next reply.""",
-}
+One action per reply. Each action is applied and the canvas is executed before your next reply."""
 
 
 def _json(obj: Any) -> str:
@@ -297,43 +235,32 @@ def _schema_line(schema: Any) -> str:
     return line
 
 
-def _actions_section(orchestration: str) -> str:
-    text = _ACTIONS_FIXED if orchestration == "fixed_workflow" else _ACTIONS_CANVAS
-    ids = "skill:<id>" + (" and op:<id>" if orchestration in _OPERATOR_ORCHESTRATIONS else "")
-    uses_ids = '"skill:<id>", "op:<id>", ...' if orchestration in _OPERATOR_ORCHESTRATIONS else '"skill:<id>", ...'
-    return (text.replace("@PATCH_KEYS@", _PATCH_KEYS.get(orchestration, "")).replace("@PATCH_RULES@", _patch_rules(orchestration))
-            .replace("@FINISH@", _FINISH).replace("@USES@", _USES.format(ids=ids)).replace("@USES_IDS@", uses_ids))
+def _actions_section() -> str:
+    return (_ACTIONS_CANVAS.replace("@PATCH_KEYS@", _PATCH_KEYS).replace("@PATCH_RULES@", _PATCH_RULES)
+            .replace("@FINISH@", _FINISH).replace("@USES@", _USES.format(ids="skill:<id> and op:<id>"))
+            .replace("@USES_IDS@", '"skill:<id>", "op:<id>", ...'))
 
 
-def build_system_prompt(episode: Any, skills: Sequence[Any], operators: Sequence[Any], orchestration: str = "canvas",
-                        *, max_steps: int | None = None, fixed_code_node: str | None = None,
-                        show_dev_score: bool = True) -> str:
+def build_system_prompt(episode: Any, skills: Sequence[Any], operators: Sequence[Any], *,
+                        max_steps: int | None = None, show_dev_score: bool = True) -> str:
     """System prompt for the policy π_Θ0 on one episode.
 
     Args:
         episode: a :class:`scienceclaw.task.Episode`; only its public view is rendered.
         skills: retrieved Skills (rendered in full with ``Skill.render()``).
-        operators: retrieved Operators (``OperatorSpec.render()``: signature, description, contract). Rendered only
-            in the orchestrations that accept operator nodes (``canvas``, ``single_turn``).
-        orchestration: one of :data:`ORCHESTRATIONS`.
+        operators: retrieved Operators (``OperatorSpec.render()``: signature, description, contract).
         max_steps: effective step budget (defaults to ``episode.budget.max_steps``).
-        fixed_code_node: id of the pre-built code node (``fixed_workflow`` only).
         show_dev_score: whether the feedback carries the development score (the solver's ``show_dev_score``).
     """
-    if orchestration not in ORCHESTRATIONS:
-        raise ValueError(f"unknown orchestration {orchestration!r}; expected one of {ORCHESTRATIONS}")
     budget = episode.budget
     steps = int(max_steps if max_steps is not None else budget.max_steps)
-    with_ops = orchestration in _OPERATOR_ORCHESTRATIONS
-    feedback = _feedback_section(with_ops, bool(show_dev_score))
-    ports = _PORT_SCHEMA if orchestration == "fixed_workflow" else _PORT_SCHEMA + "\n\n" + _EDGES
     parts: list[str] = [
         _CANVAS,
-        _node_kinds(orchestration, float(budget.max_node_s), int(budget.max_llm_items)),
-        ports,
-        _actions_section(orchestration),
-        feedback,
-        _ORCH[orchestration].replace("{code_node}", fixed_code_node or "code"),
+        _node_kinds(float(budget.max_node_s), int(budget.max_llm_items)),
+        _PORT_SCHEMA + "\n\n" + _EDGES,
+        _actions_section(),
+        _feedback_section(bool(show_dev_score)),
+        _ORCH,
     ]
 
     # ------------------------------------------------------------------ task (public view only)
@@ -353,21 +280,19 @@ def build_system_prompt(episode: Any, skills: Sequence[Any], operators: Sequence
 
     parts.append(_ACCEPTANCE)
 
-    tools = fixed_workflow_tools(episode) if orchestration == "fixed_workflow" else (episode.tools or [])
+    tools = episode.tools or []
     parts.append("# Tools\n" + ("\n".join(f"- {t.signature()}" for t in tools) if tools else "(none)"))
 
     limits = ["# Budget",
               f"- replies (steps): at most {steps}",
               f"- policy tokens: at most {int(budget.max_policy_tokens)}",
               f"- wall-clock time: at most {float(budget.max_wall_s):g} s",
-              f"- time per node run: at most {float(budget.max_node_s):g} s"]
-    if with_ops:
-        limits.append(f"- llm node items per run: at most {int(budget.max_llm_items)}")
+              f"- time per node run: at most {float(budget.max_node_s):g} s",
+              f"- llm node items per run: at most {int(budget.max_llm_items)}"]
     parts.append("\n".join(limits))
 
     parts.append("# Skills from your library\n" + ("\n\n".join(s.render() for s in skills) if skills else "(none)"))
-    if with_ops:
-        parts.append("# Operators from your library\n" + ("\n\n".join(o.render() for o in operators) if operators else "(none)"))
+    parts.append("# Operators from your library\n" + ("\n\n".join(o.render() for o in operators) if operators else "(none)"))
     return "\n\n".join(parts).strip() + "\n"
 
 
@@ -401,9 +326,6 @@ def summarize_action(action: Any) -> str:
     if typ in ("add_edge", "remove_edge"):
         e = payload.get("edge") or {}
         return f"{typ} {e.get('src', '?')}.{e.get('src_port', '?')} -> {e.get('dst', '?')}.{e.get('dst_port', '?')}"
-    if typ == "batch":
-        subs = payload.get("actions") or []
-        return f"batch of {len(subs)} actions: " + "; ".join(summarize_action(s) for s in subs[:12])
     return str(typ)
 
 

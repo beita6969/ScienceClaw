@@ -327,6 +327,22 @@ ScienceClaw/
 
 **Documentation:** [`DESIGN.md`](packages/scienceclaw/docs/DESIGN.md) (the full contract, including the decisions the paper leaves open) · [`INTEGRATION.md`](packages/scienceclaw/docs/INTEGRATION.md) (gateway, plugin, skill and evolution map) · [plugin guide](extensions/scienceclaw/README.md) · [`SCIENCE.md`](SCIENCE.md)
 
+## 📖 Citation
+
+If you use ScienceClaw or ScienceClaw-Eval, please cite the paper ([arXiv:2610.08691](https://arxiv.org/abs/2610.08691)):
+
+```bibtex
+@misc{zhang2026scienceclaw,
+  title         = {ScienceClaw: Benchmarking Continual Self-Evolution of AI-for-Science Agents Across the Natural and Social Sciences},
+  author        = {Zhang, Mingda and Liu, Wenjin and Shen, Tiesunlong and Xiao, Zikai and Lin, Zhenghong and Xu, Qing and Cambria, Erik and Tang, Xiaoying and Luo, Haoran},
+  year          = {2026},
+  eprint        = {2610.08691},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  url           = {https://arxiv.org/abs/2610.08691}
+}
+```
+
 ## 📬 Contact and license
 
 mingdazhang@ieee.org · MIT, see [LICENSE](LICENSE).

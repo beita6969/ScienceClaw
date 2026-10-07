@@ -547,7 +547,7 @@ For systematic reviews and meta-analyses, follow PRISMA 2020:
 
 ### Project directory structure
 ```
-~/clawd/projects/<slug>-<YYYY-MM-DD>/
+projects/<slug>-<YYYY-MM-DD>/   # in the agent workspace
   figures/    # All generated plots
   reports/    # Written reports, summaries
   data/       # Downloaded or generated data files

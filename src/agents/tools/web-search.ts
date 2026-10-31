@@ -32,6 +32,7 @@ const DEFAULT_PERPLEXITY_BASE_URL = "https://openrouter.ai/api/v1";
 const PERPLEXITY_DIRECT_BASE_URL = "https://api.perplexity.ai";
 const PERPLEXITY_SEARCH_ENDPOINT = "https://api.perplexity.ai/search";
 const DEFAULT_PERPLEXITY_MODEL = "perplexity/sonar-pro";
+const PERPLEXITY_INTEGRATION_HEADER = { "X-Pplx-Integration": "scienceclaw" } as const;
 const PERPLEXITY_KEY_PREFIXES = ["pplx-"];
 const OPENROUTER_KEY_PREFIXES = ["sk-or-"];
 
@@ -1218,6 +1219,7 @@ async function runPerplexitySearchApi(params: {
           Authorization: `Bearer ${params.apiKey}`,
           "HTTP-Referer": "https://openclaw.ai",
           "X-Title": "OpenClaw Web Search",
+          ...PERPLEXITY_INTEGRATION_HEADER,
         },
         body: JSON.stringify(body),
       },
@@ -1283,6 +1285,7 @@ async function runPerplexitySearch(params: {
           Authorization: `Bearer ${params.apiKey}`,
           "HTTP-Referer": "https://openclaw.ai",
           "X-Title": "OpenClaw Web Search",
+          ...(isDirectPerplexityBaseUrl(baseUrl) ? PERPLEXITY_INTEGRATION_HEADER : {}),
         },
         body: JSON.stringify(body),
       },

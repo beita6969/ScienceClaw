@@ -327,6 +327,16 @@ ScienceClaw/
 
 **Documentation:** [`DESIGN.md`](packages/scienceclaw/docs/DESIGN.md) (the full contract, including the decisions the paper leaves open) · [`INTEGRATION.md`](packages/scienceclaw/docs/INTEGRATION.md) (gateway, plugin, skill and evolution map) · [plugin guide](extensions/scienceclaw/README.md) · [`SCIENCE.md`](SCIENCE.md)
 
+## 🛠️ Reporting a problem
+
+For bugs or setup problems, [open an issue](https://github.com/beita6969/ScienceClaw/issues/new/choose) with:
+
+- The repository revision (`git rev-parse HEAD`), operating system, and relevant Python, Node.js, and pnpm versions.
+- The command or gateway tool operation you ran, the expected result, and the actual result.
+- The smallest reproducible example and relevant error output. For tool setup problems, include the relevant output from `python -m scienceclaw.cli doctor`.
+
+Remove API keys, access tokens, private data, and local credentials from examples and logs before posting.
+
 ## 📖 Citation
 
 If you use ScienceClaw or ScienceClaw-Eval, please cite the paper ([arXiv:2610.08691](https://arxiv.org/abs/2610.08691)):
